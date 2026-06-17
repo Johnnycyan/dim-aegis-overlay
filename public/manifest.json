@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "DIM Aegis Overlay",
+  "version": "1.0.0",
+  "description": "Display Aegis wishlist rankings directly inside Destiny Item Manager (DIM).",
+  "permissions": [
+    "storage",
+    "alarms",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://raw.githubusercontent.com/*",
+    "https://app.destinyitemmanager.com/*",
+    "https://www.light.gg/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://app.destinyitemmanager.com/*"
+      ],
+      "js": [
+        "main-world-content.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://app.destinyitemmanager.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "world": "ISOLATED",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.light.gg/god-roll/roll-appraiser/",
+        "https://www.light.gg/god-roll/roll-appraiser/*"
+      ],
+      "js": [
+        "lightgg-content.js"
+      ],
+      "world": "ISOLATED",
+      "run_at": "document_idle"
+    }
+  ]
+}

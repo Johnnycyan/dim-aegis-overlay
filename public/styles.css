@@ -1,0 +1,709 @@
+/* ==========================================
+   DIM Aegis Overlay - CSS Stylesheet
+   ========================================== */
+
+/* ------------------------------------------
+   1. Badge Overlay Styles (Bottom-Right)
+   ------------------------------------------ */
+.aegis-badge {
+  position: absolute !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  z-index: 99 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  user-select: none !important;
+  pointer-events: none !important;
+  transition: transform 0.2s ease !important;
+}
+
+/* Badge Grade Gradients */
+.aegis-badge-s {
+  background: linear-gradient(135deg, #ffd700, #ff8c00) !important; /* Gold */
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+.aegis-badge-a {
+  background: linear-gradient(135deg, #00f2fe, #4facfe) !important; /* Cyan / Blue */
+}
+
+.aegis-badge-b {
+  background: linear-gradient(135deg, #da70d6, #8a2be2) !important; /* Purple */
+}
+
+.aegis-badge-c {
+  background: linear-gradient(135deg, #bdc3c7, #2c3e50) !important; /* Steel Grey */
+}
+
+.aegis-badge-d {
+  background: linear-gradient(135deg, #e67e22, #d35400) !important; /* Orange */
+}
+
+.aegis-badge-f {
+  background: linear-gradient(135deg, #e74c3c, #c0392b) !important; /* Red */
+}
+
+
+/* ------------------------------------------
+   2. Premium Glassmorphism Tooltip
+   ------------------------------------------ */
+.aegis-tooltip {
+  position: absolute;
+  width: 280px;
+  background: rgba(18, 18, 26, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  color: #e3e3e8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  z-index: 10000;
+  overflow: hidden;
+  pointer-events: none;
+  animation: aegis-fade-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes aegis-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.aegis-tooltip.hidden {
+  display: none !important;
+}
+
+/* Tooltip Header */
+.aegis-tooltip-header {
+  padding: 12px 14px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.aegis-tooltip-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.aegis-tooltip-weapon-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.aegis-tooltip-grade {
+  font-size: 13px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.aegis-grade-s {
+  color: #ffd700;
+}
+.aegis-grade-a {
+  color: #00f2fe;
+}
+.aegis-grade-b {
+  color: #da70d6;
+}
+.aegis-grade-c {
+  color: #bdc3c7;
+}
+.aegis-grade-d {
+  color: #e67e22;
+}
+.aegis-grade-f {
+  color: #e74c3c;
+}
+
+/* Match Percentage Bar */
+.aegis-tooltip-match-bar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #9e9ea6;
+  margin-bottom: 4px;
+}
+
+.aegis-tooltip-match-value {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.aegis-tooltip-progress-bg {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.aegis-tooltip-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* Progress Fill Gradients */
+.aegis-tooltip-progress-fill.aegis-grade-s {
+  background: linear-gradient(90deg, #ffd700, #ff8c00);
+}
+.aegis-tooltip-progress-fill.aegis-grade-a {
+  background: linear-gradient(90deg, #00f2fe, #4facfe);
+}
+.aegis-tooltip-progress-fill.aegis-grade-b {
+  background: linear-gradient(90deg, #da70d6, #8a2be2);
+}
+.aegis-tooltip-progress-fill.aegis-grade-c {
+  background: linear-gradient(90deg, #bdc3c7, #7f8c8d);
+}
+.aegis-tooltip-progress-fill.aegis-grade-d {
+  background: linear-gradient(90deg, #e67e22, #d35400);
+}
+.aegis-tooltip-progress-fill.aegis-grade-f {
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+/* Tooltip Body */
+.aegis-tooltip-body {
+  padding: 12px 14px;
+}
+
+.aegis-tooltip-section {
+  margin-bottom: 12px;
+}
+
+.aegis-tooltip-section:last-child {
+  margin-bottom: 0;
+}
+
+.aegis-tooltip-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6e6e73;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Perks List Layout */
+.aegis-tooltip-perks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.aegis-tooltip-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.aegis-perk-icon-img {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.aegis-perk-bullet {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.aegis-matched {
+  color: #00e676; /* Vibrant Green */
+}
+
+.aegis-missing {
+  color: #ff5252; /* Coral Red */
+}
+
+.aegis-tooltip-perk-name-text {
+  font-weight: 500;
+}
+
+.aegis-tooltip-perk-empty {
+  font-size: 12px;
+  color: #515159;
+  font-style: italic;
+}
+
+/* Notes Section */
+.aegis-notes-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.aegis-tooltip-notes-text {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #c5c5c9;
+  font-style: italic;
+}
+
+
+/* ------------------------------------------
+   3. Settings Popup UI Styling
+   ------------------------------------------ */
+.popup-body {
+  margin: 0;
+  padding: 0;
+  background-color: #0c0c10;
+  color: #d1d1d6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  width: 320px;
+  box-sizing: border-box;
+}
+
+.popup-container {
+  padding: 16px;
+}
+
+/* Header */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1c1c24;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffb300;
+}
+
+.shield-logo {
+  filter: drop-shadow(0 0 4px rgba(255, 179, 0, 0.4));
+}
+
+.popup-header h1 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+}
+
+.version {
+  font-size: 10px;
+  color: #6e6e73;
+  background: #1c1c24;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+/* Main Content */
+.popup-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-card,
+.status-card {
+  background: #121218;
+  border: 1px solid #1c1c24;
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.settings-card h2,
+.status-card h2 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8e8e93;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.description {
+  font-size: 11px;
+  color: #6e6e73;
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+}
+
+/* Input Fields */
+.input-group {
+  margin-bottom: 12px;
+}
+
+#wishlist-url {
+  width: 100%;
+  background: #08080c;
+  border: 1px solid #2c2c35;
+  border-radius: 4px;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-family: monospace;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+#wishlist-url:focus {
+  border-color: #ffb300;
+}
+
+#wishlist-url:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button & Loading States */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ffb300, #ff8f00);
+  color: #000000;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 8px rgba(255, 179, 0, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #1c1c24;
+  color: #6e6e73;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(110, 110, 115, 0.25);
+  border-top: 2px solid #ffb300;
+  border-radius: 50%;
+  animation: aegis-spin 0.8s linear infinite;
+}
+
+.spinner.hidden {
+  display: none !important;
+}
+
+@keyframes aegis-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Status Panel */
+.status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.status-label {
+  color: #8e8e93;
+}
+
+.status-value {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.status-success {
+  color: #30d158 !important; /* iOS Green */
+}
+
+.status-loading {
+  color: #ffd60a !important; /* iOS Yellow */
+  animation: aegis-pulse 1.5s infinite;
+}
+
+.status-error {
+  color: #ff453a !important; /* iOS Red */
+}
+
+@keyframes aegis-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Error message block */
+.error-msg-box {
+  background: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 4px;
+}
+
+.error-msg-box p {
+  margin: 0;
+  font-size: 10px;
+  color: #ff453a;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.error-msg-box.hidden {
+  display: none !important;
+}
+
+/* Footer */
+.popup-footer {
+  border-top: 1px solid #1c1c24;
+  padding-top: 12px;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.popup-footer p {
+  font-size: 9.5px;
+  color: #48484a;
+  line-height: 1.3;
+  margin: 0;
+}
+
+/* ==========================================
+   DIM Aegis Overlay - Polish Enhancements CSS
+   ========================================== */
+
+/* 1. Dimmed and grayscale styling for missing perks in tooltips */
+.aegis-missing {
+  color: rgba(255, 82, 82, 0.55) !important; /* Dimmed coral red */
+}
+
+.aegis-missing .aegis-perk-icon-img {
+  filter: grayscale(1) opacity(0.4) !important;
+}
+
+/* 2. Smooth hover scale animation on weapon cards (restricted to grid items starting with item- ID) */
+div[id^="item-"][data-aegis-item-hash] {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+div[id^="item-"][data-aegis-item-hash]:hover {
+  transform: scale(1.04) !important;
+  z-index: 100 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 3. Tooltip Tag badges styling */
+.aegis-tooltip-tags-row {
+  display: flex !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+}
+
+.aegis-tooltip-tag {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.aegis-tag-pve {
+  background: rgba(48, 209, 88, 0.15) !important; /* Premium green */
+  color: #30d158 !important;
+  border-color: rgba(48, 209, 88, 0.3) !important;
+}
+
+.aegis-tag-pvp {
+  background: rgba(191, 90, 242, 0.15) !important; /* Premium purple */
+  color: #bf5af2 !important;
+  border-color: rgba(191, 90, 242, 0.3) !important;
+}
+
+/* 4. Popup Search interface styling */
+.search-card {
+  margin-top: 10px !important;
+}
+
+#search-input {
+  width: 100%;
+  background: #08080c;
+  border: 1px solid #2c2c35;
+  border-radius: 4px;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 11px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+#search-input:focus {
+  border-color: #ffb300;
+}
+
+.search-results-container {
+  margin-top: 12px !important;
+  max-height: 240px !important;
+  overflow-y: auto !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.search-results-container.hidden {
+  display: none !important;
+}
+
+/* Scrollbar styles for search results */
+.search-results-container::-webkit-scrollbar {
+  width: 4px;
+}
+.search-results-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.search-results-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.search-item {
+  background: #13131b;
+  border: 1px solid #1f1f2a;
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.search-item:hover {
+  background: #191924;
+  border-color: #2c2c3d;
+}
+
+.search-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.search-item-header::after {
+  content: '▼';
+  font-size: 8px;
+  color: #6e6e73;
+  transition: transform 0.2s ease;
+  margin-left: 6px;
+}
+
+.search-item.active .search-item-header::after {
+  transform: rotate(180deg);
+  color: #ffb300;
+}
+
+.search-item-body {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding-top: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  cursor: default;
+}
+
+.search-item.active .search-item-body {
+  display: flex;
+}
+
+.search-roll {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.search-roll-title {
+  color: #ffb300;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.search-roll-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.search-perk-pill {
+  background: #1e1e28;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #e3e3e8;
+  padding: 2.5px 7px;
+  border-radius: 10px;
+  font-size: 9.5px;
+  font-weight: 500;
+}
+
+.search-roll-notes {
+  color: #a0a0a8;
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.35;
+}
+
