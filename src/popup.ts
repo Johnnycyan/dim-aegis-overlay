@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const errorMessage = document.getElementById('error-message') as HTMLParagraphElement;
   const sourceSelect = document.getElementById('scoring-source') as HTMLSelectElement;
   const lightggCount = document.getElementById('lightgg-count') as HTMLSpanElement;
+  const lightggSyncBtn = document.getElementById('lightgg-sync-button') as HTMLButtonElement;
+  const lightggSyncStatusRow = document.getElementById('lightgg-sync-status-row') as HTMLDivElement;
+  const lightggSyncStatusText = document.getElementById('lightgg-sync-status-text') as HTMLSpanElement;
 
   // Function to refresh UI from storage
   function updateUI() {
@@ -120,6 +123,50 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 300);
     });
   });
+
+  // ── Light.gg background sync button ──────────────────────────────────────
+  function setLightGGLoading(loading: boolean) {
+    if (!lightggSyncBtn) return;
+    if (loading) {
+      lightggSyncBtn.disabled = true;
+      lightggSyncBtn.querySelector('.spinner')?.classList.remove('hidden');
+      const textEl = lightggSyncBtn.querySelector('.btn-text');
+      if (textEl) textEl.textContent = 'Syncing...';
+      if (lightggSyncStatusRow) lightggSyncStatusRow.style.display = 'block';
+      if (lightggSyncStatusText) {
+        lightggSyncStatusText.textContent = '⏳ Opening Roll Appraiser in background...';
+        lightggSyncStatusText.style.color = '#ffb300';
+      }
+    } else {
+      lightggSyncBtn.disabled = false;
+      lightggSyncBtn.querySelector('.spinner')?.classList.add('hidden');
+      const textEl = lightggSyncBtn.querySelector('.btn-text');
+      if (textEl) textEl.textContent = 'Sync Light.gg Grades';
+    }
+  }
+
+  if (lightggSyncBtn) {
+    lightggSyncBtn.addEventListener('click', () => {
+      setLightGGLoading(true);
+      chrome.runtime.sendMessage({ action: 'syncLightGG' }, (response) => {
+        setLightGGLoading(false);
+        if (lightggSyncStatusRow) lightggSyncStatusRow.style.display = 'block';
+        if (response && response.success) {
+          if (lightggSyncStatusText) {
+            lightggSyncStatusText.textContent = `✅ Done! ${(response.count || 0).toLocaleString()} weapons graded.`;
+            lightggSyncStatusText.style.color = '#4caf50';
+          }
+          updateUI();
+        } else {
+          if (lightggSyncStatusText) {
+            const errMsg = (response && response.error) ? response.error : 'Unknown error';
+            lightggSyncStatusText.textContent = `❌ ${errMsg}`;
+            lightggSyncStatusText.style.color = '#f44336';
+          }
+        }
+      });
+    });
+  }
 
   // Search logic
   const searchInput = document.getElementById('search-input') as HTMLInputElement;

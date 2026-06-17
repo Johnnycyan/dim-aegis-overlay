@@ -419,6 +419,23 @@
   cursor: not-allowed;
 }
 
+.btn-secondary {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: #000000;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
+}
+
+.btn-secondary:disabled {
+  background: #1c1c24;
+  color: #6e6e73;
+  cursor: not-allowed;
+}
+
 .spinner {
   width: 12px;
   height: 12px;

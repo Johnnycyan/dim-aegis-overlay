@@ -14,6 +14,7 @@ export default defineConfig({
         'main-world-content': resolve(__dirname, 'src/main-world-content.ts'),
         popup: resolve(__dirname, 'src/popup.ts'),
         'lightgg-content': resolve(__dirname, 'src/lightgg-content.ts'),
+        'lightgg-main-world': resolve(__dirname, 'src/lightgg-main-world.ts'),
       },
       output: {
         entryFileNames: '[name].js',

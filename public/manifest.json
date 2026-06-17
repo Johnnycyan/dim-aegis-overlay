@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "alarms",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "tabs"
   ],
   "host_permissions": [
     "https://raw.githubusercontent.com/*",
@@ -43,6 +44,16 @@
       ],
       "world": "ISOLATED",
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.light.gg/*"
+      ],
+      "js": [
+        "lightgg-main-world.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
     },
     {
       "matches": [

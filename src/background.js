@@ -1,6 +1,7 @@
 import { parseWishlist } from './parser';
 const DEFAULT_URL = 'https://raw.githubusercontent.com/charlesxcaliber/DIMAegisWeaponWishlist/main/MrCharlesWishlist_MRB_PPC2.txt';
 const SYNC_ALARM_NAME = 'sync-wishlist-alarm';
+const LGG_ROLL_APPRAISER_URL = 'https://www.light.gg/god-roll/roll-appraiser/';
 /**
  * Fetches the wishlist from the configured URL, parses it, and caches it in local storage.
  *
@@ -87,10 +88,73 @@ chrome.runtime.onStartup.addListener(async () => {
         fetchAndCacheWishlist();
     }
 });
+/**
+ * Opens the Light.gg Roll Appraiser in a hidden (inactive) tab.
+ * Waits for the content script to signal completion via chrome.storage,
+ * then closes the tab automatically.
+ *
+ * The content script writes { lightggSyncStatus: 'done' } when grades
+ * are collected (either via API intercept or DOM scraping).
+ */
+async function syncLightGGInBackground() {
+    // Mark as syncing
+    await chrome.storage.local.set({ lightggSyncStatus: 'syncing', lightggSyncError: null });
+    return new Promise((resolve) => {
+        let tabId = null;
+        let storageListener = null;
+        let timeoutId = null;
+        function cleanup(success, count, error) {
+            if (timeoutId)
+                clearTimeout(timeoutId);
+            if (storageListener)
+                chrome.storage.onChanged.removeListener(storageListener);
+            if (tabId !== null) {
+                chrome.tabs.remove(tabId).catch(() => { }); // Close the hidden tab
+                tabId = null;
+            }
+            const status = success ? 'done' : 'error';
+            chrome.storage.local.set({ lightggSyncStatus: status, lightggSyncError: error || null });
+            resolve({ success, count, error });
+        }
+        // Watch for the content script to write { lightggSyncStatus: 'done' }
+        storageListener = (changes, area) => {
+            if (area !== 'local')
+                return;
+            if (changes.lightggSyncStatus && changes.lightggSyncStatus.newValue === 'done') {
+                chrome.storage.local.get('lightggData', (res) => {
+                    const count = Object.keys(res.lightggData || {}).length;
+                    console.log(`[DIM Aegis Overlay] Light.gg background sync complete. ${count} weapons graded.`);
+                    cleanup(true, count);
+                });
+            }
+        };
+        chrome.storage.onChanged.addListener(storageListener);
+        // Safety timeout: close tab after 45 seconds regardless
+        timeoutId = setTimeout(() => {
+            console.warn('[DIM Aegis Overlay] Light.gg background sync timed out.');
+            cleanup(false, undefined, 'Sync timed out after 45 seconds. Light.gg may require you to be logged in.');
+        }, 45000);
+        // Open the Roll Appraiser in a background tab (not active, not focused)
+        chrome.tabs.create({ url: LGG_ROLL_APPRAISER_URL, active: false }, (tab) => {
+            if (chrome.runtime.lastError || !tab.id) {
+                cleanup(false, undefined, chrome.runtime.lastError?.message || 'Failed to open tab');
+                return;
+            }
+            tabId = tab.id;
+            console.log(`[DIM Aegis Overlay] Opened hidden Light.gg tab (id=${tabId}) for background sync.`);
+        });
+    });
+}
 // Listen for messages from settings popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.action === 'syncNow') {
         fetchAndCacheWishlist(message.url)
+            .then((res) => sendResponse(res))
+            .catch((err) => sendResponse({ success: false, error: err.message }));
+        return true; // Keep message channel open for async sendResponse
+    }
+    if (message.action === 'syncLightGG') {
+        syncLightGGInBackground()
             .then((res) => sendResponse(res))
             .catch((err) => sendResponse({ success: false, error: err.message }));
         return true; // Keep message channel open for async sendResponse
