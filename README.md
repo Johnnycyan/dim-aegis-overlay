@@ -73,34 +73,46 @@ Weapons are scored against every wishlist entry for that item hash. The **best m
 
 ---
 
-## Installation (Developer / Unpacked)
+## Installation (Unpacked Extension)
 
-> No Chrome Web Store listing — load it as an unpacked extension.
+> No Chrome Web Store listing — load it as an unpacked extension in Developer Mode.
 
-### 1. Clone & Build
+### Method A: Direct Download (Recommended for Users)
 
-```bash
-git clone https://github.com/YOUR_USERNAME/dim-aegis-overlay.git
-cd dim-aegis-overlay
-npm install
-npm run build
-```
+1. Go to the [Releases](https://github.com/Maxeption/dim-aegis-overlay/releases) page on GitHub.
+2. Download the pre-built `dim-aegis-overlay-v1.0.0.zip` file.
+3. Unzip the file to a permanent folder on your computer.
+4. Open Chrome or Opera and navigate to `chrome://extensions/` (or `opera://extensions/`).
+5. Enable **Developer mode** (toggle in the top-right corner).
+6. Click **Load unpacked** (top-left) and select the unzipped folder (which contains `manifest.json`).
 
-The compiled extension will be in the `dist/` folder.
+---
 
-### 2. Load in Chrome / Opera
+### Method B: Clone & Build (For Developers)
 
-1. Go to `chrome://extensions` (or `opera://extensions`)
-2. Enable **Developer mode** (toggle, top-right)
-3. Click **Load unpacked**
-4. Select the `dist/` folder
+1. Clone and compile the repository:
+   ```bash
+   git clone https://github.com/Maxeption/dim-aegis-overlay.git
+   cd dim-aegis-overlay
+   npm install
+   npm run build
+   ```
+   The compiled extension files will be created in the `dist/` directory.
 
-### 3. Configure
+2. Load in Chrome or Opera:
+   - Go to `chrome://extensions/` (or `opera://extensions/`).
+   - Enable **Developer mode** (toggle, top-right).
+   - Click **Load unpacked** and select the compiled `dist/` folder.
 
-1. Click the extension icon → popup opens
-2. *(Optional)* Paste a custom Aegis wishlist URL (defaults to MrCharles' wishlist)
-3. Click **Sync Wishlist**
-4. Open DIM — grade badges appear on weapon tiles automatically
+---
+
+### Configuration
+
+1. Click the extension icon in your browser toolbar to open the settings popup.
+2. Select your preferred **Scoring Engine** (Aegis Wishlist or Light.gg Roll Appraiser).
+3. If using Aegis, click **Sync Wishlist** to fetch recommendations.
+4. If using Light.gg, click **Sync Grades** to download appraisals.
+5. Open or refresh Destiny Item Manager (DIM) — grade badges and pulsing gold glows will appear on your items.
 
 ---
 
