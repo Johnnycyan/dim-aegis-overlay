@@ -37,7 +37,7 @@ function setupRegistryObserver() {
           const perksMap = (hoveredElement as any)._aegisPerksMap as Record<number, { name: string; icon: string }>;
           const activeHashes = (hoveredElement as any)._aegisActiveHashes as number[];
           if (result && result.grade) {
-            showTooltip(hoveredElement, result, name, perksMap, activeHashes);
+            showTooltip(hoveredElement, result, name, perksMap, activeHashes, scoringSource === 'lightgg');
           }
         }
       }
@@ -101,7 +101,7 @@ function handleMouseEnter(e: MouseEvent) {
   const activeHashes = (el as any)._aegisActiveHashes as number[];
 
   if (result && result.grade) {
-    showTooltip(el, result, name, perksMap, activeHashes);
+    showTooltip(el, result, name, perksMap, activeHashes, scoringSource === 'lightgg');
   }
 }
 
@@ -111,6 +111,52 @@ function handleMouseEnter(e: MouseEvent) {
 function handleMouseLeave() {
   hoveredElement = null;
   hideTooltip();
+}
+
+/**
+ * Injects a detailed grade summary block into the DIM item popup header.
+ */
+function injectPopupSummary(popupContainer: HTMLElement, result: ScoringResult, scoringSource: string) {
+  const titleEl = popupContainer.querySelector('h1, [class*="title"]');
+  if (!titleEl) return;
+
+  const header = titleEl.parentElement;
+  if (!header) return;
+
+  let summaryEl = popupContainer.querySelector('.aegis-popup-summary') as HTMLDivElement | null;
+  if (!result.grade) {
+    if (summaryEl) summaryEl.remove();
+    return;
+  }
+
+  if (!summaryEl) {
+    summaryEl = document.createElement('div');
+    summaryEl.className = 'aegis-popup-summary';
+    titleEl.insertAdjacentElement('afterend', summaryEl);
+  }
+
+  const baseGradeLetter = result.grade.charAt(0).toLowerCase();
+  const gradeClass = `aegis-grade-${baseGradeLetter}`;
+  const isLightGG = scoringSource === 'lightgg';
+
+  let notesHtml = '';
+  if (result.notes) {
+    notesHtml = `<div class="aegis-popup-notes-text">${result.notes}</div>`;
+  }
+
+  const matchLabel = isLightGG
+    ? 'Light.gg Roll Appraisal'
+    : `Wishlist Match: <strong class="${gradeClass}">${result.matchPercentage}%</strong>`;
+
+  summaryEl.innerHTML = `
+    <div class="aegis-popup-summary-content">
+      <div class="aegis-popup-row">
+        <span class="aegis-popup-grade-badge aegis-badge-${baseGradeLetter}">${result.grade}</span>
+        <span class="aegis-popup-label">${matchLabel}</span>
+      </div>
+      ${notesHtml}
+    </div>
+  `;
 }
 
 /**
@@ -125,6 +171,14 @@ function injectBadge(el: HTMLElement, result: ScoringResult) {
     badgeTarget.style.setProperty('position', 'relative', 'important');
   } else {
     badgeTarget = el;
+  }
+
+  // Handle S-tier gold glow class on the badge target
+  if (badgeTarget) {
+    badgeTarget.classList.remove('aegis-gold-glow');
+    if (result.grade && result.grade.startsWith('S')) {
+      badgeTarget.classList.add('aegis-gold-glow');
+    }
   }
 
   let badge = badgeTarget.querySelector('.aegis-badge') as HTMLDivElement | null;
@@ -148,6 +202,12 @@ function injectBadge(el: HTMLElement, result: ScoringResult) {
  * Removes the Aegis badge overlay from a weapon tile if it exists.
  */
 function removeBadge(el: HTMLElement) {
+  let badgeTarget = el.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"]') as HTMLElement | null;
+  if (badgeTarget) {
+    badgeTarget.classList.remove('aegis-gold-glow');
+  } else {
+    el.classList.remove('aegis-gold-glow');
+  }
   const badge = el.querySelector('.aegis-badge');
   if (badge) {
     badge.remove();
@@ -201,20 +261,16 @@ function processElement(el: HTMLElement) {
       // Strip any non-numeric prefix (e.g. Light.gg uses 'i' prefix on some IDs)
       const instanceId = rawInstanceId.replace(/^[^0-9]+/, '');
       const grade = lightggDb[instanceId];
-      // Debug: log first few lookups to verify ID matching
-      if (Object.keys(lightggDb).length > 0 && !el.hasAttribute('data-aegis-lgg-checked')) {
-        el.setAttribute('data-aegis-lgg-checked', 'true');
-        const sample = Object.keys(lightggDb)[0];
-        console.log(`[DIM Aegis Overlay LGG] ID lookup: rawId="${rawInstanceId}" → instanceId="${instanceId}" | grade="${grade || 'NOT FOUND'}" | DB sample key="${sample}"`);
-      }
       if (grade) {
+        // Run Aegis scoring to get matched and missing perks
+        const aegisResult = scoreWeapon(itemHash, perkHashes, wishlistDb, enhancedToNormalMap);
         result = {
           grade: grade as any,
-          matchPercentage: 100,
-          matchedPerks: [],
-          missingPerks: [],
-          notes: 'Community popularity rating from Light.gg Roll Appraiser.',
-          wishlistPerks: [],
+          matchPercentage: aegisResult.grade ? aegisResult.matchPercentage : 100,
+          matchedPerks: aegisResult.matchedPerks,
+          missingPerks: aegisResult.missingPerks,
+          notes: aegisResult.notes || 'Community popularity rating from Light.gg Roll Appraiser.',
+          wishlistPerks: aegisResult.wishlistPerks,
         };
       } else {
         result = {
@@ -247,6 +303,12 @@ function processElement(el: HTMLElement) {
       // Inject rank badge
       injectBadge(el, result);
 
+      // Inject popup summary card if inside a details popup
+      const popupContainer = el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+      if (popupContainer) {
+        injectPopupSummary(popupContainer as HTMLElement, result, scoringSource);
+      }
+
       // Attach event listeners for the tooltip if not already done
       if (!el.hasAttribute('data-aegis-listeners')) {
         el.addEventListener('mouseenter', handleMouseEnter);
@@ -256,6 +318,11 @@ function processElement(el: HTMLElement) {
     } else {
       // If graded previously but now has no grade, remove UI
       removeBadge(el);
+      const popupContainer = el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+      if (popupContainer) {
+        const summary = popupContainer.querySelector('.aegis-popup-summary');
+        if (summary) summary.remove();
+      }
       if (el.hasAttribute('data-aegis-listeners')) {
         el.removeEventListener('mouseenter', handleMouseEnter);
         el.removeEventListener('mouseleave', handleMouseLeave);

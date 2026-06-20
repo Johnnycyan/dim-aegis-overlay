@@ -292,19 +292,19 @@ function processElement(el) {
         console.debug('Aegis Overlay: Element scan failed', e);
     }
 }
+const SELECTORS = [
+    'div[id^="item-"]',
+    'div[class*="item-"]',
+    'div[class*="StoreItem"]',
+    'div[class*="InventoryItem"]',
+    '.item',
+    '.item-tile',
+].join(',');
 /**
  * Queries the document for potential item elements and processes them.
  */
 function scanPage() {
-    const selectors = [
-        'div[id^="item-"]',
-        'div[class*="item-"]',
-        'div[class*="StoreItem"]',
-        'div[class*="InventoryItem"]',
-        '.item',
-        '.item-tile',
-    ];
-    const candidates = document.querySelectorAll(selectors.join(','));
+    const candidates = document.querySelectorAll(SELECTORS);
     for (let i = 0; i < candidates.length; i++) {
         processElement(candidates[i]);
     }
@@ -313,15 +313,19 @@ function scanPage() {
 setInterval(scanPage, 1000);
 // 2. Immediate scan on DOM modifications using MutationObserver
 const observer = new MutationObserver((mutations) => {
-    let shouldScan = false;
     for (let i = 0; i < mutations.length; i++) {
-        if (mutations[i].addedNodes.length > 0) {
-            shouldScan = true;
-            break;
+        const mutation = mutations[i];
+        if (mutation.addedNodes.length > 0) {
+            mutation.addedNodes.forEach((node) => {
+                if (node instanceof HTMLElement) {
+                    if (node.matches && node.matches(SELECTORS)) {
+                        processElement(node);
+                    }
+                    const children = node.querySelectorAll(SELECTORS);
+                    children.forEach(processElement);
+                }
+            });
         }
-    }
-    if (shouldScan) {
-        scanPage();
     }
 });
 observer.observe(document.body, {

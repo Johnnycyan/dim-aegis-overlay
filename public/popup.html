@@ -47,10 +47,18 @@
       <section class="settings-card">
         <h2>Light.gg Sync</h2>
         <p class="description">Automatically opens Roll Appraiser in the background to fetch your weapon grades &mdash; no tab-switching needed.</p>
-        <button id="lightgg-sync-button" class="btn btn-secondary">
-          <span class="btn-text">Sync Light.gg Grades</span>
-          <span class="spinner hidden"></span>
-        </button>
+        <div id="lightgg-sync-warning" class="error-msg-box hidden" style="margin-bottom: 12px; background: rgba(255, 179, 0, 0.1); border-color: rgba(255, 179, 0, 0.2); border-radius: 4px; padding: 8px;">
+          <p style="color: #ffb300; font-size: 10px; font-weight: 600; margin: 0;">⚠️ Light.gg cache is older than 48 hours. Syncing is recommended.</p>
+        </div>
+        <div class="btn-group" style="display: flex; gap: 8px;">
+          <button id="lightgg-sync-button" class="btn btn-secondary" style="flex: 1;">
+            <span class="btn-text">Sync Grades</span>
+            <span class="spinner hidden"></span>
+          </button>
+          <button id="lightgg-clear-button" class="btn" style="flex: 1; background: #2c2c35; color: #ffffff;">
+            <span class="btn-text">Clear Cache</span>
+          </button>
+        </div>
         <div id="lightgg-sync-status-row" style="margin-top: 8px; font-size: 10.5px; display: none;">
           <span id="lightgg-sync-status-text" style="color: #aaa;">Waiting...</span>
         </div>
@@ -74,6 +82,10 @@
           <div class="status-item">
             <span class="status-label">Light.gg Graded:</span>
             <span id="lightgg-count" class="status-value">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Light.gg Synced:</span>
+            <span id="lightgg-last-updated" class="status-value">Never</span>
           </div>
           <div id="error-container" class="error-msg-box hidden">
             <p id="error-message"></p>

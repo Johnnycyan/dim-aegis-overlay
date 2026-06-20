@@ -119,9 +119,11 @@ export function showTooltip(
   result: ScoringResult,
   weaponName: string,
   localPerksMap: Record<number, PerkInfo>,
-  activeHashes?: number[]
+  activeHashes?: number[],
+  isLightGG?: boolean
 ) {
   const tooltip = getOrCreateTooltip();
+  const isLightGGMode = !!isLightGG;
 
   // Normalize grade to first character (e.g. S+ -> s, A- -> a) to match CSS classes
   const baseGradeLetter = result.grade ? result.grade.charAt(0).toLowerCase() : '';
@@ -144,8 +146,6 @@ export function showTooltip(
     }
   }
 
-  const isLightGG = result.notes === 'Community popularity rating from Light.gg Roll Appraiser.';
-
   // Assemble premium HTML content
   let html = `
     <div class="aegis-tooltip-header">
@@ -156,7 +156,7 @@ export function showTooltip(
       ${tagsHtml}
   `;
 
-  if (!isLightGG) {
+  if (!isLightGGMode) {
     html += `
       <div class="aegis-tooltip-match-bar-container">
         <div class="aegis-tooltip-match-label">Match Percentage</div>
@@ -180,7 +180,9 @@ export function showTooltip(
     <div class="aegis-tooltip-body">
   `;
 
-  if (!isLightGG) {
+  const hasWishlist = result.wishlistPerks && result.wishlistPerks.length > 0;
+
+  if (hasWishlist) {
     html += `
       <div class="aegis-tooltip-section">
         <div class="aegis-tooltip-section-title">Matched Perks</div>
@@ -231,7 +233,7 @@ export function showTooltip(
       `;
     }
   } else {
-    // Light.gg mode: show only the plugged/active perks
+    // Fallback: show only the plugged/active perks
     // Filter to meaningful perks: exclude trackers, empty sockets, mods, ornaments, shaders by name keywords
     const JUNK_KEYWORDS = /tracker|empty|default|ornament|shader|catalyst|upgrade|mod socket|memento/i;
     
@@ -276,7 +278,7 @@ export function showTooltip(
   if (result.notes) {
     html += `
       <div class="aegis-tooltip-section aegis-notes-section">
-        <div class="aegis-tooltip-section-title">${isLightGG ? 'Information' : 'Aegis Notes'}</div>
+        <div class="aegis-tooltip-section-title">${isLightGGMode ? 'Information' : 'Aegis Notes'}</div>
         <div class="aegis-tooltip-notes-text">${result.notes}</div>
       </div>
     `;

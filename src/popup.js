@@ -11,11 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const sourceSelect = document.getElementById('scoring-source');
     const lightggCount = document.getElementById('lightgg-count');
     const lightggSyncBtn = document.getElementById('lightgg-sync-button');
+    const lightggClearBtn = document.getElementById('lightgg-clear-button');
     const lightggSyncStatusRow = document.getElementById('lightgg-sync-status-row');
     const lightggSyncStatusText = document.getElementById('lightgg-sync-status-text');
     // Function to refresh UI from storage
     function updateUI() {
-        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData'], (res) => {
+        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync'], (res) => {
             // Set URL input
             urlInput.value = res.wishlistUrl || DEFAULT_URL;
             // Set Last Updated time
@@ -28,9 +29,32 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set Weapons Count
             weaponsCount.textContent = (res.parsedCount || 0).toLocaleString();
             // Set Light.gg Graded Count
+            const lggData = res.lightggData || {};
             if (lightggCount) {
-                const lggData = res.lightggData || {};
                 lightggCount.textContent = Object.keys(lggData).length.toLocaleString();
+            }
+            // Set Light.gg Last Synced time
+            const lggLastUpdated = document.getElementById('lightgg-last-updated');
+            if (lggLastUpdated) {
+                if (res.lightggLastSync) {
+                    lggLastUpdated.textContent = new Date(res.lightggLastSync).toLocaleString();
+                }
+                else {
+                    lggLastUpdated.textContent = 'Never';
+                }
+            }
+            // Handle Light.gg cache age warning banner
+            const warningBanner = document.getElementById('lightgg-sync-warning');
+            if (warningBanner) {
+                const hasGrades = Object.keys(lggData).length > 0;
+                const dayInMs = 24 * 60 * 60 * 1000;
+                const isOutdated = res.lightggLastSync && (Date.now() - res.lightggLastSync > 2 * dayInMs);
+                if (hasGrades && isOutdated) {
+                    warningBanner.classList.remove('hidden');
+                }
+                else {
+                    warningBanner.classList.add('hidden');
+                }
             }
             // Set Scoring Source dropdown value
             if (sourceSelect) {
@@ -114,6 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function setLightGGLoading(loading) {
         if (!lightggSyncBtn)
             return;
+        if (lightggClearBtn)
+            lightggClearBtn.disabled = loading;
         if (loading) {
             lightggSyncBtn.disabled = true;
             lightggSyncBtn.querySelector('.spinner')?.classList.remove('hidden');
@@ -132,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lightggSyncBtn.querySelector('.spinner')?.classList.add('hidden');
             const textEl = lightggSyncBtn.querySelector('.btn-text');
             if (textEl)
-                textEl.textContent = 'Sync Light.gg Grades';
+                textEl.textContent = 'Sync Grades';
         }
     }
     if (lightggSyncBtn) {
@@ -157,6 +183,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+        });
+    }
+    if (lightggClearBtn) {
+        lightggClearBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear your cached Light.gg weapon grades?')) {
+                chrome.storage.local.set({ lightggData: {}, lightggLastSync: 0 }, () => {
+                    updateUI();
+                    if (lightggSyncStatusRow)
+                        lightggSyncStatusRow.style.display = 'block';
+                    if (lightggSyncStatusText) {
+                        lightggSyncStatusText.textContent = '🧹 Cache cleared successfully.';
+                        lightggSyncStatusText.style.color = '#4caf50';
+                    }
+                });
+            }
         });
     }
     // Search logic

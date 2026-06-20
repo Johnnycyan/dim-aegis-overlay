@@ -31,10 +31,20 @@ function saveGrades(grades: Record<string, string>, source: string) {
 
   chrome.storage.local.get('lightggData', (res) => {
     const existing = res.lightggData || {};
-    const merged = { ...existing, ...grades };
-    const total = Object.keys(merged).length;
-    chrome.storage.local.set({ lightggData: merged, lightggLastSync: Date.now() }, () => {
-      console.log(`[DIM Aegis Overlay LGG] [${source}] Saved ${count} new grades. Total cached: ${total}`);
+    let changed = false;
+    
+    for (const [id, grade] of Object.entries(grades)) {
+      if (existing[id] !== grade) {
+        existing[id] = grade;
+        changed = true;
+      }
+    }
+
+    if (!changed) return;
+
+    const total = Object.keys(existing).length;
+    chrome.storage.local.set({ lightggData: existing, lightggLastSync: Date.now() }, () => {
+      console.log(`[DIM Aegis Overlay LGG] [${source}] Saved ${count} new/updated grades. Total cached: ${total}`);
       totalGradesFound = total;
     });
   });

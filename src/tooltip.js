@@ -93,8 +93,9 @@ function positionTooltip(target, tooltip) {
  * @param weaponName The weapon's display name.
  * @param localPerksMap Dictionary of socketed perk info extracted from this weapon.
  */
-export function showTooltip(target, result, weaponName, localPerksMap, activeHashes) {
+export function showTooltip(target, result, weaponName, localPerksMap, activeHashes, isLightGG) {
     const tooltip = getOrCreateTooltip();
+    const isLightGGMode = !!isLightGG;
     // Normalize grade to first character (e.g. S+ -> s, A- -> a) to match CSS classes
     const baseGradeLetter = result.grade ? result.grade.charAt(0).toLowerCase() : '';
     const gradeClass = `aegis-grade-${baseGradeLetter}`;
@@ -114,7 +115,6 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
             tagsHtml += '</div>';
         }
     }
-    const isLightGG = result.notes === 'Community popularity rating from Light.gg Roll Appraiser.';
     // Assemble premium HTML content
     let html = `
     <div class="aegis-tooltip-header">
@@ -124,7 +124,7 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
       </div>
       ${tagsHtml}
   `;
-    if (!isLightGG) {
+    if (!isLightGGMode) {
         html += `
       <div class="aegis-tooltip-match-bar-container">
         <div class="aegis-tooltip-match-label">Match Percentage</div>
@@ -147,7 +147,8 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
     
     <div class="aegis-tooltip-body">
   `;
-    if (!isLightGG) {
+    const hasWishlist = result.wishlistPerks && result.wishlistPerks.length > 0;
+    if (hasWishlist) {
         html += `
       <div class="aegis-tooltip-section">
         <div class="aegis-tooltip-section-title">Matched Perks</div>
@@ -195,7 +196,7 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
         }
     }
     else {
-        // Light.gg mode: show only the plugged/active perks
+        // Fallback: show only the plugged/active perks
         // Filter to meaningful perks: exclude trackers, empty sockets, mods, ornaments, shaders by name keywords
         const JUNK_KEYWORDS = /tracker|empty|default|ornament|shader|catalyst|upgrade|mod socket|memento/i;
         // Build the list of perks to display
@@ -237,7 +238,7 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
     if (result.notes) {
         html += `
       <div class="aegis-tooltip-section aegis-notes-section">
-        <div class="aegis-tooltip-section-title">${isLightGG ? 'Information' : 'Aegis Notes'}</div>
+        <div class="aegis-tooltip-section-title">${isLightGGMode ? 'Information' : 'Aegis Notes'}</div>
         <div class="aegis-tooltip-notes-text">${result.notes}</div>
       </div>
     `;
