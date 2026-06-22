@@ -16,6 +16,7 @@
   ],
   "background": {
     "service_worker": "background.js",
+    "scripts": ["background.js"],
     "type": "module"
   },
   "action": {
@@ -66,5 +67,10 @@
       "world": "ISOLATED",
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "dim-aegis-overlay@maxeption.github.io"
+    }
+  }
 }
