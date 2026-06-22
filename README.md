@@ -20,6 +20,10 @@ A **Chrome / Opera MV3 browser extension** that overlays weapon roll grades dire
 | ✨ **Enhanced perks** | Enhanced perks are correctly mapped to their normal counterparts |
 | 📦 **MV3 compliant** | Built on Manifest V3 with a service worker background script |
 
+<img width="666" height="764" alt="image" src="https://github.com/user-attachments/assets/1d837deb-8758-4b14-a29a-e515337f1418" />
+<img width="322" height="599" alt="image" src="https://github.com/user-attachments/assets/8913df9d-95f1-4a5c-8eaa-99e9c4531094" />
+<img width="280" height="369" alt="image" src="https://github.com/user-attachments/assets/a1a00453-42e8-4aa7-bb30-5c67d164760f" />
+
 ---
 
 ## How It Works
