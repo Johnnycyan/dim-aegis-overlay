@@ -70,7 +70,13 @@
   ],
   "browser_specific_settings": {
     "gecko": {
-      "id": "dim-aegis-overlay@maxeption.github.io"
+      "id": "dim-aegis-overlay@maxeption.github.io",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   }
 }

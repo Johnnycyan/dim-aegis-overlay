@@ -1,3 +1,5 @@
+import { safeSetInnerHTML } from './dom-utils';
+
 const DEFAULT_URL =
   'https://raw.githubusercontent.com/charlesxcaliber/DIMAegisWeaponWishlist/main/MrCharlesWishlist_MRB_PPC2.txt';
 
@@ -217,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', () => {
       const query = searchInput.value.trim().toLowerCase();
       if (!query) {
-        searchResults.innerHTML = '';
+        searchResults.replaceChildren();
         searchResults.classList.add('hidden');
         return;
       }
@@ -247,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const matchKeys = Object.keys(matches);
         if (matchKeys.length === 0) {
-          searchResults.innerHTML = '<div class="description" style="text-align: center; margin: 10px 0;">No matching weapons found.</div>';
+          safeSetInnerHTML(searchResults, '<div class="description" style="text-align: center; margin: 10px 0;">No matching weapons found.</div>');
           searchResults.classList.remove('hidden');
           return;
         }
@@ -296,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
           html += `<div class="description" style="text-align: center; font-size: 9.5px; margin-top: 5px;">Showing 15 of ${matchKeys.length} matching weapons.</div>`;
         }
 
-        searchResults.innerHTML = html;
+        safeSetInnerHTML(searchResults, html);
         searchResults.classList.remove('hidden');
 
         // Add collapsible click handlers

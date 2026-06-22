@@ -1,5 +1,6 @@
 import { scoreWeapon } from './scorer';
 import { showTooltip, hideTooltip } from './tooltip';
+import { safeSetInnerHTML } from './dom-utils';
 let wishlistDb = {};
 let enhancedToNormalMap = {};
 let scoringSource = 'aegis';
@@ -134,7 +135,7 @@ function injectPopupSummary(popupContainer, result, scoringSource) {
     const matchLabel = isLightGG
         ? 'Light.gg Roll Appraisal'
         : `Wishlist Match: <strong class="${gradeClass}">${result.matchPercentage}%</strong>`;
-    summaryEl.innerHTML = `
+    safeSetInnerHTML(summaryEl, `
     <div class="aegis-popup-summary-content">
       <div class="aegis-popup-row">
         <span class="aegis-popup-grade-badge aegis-badge-${baseGradeLetter}">${result.grade}</span>
@@ -142,7 +143,7 @@ function injectPopupSummary(popupContainer, result, scoringSource) {
       </div>
       ${notesHtml}
     </div>
-  `;
+  `);
 }
 /**
  * Injects or updates the Aegis rank badge overlay inside a weapon tile.

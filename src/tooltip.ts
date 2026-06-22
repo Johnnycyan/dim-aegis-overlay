@@ -1,4 +1,5 @@
 import { ScoringResult } from './types';
+import { safeSetInnerHTML } from './dom-utils';
 
 interface PerkInfo {
   name: string;
@@ -288,7 +289,7 @@ export function showTooltip(
     </div>
   `;
 
-  tooltip.innerHTML = html;
+  safeSetInnerHTML(tooltip, html);
 
   // Position and display
   positionTooltip(target, tooltip);

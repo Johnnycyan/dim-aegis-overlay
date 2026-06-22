@@ -1,3 +1,4 @@
+import { safeSetInnerHTML } from './dom-utils';
 let tooltipEl = null;
 /**
  * Creates the global tooltip element in the DOM if it doesn't already exist.
@@ -246,7 +247,7 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
     html += `
     </div>
   `;
-    tooltip.innerHTML = html;
+    safeSetInnerHTML(tooltip, html);
     // Position and display
     positionTooltip(target, tooltip);
     tooltip.classList.remove('hidden');

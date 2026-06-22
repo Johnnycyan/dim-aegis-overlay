@@ -1,6 +1,7 @@
 import { scoreWeapon } from './scorer';
 import { WishlistDatabase, ScoringResult } from './types';
 import { showTooltip, hideTooltip } from './tooltip';
+import { safeSetInnerHTML } from './dom-utils';
 
 let wishlistDb: WishlistDatabase = {};
 let enhancedToNormalMap: Record<number, number> = {};
@@ -148,7 +149,9 @@ function injectPopupSummary(popupContainer: HTMLElement, result: ScoringResult, 
     ? 'Light.gg Roll Appraisal'
     : `Wishlist Match: <strong class="${gradeClass}">${result.matchPercentage}%</strong>`;
 
-  summaryEl.innerHTML = `
+  safeSetInnerHTML(
+    summaryEl,
+    `
     <div class="aegis-popup-summary-content">
       <div class="aegis-popup-row">
         <span class="aegis-popup-grade-badge aegis-badge-${baseGradeLetter}">${result.grade}</span>
@@ -156,7 +159,8 @@ function injectPopupSummary(popupContainer: HTMLElement, result: ScoringResult, 
       </div>
       ${notesHtml}
     </div>
-  `;
+  `
+  );
 }
 
 /**
