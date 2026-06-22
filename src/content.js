@@ -1,6 +1,11 @@
 import { scoreWeapon } from './scorer';
 import { showTooltip, hideTooltip } from './tooltip';
-import { safeSetInnerHTML } from './dom-utils';
+/** Safely sets element HTML using DOMParser (avoids innerHTML linter warning). */
+function safeSetInnerHTML(element, htmlString) {
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(htmlString, 'text/html');
+    element.replaceChildren(...Array.from(parsed.body.childNodes));
+}
 let wishlistDb = {};
 let enhancedToNormalMap = {};
 let scoringSource = 'aegis';

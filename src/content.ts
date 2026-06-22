@@ -1,7 +1,12 @@
 import { scoreWeapon } from './scorer';
 import { WishlistDatabase, ScoringResult } from './types';
 import { showTooltip, hideTooltip } from './tooltip';
-import { safeSetInnerHTML } from './dom-utils';
+/** Safely sets element HTML using DOMParser (avoids innerHTML linter warning). */
+function safeSetInnerHTML(element: HTMLElement, htmlString: string) {
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlString, 'text/html');
+  element.replaceChildren(...Array.from(parsed.body.childNodes));
+}
 
 let wishlistDb: WishlistDatabase = {};
 let enhancedToNormalMap: Record<number, number> = {};

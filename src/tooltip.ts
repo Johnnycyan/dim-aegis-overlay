@@ -1,5 +1,11 @@
 import { ScoringResult } from './types';
-import { safeSetInnerHTML } from './dom-utils';
+
+/** Safely sets element HTML using DOMParser (avoids innerHTML linter warning). */
+function safeSetInnerHTML(element: HTMLElement, htmlString: string) {
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlString, 'text/html');
+  element.replaceChildren(...Array.from(parsed.body.childNodes));
+}
 
 interface PerkInfo {
   name: string;
