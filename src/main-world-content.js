@@ -328,10 +328,17 @@ const observer = new MutationObserver((mutations) => {
         }
     }
 });
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-});
+function startObserver() {
+    if (!document.body) {
+        document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+        return;
+    }
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+}
+startObserver();
 // Run initial scan once script loads
 console.log('DIM Aegis Overlay: React Fiber scanner initialized in MAIN world.');
 scanPage();

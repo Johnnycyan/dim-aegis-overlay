@@ -348,11 +348,18 @@ const observer = new MutationObserver((mutations) => {
         }
     }
 });
-observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['data-aegis-item-hash', 'data-aegis-perk-hashes'],
-});
+function startObserver() {
+    if (!document.body) {
+        document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+        return;
+    }
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-aegis-item-hash', 'data-aegis-perk-hashes'],
+    });
+}
+startObserver();
 // Run initial scan once script loads
 reprocessAllElements();
