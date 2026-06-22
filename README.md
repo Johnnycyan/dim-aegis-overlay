@@ -84,7 +84,7 @@ Weapons are scored against every wishlist entry for that item hash. The **best m
 ### Method A: Direct Download (Recommended for Users)
 
 1. Go to the [Releases](https://github.com/Maxeption/dim-aegis-overlay/releases) page on GitHub.
-2. Download the pre-built `dim-aegis-overlay-v1.0.0.zip` file.
+2. Download the pre-built `dim-aegis-overlay-v1.0.1.zip` file.
 3. Unzip the file to a permanent folder on your computer.
 4. Open Chrome or Opera and navigate to `chrome://extensions/` (or `opera://extensions/`).
 5. Enable **Developer mode** (toggle in the top-right corner).
