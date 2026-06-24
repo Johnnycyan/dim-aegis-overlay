@@ -1,4 +1,4 @@
-import { ScoringResult } from './types';
+import { ScoringResult, AegisSheetWeapon, TooltipPerk } from './types';
 
 /** Safely sets element HTML using DOMParser (avoids innerHTML linter warning). */
 function safeSetInnerHTML(element: HTMLElement, htmlString: string) {
@@ -127,7 +127,11 @@ export function showTooltip(
   weaponName: string,
   localPerksMap: Record<number, PerkInfo>,
   activeHashes?: number[],
-  isLightGG?: boolean
+  isLightGG?: boolean,
+  sheetWeapon?: AegisSheetWeapon,
+  bestAlternative?: string,
+  isBestInClass?: boolean,
+  sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] }
 ) {
   const tooltip = getOrCreateTooltip();
   const isLightGGMode = !!isLightGG;
@@ -153,6 +157,54 @@ export function showTooltip(
     }
   }
 
+  // Assemble sheet metadata
+  let sheetMetaHtml = '';
+  let sheetBodyHtml = '';
+  if (sheetWeapon) {
+    const tierLetter = sheetWeapon.tier ? sheetWeapon.tier.charAt(0).toLowerCase() : '';
+    const tierClass = `aegis-tier-${tierLetter}`;
+    const rankText = sheetWeapon.rank ? `Rank #${sheetWeapon.rank}` : '';
+    
+    let categoryMetaText = '';
+    if (isBestInClass) {
+      categoryMetaText = `<span class="aegis-tooltip-best-tag">★ Best in Class</span>`;
+    } else if (bestAlternative) {
+      categoryMetaText = `<span class="aegis-tooltip-alt-text">Alt: ${bestAlternative}</span>`;
+    }
+
+    sheetMetaHtml = `
+      <div class="aegis-tooltip-sheet-meta">
+        <span class="aegis-tooltip-sheet-badge ${tierClass}">${sheetWeapon.tier} Tier</span>
+        ${rankText ? `<span class="aegis-tooltip-sheet-rank">${rankText}</span>` : ''}
+        ${categoryMetaText}
+      </div>
+    `;
+
+    // Shortened recommended perks
+    const cleanPerk1 = sheetWeapon.perk1 ? sheetWeapon.perk1.split('\n')[0].trim() : '';
+    const cleanPerk2 = sheetWeapon.perk2 ? sheetWeapon.perk2.split('\n')[0].trim() : '';
+    let recsHtml = '';
+    if (cleanPerk1 || cleanPerk2) {
+      const perksText = [cleanPerk1, cleanPerk2].filter(Boolean).join(' / ');
+      recsHtml = `
+        <div class="aegis-tooltip-compact-recs">
+          <span class="aegis-tooltip-recs-label">Rec Perks:</span>
+          <span class="aegis-tooltip-recs-value" title="${perksText}">${perksText}</span>
+        </div>
+      `;
+    }
+
+    if (sheetWeapon.notes || recsHtml) {
+      sheetBodyHtml = `
+        <div class="aegis-tooltip-section aegis-meta-section">
+          <div class="aegis-tooltip-section-title">Aegis Meta Analysis</div>
+          ${recsHtml}
+          ${sheetWeapon.notes ? `<div class="aegis-tooltip-meta-note">${sheetWeapon.notes}</div>` : ''}
+        </div>
+      `;
+    }
+  }
+
   // Assemble premium HTML content
   let html = `
     <div class="aegis-tooltip-header">
@@ -161,6 +213,7 @@ export function showTooltip(
         <span class="aegis-tooltip-grade ${gradeClass}">${result.grade}</span>
       </div>
       ${tagsHtml}
+      ${sheetMetaHtml}
   `;
 
   if (!isLightGGMode) {
@@ -181,15 +234,75 @@ export function showTooltip(
     `;
   }
 
+  let upgradeBannerHtml = '';
+  if (result.upgradeAdvice) {
+    upgradeBannerHtml = `
+      <div class="aegis-tooltip-upgrade-banner">
+        ${result.upgradeAdvice}
+      </div>
+    `;
+  }
+
   html += `
     </div>
     
     <div class="aegis-tooltip-body">
+      ${upgradeBannerHtml}
+      ${sheetBodyHtml}
   `;
 
   const hasWishlist = result.wishlistPerks && result.wishlistPerks.length > 0;
 
-  if (hasWishlist) {
+  if (sheetPerks) {
+    html += `
+      <div class="aegis-tooltip-section">
+        <div class="aegis-tooltip-section-title">Matched Perks (Spreadsheet)</div>
+        <div class="aegis-tooltip-perks-grid">
+    `;
+
+    if (sheetPerks.matched.length === 0) {
+      html += `<div class="aegis-tooltip-perk-empty">None</div>`;
+    } else {
+      for (const perk of sheetPerks.matched) {
+        const iconUrl = perk.icon ? `https://www.bungie.net${perk.icon}` : '';
+        const itemClass = perk.matched ? 'aegis-matched' : 'aegis-selectable';
+        const labelSuffix = perk.matched ? '' : ' <span class="aegis-selectable-suffix">(Selectable)</span>';
+        html += `
+          <div class="aegis-tooltip-perk-item ${itemClass}">
+            ${iconUrl ? `<img src="${iconUrl}" class="aegis-perk-icon-img" alt="" />` : '<span class="aegis-perk-bullet">•</span>'}
+            <span class="aegis-perk-name-text">${perk.name}${labelSuffix}</span>
+          </div>
+        `;
+      }
+    }
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    if (sheetPerks.missing.length > 0) {
+      html += `
+        <div class="aegis-tooltip-section">
+          <div class="aegis-tooltip-section-title">Missing Perks (Spreadsheet)</div>
+          <div class="aegis-tooltip-perks-grid">
+      `;
+
+      for (const perk of sheetPerks.missing) {
+        html += `
+          <div class="aegis-tooltip-perk-item aegis-missing">
+            <span class="aegis-perk-bullet">•</span>
+            <span class="aegis-perk-name-text">${perk.name}</span>
+          </div>
+        `;
+      }
+
+      html += `
+          </div>
+        </div>
+      `;
+    }
+  } else if (hasWishlist) {
     html += `
       <div class="aegis-tooltip-section">
         <div class="aegis-tooltip-section-title">Matched Perks</div>

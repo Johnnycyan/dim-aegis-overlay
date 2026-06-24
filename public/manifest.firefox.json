@@ -12,12 +12,9 @@
   "host_permissions": [
     "https://raw.githubusercontent.com/*",
     "https://app.destinyitemmanager.com/*",
-    "https://www.light.gg/*",
-    "https://*/*",
-    "http://*/*"
+    "https://www.light.gg/*"
   ],
   "background": {
-    "service_worker": "background.js",
     "scripts": ["background.js"],
     "type": "module"
   },

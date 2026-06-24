@@ -299,6 +299,11 @@ const SELECTORS = [
     'div[class*="InventoryItem"]',
     '.item',
     '.item-tile',
+    '[class*="ItemPopup"]',
+    '[class*="item-popup"]',
+    '[class*="Sheet"]',
+    '[class*="sheet"]',
+    '.item-popup',
 ].join(',');
 /**
  * Queries the document for potential item elements and processes them.

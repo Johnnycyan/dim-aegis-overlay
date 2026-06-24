@@ -65,27 +65,169 @@ async function fetchAndCacheWishlist(url) {
         return { success: false, error: errMsg };
     }
 }
+const SHEET_ID = '1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY';
+const ALL_TABS = [
+    'Autos', 'Bows', 'HCs', 'Pulses', 'Scouts', 'Sidearms', 'SMGs',
+    'BGLs', 'Fusions', 'Glaives', 'Shotguns', 'Snipers',
+    'Rocket Sidearms', 'Traces', 'HGLs', 'LFRs', 'LMGs', 'Rockets',
+    'Swords', 'Other',
+];
+function parseCSV(text) {
+    const normalizedText = text.replace(/\r\n|\r/g, '\n');
+    const rows = [];
+    let row = [], field = '', inQ = false;
+    for (let i = 0; i < normalizedText.length; i++) {
+        const c = normalizedText[i], nx = normalizedText[i + 1];
+        if (inQ) {
+            if (c === '"' && nx === '"') {
+                field += '"';
+                i++;
+            }
+            else if (c === '"')
+                inQ = false;
+            else
+                field += c;
+        }
+        else {
+            if (c === '"')
+                inQ = true;
+            else if (c === ',') {
+                row.push(field);
+                field = '';
+            }
+            else if (c === '\n') {
+                row.push(field);
+                rows.push(row);
+                row = [];
+                field = '';
+            }
+            else
+                field += c;
+        }
+    }
+    if (row.length || field) {
+        row.push(field);
+        rows.push(row);
+    }
+    return rows;
+}
+function normName(s) {
+    return (s ?? '').split('\n')[0].trim().toLowerCase();
+}
+function stripEdition(name) {
+    return name.replace(/\s*\([^)]+\)\s*$/, '').trim();
+}
+/**
+ * Fetches Aegis spreadsheet tabs, parses them and caches the output database in local storage.
+ */
+async function fetchAndCacheAegisSheet() {
+    console.log('DIM Aegis Overlay: Fetching Aegis Master Spreadsheet...');
+    const weapons = {};
+    const categories = {};
+    try {
+        const promises = ALL_TABS.map(async (tab) => {
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+            const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error(`Failed to fetch tab ${tab}: ${res.statusText}`);
+            }
+            const csvText = await res.text();
+            const rows = parseCSV(csvText);
+            if (rows.length < 2)
+                return;
+            const header = rows[0];
+            const idx = {};
+            header.forEach((col, i) => {
+                idx[col.trim()] = i;
+            });
+            const getVal = (row, key) => {
+                const i = idx[key];
+                return i !== undefined ? (row[i] ?? '').trim() : '';
+            };
+            const categoryWeapons = [];
+            for (let r = 1; r < rows.length; r++) {
+                const row = rows[r];
+                const nameVal = getVal(row, 'Name');
+                if (!nameVal)
+                    continue;
+                const weaponName = nameVal.split('\n')[0].trim();
+                const normalized = normName(weaponName);
+                const baseNormalized = normName(stripEdition(weaponName));
+                const weaponData = {
+                    name: weaponName,
+                    energy: getVal(row, 'Energy'),
+                    frame: getVal(row, 'Frame'),
+                    barrel: getVal(row, 'PERKS Barrel'),
+                    mag: getVal(row, 'Mag'),
+                    perk1: getVal(row, 'Perk 1'),
+                    perk2: getVal(row, 'Perk 2'),
+                    origin: getVal(row, 'Origin Trait'),
+                    notes: getVal(row, 'ANALYSIS Notes'),
+                    rank: getVal(row, 'Rank'),
+                    tier: getVal(row, 'Tier'),
+                };
+                weapons[normalized] = weaponData;
+                if (baseNormalized !== normalized) {
+                    weapons[baseNormalized] = weaponData;
+                }
+                categoryWeapons.push(weaponData);
+            }
+            // Sort by rank ascending
+            categoryWeapons.sort((a, b) => {
+                const rA = parseInt(a.rank, 10);
+                const rB = parseInt(b.rank, 10);
+                return (isNaN(rA) ? 999 : rA) - (isNaN(rB) ? 999 : rB);
+            });
+            categories[tab] = categoryWeapons;
+        });
+        await Promise.all(promises);
+        await chrome.storage.local.set({
+            aegisSheetDb: { weapons, categories },
+            aegisSheetLastSync: Date.now(),
+        });
+        console.log('DIM Aegis Overlay: Aegis spreadsheet sync completed successfully.');
+        return { success: true };
+    }
+    catch (err) {
+        const errMsg = err.message || String(err);
+        console.error('DIM Aegis Overlay: Failed to fetch/cache Aegis spreadsheet:', errMsg);
+        return { success: false, error: errMsg };
+    }
+}
+async function syncAllData(url) {
+    if (url) {
+        // For manual wishlist sync, fetch only the wishlist to be instant and bypass slower/rate-limited sheet fetches.
+        return await fetchAndCacheWishlist(url);
+    }
+    const wlRes = await fetchAndCacheWishlist();
+    const sheetRes = await fetchAndCacheAegisSheet();
+    return {
+        success: wlRes.success && sheetRes.success,
+        count: wlRes.count,
+        error: wlRes.error || sheetRes.error,
+    };
+}
 // Set up periodic sync alarm (every 24 hours / 1440 minutes)
 chrome.alarms.create(SYNC_ALARM_NAME, { periodInMinutes: 24 * 60 });
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === SYNC_ALARM_NAME) {
-        console.log('Periodic alarm triggered. Synchronizing wishlist...');
-        fetchAndCacheWishlist();
+        console.log('Periodic alarm triggered. Synchronizing wishlist and spreadsheet...');
+        syncAllData();
     }
 });
 // Run sync immediately on installation
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('DIM Aegis Overlay installed. Performing initial wishlist sync...');
-    fetchAndCacheWishlist();
+    console.log('DIM Aegis Overlay installed. Performing initial data sync...');
+    syncAllData();
 });
 // Check/sync on startup if cache is missing or expired (older than 24 hours)
 chrome.runtime.onStartup.addListener(async () => {
-    const data = await chrome.storage.local.get(['lastUpdated', 'wishlistData']);
+    const data = await chrome.storage.local.get(['lastUpdated', 'wishlistData', 'aegisSheetDb']);
     const dayInMs = 24 * 60 * 60 * 1000;
     const now = Date.now();
-    if (!data.wishlistData || !data.lastUpdated || now - data.lastUpdated > dayInMs) {
-        console.log('Wishlist cache missing or expired. Performing startup sync...');
-        fetchAndCacheWishlist();
+    if (!data.wishlistData || !data.aegisSheetDb || !data.lastUpdated || now - data.lastUpdated > dayInMs) {
+        console.log('Cache missing or expired. Performing startup sync...');
+        syncAllData();
     }
 });
 /**
@@ -148,7 +290,7 @@ async function syncLightGGInBackground() {
 // Listen for messages from settings popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.action === 'syncNow') {
-        fetchAndCacheWishlist(message.url)
+        syncAllData(message.url)
             .then((res) => sendResponse(res))
             .catch((err) => sendResponse({ success: false, error: err.message }));
         return true; // Keep message channel open for async sendResponse

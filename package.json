@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "package": "node scripts/package.mjs",
+    "build:all": "tsc && vite build && node scripts/package.mjs",
     "preview": "vite preview"
   },
   "dependencies": {},
