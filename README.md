@@ -1,3 +1,10 @@
+# New Version available in Beta
+
+Please try out the latest version and report any problems or bugs.
+
+Either clone the WIP branch and build it or download the 1.1.0-beta release.
+
+
 # DIM Aegis Overlay
 
 A **Chrome / Opera MV3 browser extension** that overlays weapon roll grades directly inside [Destiny Item Manager (DIM)](https://app.destinyitemmanager.com), drawing from two sources:
