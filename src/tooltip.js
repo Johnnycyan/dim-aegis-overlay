@@ -99,7 +99,7 @@ function positionTooltip(target, tooltip) {
  * @param weaponName The weapon's display name.
  * @param localPerksMap Dictionary of socketed perk info extracted from this weapon.
  */
-export function showTooltip(target, result, weaponName, localPerksMap, activeHashes, isLightGG, sheetWeapon, bestAlternative, isBestInClass, sheetPerks) {
+export function showTooltip(target, result, weaponName, localPerksMap, activeHashes, isLightGG, sheetWeapon, bestAlternative, isBestInClass, sheetPerks, globalPerkNameToIcon) {
     const tooltip = getOrCreateTooltip();
     const isLightGGMode = !!isLightGG;
     // Normalize grade to first character (e.g. S+ -> s, A- -> a) to match CSS classes
@@ -242,9 +242,16 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
           <div class="aegis-tooltip-perks-grid">
       `;
             for (const perk of sheetPerks.missing) {
+                let iconPath = perk.icon || '';
+                if (!iconPath && globalPerkNameToIcon) {
+                    const normName = perk.name.toLowerCase().trim();
+                    const cleanName = normName.replace(/\s*\([^)]+\)\s*/g, '').replace(/[*+]/g, '').trim();
+                    iconPath = globalPerkNameToIcon[cleanName] || globalPerkNameToIcon[normName] || '';
+                }
+                const iconUrl = iconPath ? `https://www.bungie.net${iconPath}` : '';
                 html += `
           <div class="aegis-tooltip-perk-item aegis-missing">
-            <span class="aegis-perk-bullet">•</span>
+            ${iconUrl ? `<img src="${iconUrl}" class="aegis-perk-icon-img" alt="" />` : '<span class="aegis-perk-bullet">•</span>'}
             <span class="aegis-perk-name-text">${perk.name}</span>
           </div>
         `;

@@ -131,7 +131,8 @@ export function showTooltip(
   sheetWeapon?: AegisSheetWeapon,
   bestAlternative?: string,
   isBestInClass?: boolean,
-  sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] }
+  sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] },
+  globalPerkNameToIcon?: Record<string, string>
 ) {
   const tooltip = getOrCreateTooltip();
   const isLightGGMode = !!isLightGG;
@@ -289,9 +290,16 @@ export function showTooltip(
       `;
 
       for (const perk of sheetPerks.missing) {
+        let iconPath = perk.icon || '';
+        if (!iconPath && globalPerkNameToIcon) {
+          const normName = perk.name.toLowerCase().trim();
+          const cleanName = normName.replace(/\s*\([^)]+\)\s*/g, '').replace(/[*+]/g, '').trim();
+          iconPath = globalPerkNameToIcon[cleanName] || globalPerkNameToIcon[normName] || '';
+        }
+        const iconUrl = iconPath ? `https://www.bungie.net${iconPath}` : '';
         html += `
           <div class="aegis-tooltip-perk-item aegis-missing">
-            <span class="aegis-perk-bullet">•</span>
+            ${iconUrl ? `<img src="${iconUrl}" class="aegis-perk-icon-img" alt="" />` : '<span class="aegis-perk-bullet">•</span>'}
             <span class="aegis-perk-name-text">${perk.name}</span>
           </div>
         `;

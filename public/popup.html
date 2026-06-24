@@ -20,12 +20,18 @@
 
     <main class="popup-main">
       <section class="settings-card">
-        <h2>Scoring Engine</h2>
-        <p class="description">Select the roll ranking source to display on DIM items.</p>
-        <div class="input-group">
+        <h2>Scoring Engine & Layout</h2>
+        <p class="description">Select the roll ranking source and details layout.</p>
+        <div class="input-group" style="margin-bottom: 8px;">
           <select id="scoring-source" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
             <option value="aegis">Aegis (DIM Wishlist)</option>
             <option value="lightgg">Light.gg (Roll Appraiser)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <select id="aegis-layout-side" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
+            <option value="side">Side Panel (Next to DIM sheet)</option>
+            <option value="inline">Inline (Inside DIM sheet scroll)</option>
           </select>
         </div>
       </section>

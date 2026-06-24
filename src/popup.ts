@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to refresh UI from storage
   function updateUI() {
     chrome.storage.local.get(
-      ['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync'],
+      ['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync', 'aegisLayoutSide'],
       (res: any) => {
         // Set URL input
         urlInput.value = res.wishlistUrl || DEFAULT_URL;
@@ -76,6 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
           sourceSelect.value = res.scoringSource || 'aegis';
         }
 
+        // Set Aegis Layout dropdown value
+        const layoutSelect = document.getElementById('aegis-layout-side') as HTMLSelectElement;
+        if (layoutSelect) {
+          layoutSelect.value = res.aegisLayoutSide || 'side';
+        }
+
         // Update status text and classes
         const status = res.syncStatus || 'success';
         syncStatus.className = 'status-value';
@@ -108,6 +114,16 @@ document.addEventListener('DOMContentLoaded', () => {
     sourceSelect.addEventListener('change', () => {
       chrome.storage.local.set({ scoringSource: sourceSelect.value }, () => {
         console.log(`[DIM Aegis Overlay] Scoring source changed to: ${sourceSelect.value}`);
+      });
+    });
+  }
+
+  // Handle layout preference change
+  const layoutSelect = document.getElementById('aegis-layout-side') as HTMLSelectElement;
+  if (layoutSelect) {
+    layoutSelect.addEventListener('change', () => {
+      chrome.storage.local.set({ aegisLayoutSide: layoutSelect.value }, () => {
+        console.log(`[DIM Aegis Overlay] Aegis layout changed to: ${layoutSelect.value}`);
       });
     });
   }

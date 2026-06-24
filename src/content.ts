@@ -11,11 +11,24 @@ function safeSetInnerHTML(element: HTMLElement, htmlString: string) {
 let wishlistDb: WishlistDatabase = {};
 let enhancedToNormalMap: Record<number, number> = {};
 let scoringSource = 'aegis';
+let aegisLayoutSide = 'side';
 let lightggDb: Record<string, string> = {};
 let aegisSheetDb: AegisSheetDatabase | null = null;
 let hoveredElement: HTMLElement | null = null;
 let registryObserver: MutationObserver | null = null;
 let nameToHash: Record<string, number> = {};
+let perkNameToIcon: Record<string, string> = {};
+
+function updatePerkNameToIcon(perkRegistry: Record<string, { name: string, icon: string }>) {
+  if (!perkRegistry) return;
+  for (const p of Object.values(perkRegistry)) {
+    if (p && p.name && p.icon) {
+      const cleanName = cleanPerkName(p.name);
+      perkNameToIcon[cleanName] = p.icon;
+      perkNameToIcon[p.name.toLowerCase().trim()] = p.icon;
+    }
+  }
+}
 
 function updateNameToHashFromWishlist() {
   if (!wishlistDb) return;
@@ -49,7 +62,9 @@ function setupRegistryObserver() {
         const registryStr = registryEl.getAttribute('data-registry');
         if (registryStr) {
           try {
-            chrome.storage.local.set({ perkRegistry: JSON.parse(registryStr) });
+            const parsed = JSON.parse(registryStr);
+            chrome.storage.local.set({ perkRegistry: parsed });
+            updatePerkNameToIcon(parsed);
           } catch (e) {
             // Ignore
           }
@@ -76,7 +91,8 @@ function setupRegistryObserver() {
               sheetWeapon,
               bestAlternative,
               isBestInClass,
-              sheetPerks
+              sheetPerks,
+              perkNameToIcon
             );
           }
         }
@@ -289,8 +305,10 @@ function evaluateCategoryPerks(
     } else {
       // Capitalize the first letter of each word for missing perks
       const displayName = rawRec.replace(/\b\w/g, c => c.toUpperCase());
+      const missingIcon = perkNameToIcon[rec] || perkNameToIcon[displayName.toLowerCase().trim()];
       results.push({
         name: displayName,
+        icon: missingIcon || undefined,
         matched: false,
         status: 'missing',
       });
@@ -716,14 +734,16 @@ function initAegisExplorer() {
 }
 
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide'], (res) => {
   wishlistDb = res.wishlistData || {};
   enhancedToNormalMap = res.enhancedToNormal || {};
   scoringSource = res.scoringSource || 'aegis';
+  aegisLayoutSide = res.aegisLayoutSide || 'side';
   lightggDb = res.lightggData || {};
   aegisSheetDb = res.aegisSheetDb || null;
   console.log(`DIM Aegis Overlay: Loaded configuration. Source: ${scoringSource}`);
   updateNameToHashFromWishlist();
+  updatePerkNameToIcon(res.perkRegistry || {});
   reprocessAllElements();
   initAegisExplorer();
 });
@@ -745,12 +765,20 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
       scoringSource = changes.scoringSource.newValue || 'aegis';
       changed = true;
     }
+    if (changes.aegisLayoutSide) {
+      aegisLayoutSide = changes.aegisLayoutSide.newValue || 'side';
+      changed = true;
+    }
     if (changes.lightggData) {
       lightggDb = changes.lightggData.newValue || {};
       changed = true;
     }
     if (changes.aegisSheetDb) {
       aegisSheetDb = changes.aegisSheetDb.newValue || null;
+      changed = true;
+    }
+    if (changes.perkRegistry) {
+      updatePerkNameToIcon(changes.perkRegistry.newValue || {});
       changed = true;
     }
     if (changed) {
@@ -786,7 +814,8 @@ function handleMouseEnter(e: MouseEvent) {
       sheetWeapon,
       bestAlternative,
       isBestInClass,
-      sheetPerks
+      sheetPerks,
+      perkNameToIcon
     );
   }
 }
@@ -935,8 +964,10 @@ function injectPopupSummary(
           }
 
           for (const perk of missing) {
+            const iconHtml = perk.icon ? `<img src="https://www.bungie.net${perk.icon}" class="aegis-chip-icon" />` : '';
             chipsHtml += `
               <span class="aegis-perk-chip aegis-chip-missing" title="${perk.name} (Missing)">
+                ${iconHtml}
                 <span class="aegis-chip-name">${perk.name}</span>
               </span>
             `;
@@ -1042,7 +1073,33 @@ function injectPopupSummary(
           ${superiorsHtml}
         `
         );
-        insertTarget.after(detailsCard);
+        
+        const rect = popupContainer.getBoundingClientRect();
+        const spaceLeft = rect.left;
+        const spaceRight = window.innerWidth - rect.right;
+
+        if (aegisLayoutSide === 'side' && window.innerWidth >= 1000 && (spaceLeft >= 330 || spaceRight >= 330)) {
+          detailsCard.classList.add('aegis-side-panel');
+          popupContainer.appendChild(detailsCard);
+          
+          detailsCard.style.setProperty('position', 'absolute', 'important');
+          detailsCard.style.setProperty('top', '55px', 'important');
+          
+          if (spaceLeft >= 330) {
+            detailsCard.style.setProperty('left', '-320px', 'important');
+            detailsCard.style.setProperty('right', 'auto', 'important');
+          } else {
+            detailsCard.style.setProperty('left', 'auto', 'important');
+            detailsCard.style.setProperty('right', '-320px', 'important');
+          }
+        } else {
+          detailsCard.classList.remove('aegis-side-panel');
+          detailsCard.style.removeProperty('position');
+          detailsCard.style.removeProperty('top');
+          detailsCard.style.removeProperty('left');
+          detailsCard.style.removeProperty('right');
+          insertTarget.after(detailsCard);
+        }
       }
     }
   }
@@ -1146,9 +1203,16 @@ function processElement(el: HTMLElement) {
       .map((h) => parseInt(h.trim(), 10))
       .filter((h) => !isNaN(h));
     
-    let perksMap = {};
+    let perksMap: Record<number, { name: string; icon: string }> = {};
     if (perksDataStr) {
       perksMap = JSON.parse(perksDataStr);
+      for (const p of Object.values(perksMap)) {
+        if (p && p.name && p.icon) {
+          const cleanName = cleanPerkName(p.name);
+          perkNameToIcon[cleanName] = p.icon;
+          perkNameToIcon[p.name.toLowerCase().trim()] = p.icon;
+        }
+      }
     }
 
     const activePerksDataStr = el.getAttribute('data-aegis-active-perk-hashes');

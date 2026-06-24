@@ -916,26 +916,36 @@ div[id^="item-"][data-aegis-item-hash]:hover {
 .aegis-popup-details-card {
   margin: 12px 0 !important;
   padding: 14px 16px !important;
-  background: rgba(22, 22, 33, 0.65) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+  background: #18181c !important; /* Match DIM dark theme */
+  border: 1px solid #333339 !important; /* Simple clean border */
+  border-radius: 4px !important; /* Flat corner styling */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
+/* Allow elements to overflow the popup container/sheet boundaries */
+[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup {
+  overflow: visible !important;
+}
+
+/* Side panel layout positioning for details card */
+.aegis-popup-details-card.aegis-side-panel {
+  position: absolute !important;
+  top: 55px !important;
+  width: 308px !important;
+  margin: 0 !important;
+  z-index: 1000 !important;
+  box-sizing: border-box !important;
+}
+
 .aegis-details-header {
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
-  color: #ffd700 !important;
-  background: linear-gradient(90deg, #ffd700, #ff8c00);
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
+  color: #ffb300 !important; /* Flat solid gold */
   letter-spacing: 0.06em !important;
   margin-bottom: 10px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid #333339 !important;
   padding-bottom: 6px !important;
 }
 
@@ -1022,28 +1032,26 @@ div[id^="item-"][data-aegis-item-hash]:hover {
   background: rgba(0, 0, 0, 0.25) !important;
 }
 
-/* Active matched perks (Green glow) */
+/* Active matched perks (Flat Green) */
 .aegis-chip-active {
-  background: rgba(39, 174, 96, 0.12) !important;
-  border: 1px solid rgba(39, 174, 96, 0.45) !important;
+  background: rgba(46, 204, 113, 0.12) !important;
+  border: 1px solid rgba(46, 204, 113, 0.4) !important;
   color: #2ecc71 !important;
-  box-shadow: 0 0 6px rgba(46, 204, 113, 0.1) !important;
 }
 
-/* Selectable inactive perks (Blue/Cyan glow) */
+/* Selectable inactive perks (Flat Blue) */
 .aegis-chip-selectable {
-  background: rgba(0, 242, 254, 0.08) !important;
-  border: 1px dashed rgba(79, 172, 254, 0.5) !important;
-  color: #00f2fe !important;
-  box-shadow: 0 0 6px rgba(0, 242, 254, 0.08) !important;
+  background: rgba(52, 152, 219, 0.08) !important;
+  border: 1px dashed rgba(52, 152, 219, 0.4) !important;
+  color: #3498db !important;
 }
 
-/* Missing recommended perks (Muted Red/Grey) */
+/* Missing recommended perks (Flat Muted Red) */
 .aegis-chip-missing {
   background: rgba(231, 76, 60, 0.06) !important;
-  border: 1px solid rgba(231, 76, 60, 0.25) !important;
+  border: 1px solid rgba(231, 76, 60, 0.22) !important;
   color: #e74c3c !important;
-  opacity: 0.8 !important;
+  opacity: 0.75 !important;
 }
 
 /* Superiors/Alternative recommendations inside popups */
