@@ -194,6 +194,11 @@ dim-aegis-overlay/
 
 ---
 
+## Credits
+
+- **Revadike/aegis-dim** – The "Aegis Recommended Perks" detail card overlay and category comparison layout features introduced in the Beta version (`v1.1.0-beta`+) are inspired by the original [Revadike/aegis-dim](https://github.com/Revadike/aegis-dim) user script. Huge thanks and credit to Revadike for their awesome design and layout concepts!
+
 ## License
 
 MIT
+
