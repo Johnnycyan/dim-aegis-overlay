@@ -102,8 +102,12 @@ function positionTooltip(target, tooltip) {
 export function showTooltip(target, result, weaponName, localPerksMap, activeHashes, isLightGG, sheetWeapon, bestAlternative, isBestInClass, sheetPerks, globalPerkNameToIcon) {
     const tooltip = getOrCreateTooltip();
     const isLightGGMode = !!isLightGG;
-    // Normalize grade to first character (e.g. S+ -> s, A- -> a) to match CSS classes
-    const baseGradeLetter = result.grade ? result.grade.charAt(0).toLowerCase() : '';
+    // Normalize grade to match CSS classes (extract roll grade part if using 2-tier)
+    const gradeStr = result.grade || '';
+    const isTwoTier = gradeStr.length > 2 || (gradeStr.length === 2 && !gradeStr.endsWith('+') && !gradeStr.endsWith('-'));
+    const baseGradeLetter = isTwoTier
+        ? gradeStr.substring(1).charAt(0).toLowerCase()
+        : (gradeStr ? gradeStr.charAt(0).toLowerCase() : '');
     const gradeClass = `aegis-grade-${baseGradeLetter}`;
     // Parse PvP/PvE tags
     let tagsHtml = '';

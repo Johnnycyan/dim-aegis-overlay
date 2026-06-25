@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const weaponsCount = document.getElementById('weapons-count');
     const errorContainer = document.getElementById('error-container');
     const errorMessage = document.getElementById('error-message');
-    const sourceSelect = document.getElementById('scoring-source');
     const lightggCount = document.getElementById('lightgg-count');
     const lightggSyncBtn = document.getElementById('lightgg-sync-button');
     const lightggClearBtn = document.getElementById('lightgg-clear-button');
@@ -22,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightggSyncStatusText = document.getElementById('lightgg-sync-status-text');
     // Function to refresh UI from storage
     function updateUI() {
-        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync', 'aegisLayoutSide', 'aegisDbMode'], (res) => {
+        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier'], (res) => {
             // Set URL input
             urlInput.value = res.wishlistUrl || DEFAULT_URL;
             // Set Last Updated time
@@ -62,12 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     warningBanner.classList.add('hidden');
                 }
             }
-            // Set Scoring Source dropdown value
-            if (sourceSelect) {
-                sourceSelect.value = res.scoringSource || 'aegis';
+            // Set Scoring Source segmented control
+            const sourceVal = res.scoringSource || 'aegis';
+            const sourceSegmented = document.getElementById('scoring-source-segmented');
+            if (sourceSegmented) {
+                sourceSegmented.querySelectorAll('button').forEach(btn => {
+                    if (btn.getAttribute('data-value') === sourceVal) {
+                        btn.classList.add('active');
+                    }
+                    else {
+                        btn.classList.remove('active');
+                    }
+                });
                 const dbToggleGroup = document.getElementById('aegis-db-toggle-group');
                 if (dbToggleGroup) {
-                    if (res.scoringSource === 'lightgg') {
+                    if (sourceVal === 'lightgg') {
                         dbToggleGroup.style.display = 'none';
                     }
                     else {
@@ -88,10 +96,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             }
-            // Set Aegis Layout dropdown value
-            const layoutSelect = document.getElementById('aegis-layout-side');
-            if (layoutSelect) {
-                layoutSelect.value = res.aegisLayoutSide || 'side';
+            // Set Aegis Layout segmented control
+            const layoutVal = res.aegisLayoutSide || 'side';
+            const layoutSegmented = document.getElementById('aegis-layout-segmented');
+            if (layoutSegmented) {
+                layoutSegmented.querySelectorAll('button').forEach(btn => {
+                    if (btn.getAttribute('data-value') === layoutVal) {
+                        btn.classList.add('active');
+                    }
+                    else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+            // Set Aegis Two-Tier segmented control
+            const twoTierVal = res.aegisTwoTier ? 'true' : 'false';
+            const twoTierSegmented = document.getElementById('aegis-two-tier-segmented');
+            if (twoTierSegmented) {
+                twoTierSegmented.querySelectorAll('button').forEach(btn => {
+                    if (btn.getAttribute('data-value') === twoTierVal) {
+                        btn.classList.add('active');
+                    }
+                    else {
+                        btn.classList.remove('active');
+                    }
+                });
             }
             // Update status text and classes
             const status = res.syncStatus || 'success';
@@ -118,13 +147,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // Handle scoring source change
-    if (sourceSelect) {
-        sourceSelect.addEventListener('change', () => {
-            chrome.storage.local.set({ scoringSource: sourceSelect.value }, () => {
-                console.log(`[DIM Aegis Overlay] Scoring source changed to: ${sourceSelect.value}`);
-                updateUI();
-            });
+    // Handle Scoring Source segmented control click
+    const sourceSegmented = document.getElementById('scoring-source-segmented');
+    if (sourceSegmented) {
+        sourceSegmented.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'BUTTON') {
+                const val = target.getAttribute('data-value');
+                if (val) {
+                    chrome.storage.local.set({ scoringSource: val }, () => {
+                        console.log(`[DIM Aegis Overlay] Scoring source changed to: ${val}`);
+                        updateUI();
+                    });
+                }
+            }
         });
     }
     // Handle DB Mode segmented control click
@@ -143,13 +179,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // Handle layout preference change
-    const layoutSelect = document.getElementById('aegis-layout-side');
-    if (layoutSelect) {
-        layoutSelect.addEventListener('change', () => {
-            chrome.storage.local.set({ aegisLayoutSide: layoutSelect.value }, () => {
-                console.log(`[DIM Aegis Overlay] Aegis layout changed to: ${layoutSelect.value}`);
-            });
+    // Handle Layout segmented control click
+    const layoutSegmented = document.getElementById('aegis-layout-segmented');
+    if (layoutSegmented) {
+        layoutSegmented.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'BUTTON') {
+                const val = target.getAttribute('data-value');
+                if (val) {
+                    chrome.storage.local.set({ aegisLayoutSide: val }, () => {
+                        console.log(`[DIM Aegis Overlay] Aegis layout changed to: ${val}`);
+                        updateUI();
+                    });
+                }
+            }
+        });
+    }
+    // Handle Two-Tier segmented control click
+    const twoTierSegmented = document.getElementById('aegis-two-tier-segmented');
+    if (twoTierSegmented) {
+        twoTierSegmented.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'BUTTON') {
+                const val = target.getAttribute('data-value');
+                if (val) {
+                    chrome.storage.local.set({ aegisTwoTier: val === 'true' }, () => {
+                        console.log(`[DIM Aegis Overlay] Aegis Two-Tier grade changed to: ${val === 'true'}`);
+                        updateUI();
+                    });
+                }
+            }
         });
     }
     function setLoadingState(loading) {

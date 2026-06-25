@@ -15,22 +15,66 @@
         </svg>
         <h1>DIM Aegis Overlay</h1>
       </div>
-      <span class="version">v1.0.1</span>
+      <div class="header-actions">
+        <div class="aegis-help-container">
+          <button type="button" class="aegis-help-icon-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </button>
+          
+          <div class="aegis-help-tooltip">
+            <h3 class="tooltip-title">Scoring & Grades Guide</h3>
+            <div class="tooltip-section">
+              <span class="tooltip-section-header">1. Standard Grading (Match Accuracy)</span>
+              <div class="tooltip-grid">
+                <span class="grade-pill grade-s-pill">S+</span><span>Traits 1 & 2 + Mag + Barrel + Origin</span>
+                <span class="grade-pill grade-s-pill">S</span><span>Traits 1 & 2 + Magazine matched</span>
+                <span class="grade-pill grade-a-pill">A+</span><span>Traits 1 & 2 + Barrel matched</span>
+                <span class="grade-pill grade-a-pill">A</span><span>Traits 1 & 2 both matched</span>
+                <span class="grade-pill grade-b-pill">B+</span><span>1 Trait active + 1 selectable + Mag/Barrel</span>
+                <span class="grade-pill grade-b-pill">B</span><span>1 Trait active + 1 selectable Trait</span>
+                <span class="grade-pill grade-c-pill">C</span><span>1 Trait matched + Magazine or Barrel</span>
+                <span class="grade-pill grade-d-pill">D</span><span>Only 1 Trait matched</span>
+                <span class="grade-pill grade-f-pill">F</span><span>Underperforming (no Traits matched)</span>
+              </div>
+              <span class="tooltip-note">*Main Traits 1 & 2 must match to score A or higher.</span>
+            </div>
+            
+            <div class="tooltip-divider"></div>
+            
+            <div class="tooltip-section">
+              <span class="tooltip-section-header">2. 2-Tier System (e.g. BS+, SF)</span>
+              <p class="tooltip-desc">Combines weapon meta tier with roll accuracy:</p>
+              <div class="two-tier-demo-wrapper">
+                <img src="two-tier-demo.png" class="two-tier-demo-img" alt="2-tier grade badge demo" />
+                <div class="two-tier-demo-text">
+                  <div class="tooltip-formula">[Archetype Tier] [Roll Grade]</div>
+                  <span class="tooltip-note">Example: <b>BS+</b> means archetype is <b>B-Tier</b>, but your roll is a perfect <b>S+</b>.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="version">v1.2.0</span>
+      </div>
     </header>
 
     <main class="popup-main">
       <section class="settings-card">
         <h2>Scoring Engine & Layout</h2>
         <p class="description">Select the roll ranking source and details layout.</p>
-        <div class="input-group" style="margin-bottom: 8px;">
-          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Scoring Engine</label>
-          <select id="scoring-source" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
-            <option value="aegis">Aegis (DIM Wishlist)</option>
-            <option value="lightgg">Light.gg (Roll Appraiser)</option>
-          </select>
+        <div class="input-group input-group-compact">
+          <label>Scoring Engine</label>
+          <div class="segmented-control" id="scoring-source-segmented">
+            <button type="button" data-value="aegis" class="active">Aegis (DIM Wishlist)</button>
+            <button type="button" data-value="lightgg">Light.gg (Roll Appraiser)</button>
+          </div>
         </div>
-        <div id="aegis-db-toggle-group" class="input-group" style="margin-bottom: 8px;">
-          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Active Aegis Databases</label>
+        <div id="aegis-db-toggle-group" class="input-group input-group-compact">
+          <label>Active Aegis Databases</label>
           <div class="segmented-control" id="aegis-db-segmented">
             <button type="button" data-value="both" class="active">Both</button>
             <button type="button" data-value="spreadsheet">Spreadsheet</button>
@@ -38,11 +82,18 @@
           </div>
         </div>
         <div class="input-group">
-          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Recommended Perks Layout</label>
-          <select id="aegis-layout-side" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
-            <option value="side">Side Panel (Next to DIM sheet)</option>
-            <option value="inline">Inline (Inside DIM sheet scroll)</option>
-          </select>
+          <label>Recommended Perks Layout</label>
+          <div class="segmented-control" id="aegis-layout-segmented">
+            <button type="button" data-value="side" class="active">Side Panel (Next to DIM)</button>
+            <button type="button" data-value="inline">Inline (Inside DIM sheet)</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Badge Overlay Mode</label>
+          <div class="segmented-control" id="aegis-two-tier-segmented">
+            <button type="button" data-value="false" class="active">Standard (S, A, B...)</button>
+            <button type="button" data-value="true">2-Tier (BS+, SF...)</button>
+          </div>
         </div>
       </section>
 
@@ -63,20 +114,20 @@
       <section class="settings-card">
         <h2>Light.gg Sync</h2>
         <p class="description">Automatically opens Roll Appraiser in the background to fetch your weapon grades &mdash; no tab-switching needed.</p>
-        <div id="lightgg-sync-warning" class="error-msg-box hidden" style="margin-bottom: 12px; background: rgba(255, 179, 0, 0.1); border-color: rgba(255, 179, 0, 0.2); border-radius: 4px; padding: 8px;">
-          <p style="color: #ffb300; font-size: 10px; font-weight: 600; margin: 0;">⚠️ Light.gg cache is older than 48 hours. Syncing is recommended.</p>
+        <div id="lightgg-sync-warning" class="warning-msg-box hidden">
+          <p>⚠️ Light.gg cache is older than 48 hours. Syncing is recommended.</p>
         </div>
-        <div class="btn-group" style="display: flex; gap: 8px;">
-          <button id="lightgg-sync-button" class="btn btn-secondary" style="flex: 1;">
+        <div class="btn-group">
+          <button id="lightgg-sync-button" class="btn btn-secondary">
             <span class="btn-text">Sync Grades</span>
             <span class="spinner hidden"></span>
           </button>
-          <button id="lightgg-clear-button" class="btn" style="flex: 1; background: #2c2c35; color: #ffffff;">
+          <button id="lightgg-clear-button" class="btn btn-muted">
             <span class="btn-text">Clear Cache</span>
           </button>
         </div>
-        <div id="lightgg-sync-status-row" style="margin-top: 8px; font-size: 10.5px; display: none;">
-          <span id="lightgg-sync-status-text" style="color: #aaa;">Waiting...</span>
+        <div id="lightgg-sync-status-row" class="sync-status-row">
+          <span id="lightgg-sync-status-text">Waiting...</span>
         </div>
       </section>
 

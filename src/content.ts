@@ -13,6 +13,7 @@ let enhancedToNormalMap: Record<number, number> = {};
 let scoringSource = 'aegis';
 let aegisLayoutSide = 'side';
 let aegisDbMode = 'both';
+let aegisTwoTier = false;
 let lightggDb: Record<string, string> = {};
 let aegisSheetDb: AegisSheetDatabase | null = null;
 let hoveredElement: HTMLElement | null = null;
@@ -735,12 +736,13 @@ function initAegisExplorer() {
 }
 
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier'], (res) => {
   wishlistDb = res.wishlistData || {};
   enhancedToNormalMap = res.enhancedToNormal || {};
   scoringSource = res.scoringSource || 'aegis';
   aegisLayoutSide = res.aegisLayoutSide || 'side';
   aegisDbMode = res.aegisDbMode || 'both';
+  aegisTwoTier = res.aegisTwoTier || false;
   lightggDb = res.lightggData || {};
   aegisSheetDb = res.aegisSheetDb || null;
   console.log(`DIM Aegis Overlay: Loaded configuration. Source: ${scoringSource}`);
@@ -773,6 +775,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
     if (changes.aegisDbMode) {
       aegisDbMode = changes.aegisDbMode.newValue || 'both';
+      changed = true;
+    }
+    if (changes.aegisTwoTier) {
+      aegisTwoTier = changes.aegisTwoTier.newValue || false;
       changed = true;
     }
     if (changes.lightggData) {
@@ -908,12 +914,19 @@ function injectPopupSummary(
     `;
   }
 
+  const gradeStr = result.grade || '';
+  const isTwoTier = gradeStr.length > 2 || (gradeStr.length === 2 && !gradeStr.endsWith('+') && !gradeStr.endsWith('-'));
+  const popupBaseGradeLetter = isTwoTier 
+    ? gradeStr.substring(1).charAt(0).toLowerCase() 
+    : baseGradeLetter;
+  const wideClass = isTwoTier ? 'aegis-popup-grade-badge-wide' : '';
+
   safeSetInnerHTML(
     summaryEl,
     `
     <div class="aegis-popup-summary-content">
       <div class="aegis-popup-row">
-        <span class="aegis-popup-grade-badge aegis-badge-${baseGradeLetter}">${result.grade}</span>
+        <span class="aegis-popup-grade-badge aegis-badge-${popupBaseGradeLetter} ${wideClass}">${result.grade}</span>
         <span class="aegis-popup-label">${matchLabel}</span>
       </div>
       ${upgradeAdviceHtml}
@@ -1145,9 +1158,21 @@ function injectBadge(el: HTMLElement, result: ScoringResult) {
   badge.classList.remove('aegis-badge-s', 'aegis-badge-a', 'aegis-badge-b', 'aegis-badge-c', 'aegis-badge-d', 'aegis-badge-f');
   
   // Set grade class and text (normalizing S+ / A- etc. to the first letter class)
-  const baseLetter = result.grade ? result.grade.charAt(0).toLowerCase() : '';
+  const gradeStr = result.grade || '';
+  const isTwoTier = gradeStr.length > 2 || (gradeStr.length === 2 && !gradeStr.endsWith('+') && !gradeStr.endsWith('-'));
+  
+  // If it's a 2-tier grade (e.g. BS+ or SF), base color class on the actual roll matching grade (the last letter/symbol part)
+  const baseLetter = isTwoTier 
+    ? gradeStr.substring(1).charAt(0).toLowerCase() 
+    : (gradeStr ? gradeStr.charAt(0).toLowerCase() : '');
+    
   badge.classList.add(`aegis-badge-${baseLetter}`);
-  badge.textContent = result.grade || '';
+  if (isTwoTier) {
+    badge.classList.add('aegis-badge-wide');
+  } else {
+    badge.classList.remove('aegis-badge-wide');
+  }
+  badge.textContent = gradeStr;
 }
 
 /**
@@ -1319,6 +1344,12 @@ function processElement(el: HTMLElement) {
     (el as any)._aegisSheetPerks = hasSheetData ? sheetPerks : null;
 
     if (result.grade) {
+      // Modify grade string to be 2-tier if configured and sheet data is present
+      if (aegisTwoTier && hasSheetData && sheetWeapon && sheetWeapon.tier) {
+        const archetypeTier = sheetWeapon.tier.trim();
+        result.grade = `${archetypeTier}${result.grade}`;
+      }
+
       const isPopup = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
 
       // Inject rank badge (only if not the popup container itself)
