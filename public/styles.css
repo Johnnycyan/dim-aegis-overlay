@@ -706,7 +706,8 @@
   display: inline-block;
 }
 
-.aegis-help-icon-btn {
+.aegis-help-icon-btn,
+.github-link-btn {
   background: none;
   border: none;
   color: #8e8e93;
@@ -718,19 +719,24 @@
   border-radius: 50%;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
+  text-decoration: none;
 }
 
 .aegis-help-icon-btn:hover,
-.aegis-help-icon-btn:focus {
+.aegis-help-icon-btn:focus,
+.github-link-btn:hover,
+.github-link-btn:focus {
   color: #ffb300;
   background: rgba(255, 179, 0, 0.1);
 }
 
-.aegis-help-icon-btn svg {
+.aegis-help-icon-btn svg,
+.github-link-btn svg {
   transition: transform 0.2s ease;
 }
 
-.aegis-help-icon-btn:hover svg {
+.aegis-help-icon-btn:hover svg,
+.github-link-btn:hover svg {
   transform: scale(1.05);
 }
 
@@ -899,6 +905,56 @@
   flex-direction: column;
   gap: 4px;
   flex: 1;
+}
+
+/* Update Banner */
+.update-banner {
+  background: rgba(255, 179, 0, 0.1);
+  border: 1px solid rgba(255, 179, 0, 0.22);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.update-banner.hidden {
+  display: none !important;
+}
+
+.update-banner-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #ffb300;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.update-banner-content span {
+  flex: 1;
+}
+
+.update-banner .dismiss-btn {
+  background: none;
+  border: none;
+  color: #ffb300;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+  outline: none;
+}
+
+.update-banner .dismiss-btn:hover {
+  opacity: 1;
 }
 
 /* Footer */

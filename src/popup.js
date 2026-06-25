@@ -21,7 +21,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightggSyncStatusText = document.getElementById('lightgg-sync-status-text');
     // Function to refresh UI from storage
     function updateUI() {
-        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier'], (res) => {
+        chrome.storage.local.get([
+            'wishlistUrl',
+            'lastUpdated',
+            'parsedCount',
+            'syncStatus',
+            'syncError',
+            'scoringSource',
+            'lightggData',
+            'lightggLastSync',
+            'aegisLayoutSide',
+            'aegisDbMode',
+            'aegisTwoTier',
+            'updateAvailableVersion',
+            'updateBannerDismissed'
+        ], (res) => {
+            // Handle Extension Update warning banner
+            const updateBanner = document.getElementById('extension-update-banner');
+            const newVersionText = document.getElementById('new-version-text');
+            if (updateBanner && newVersionText) {
+                const currentVersion = chrome.runtime.getManifest().version;
+                if (res.updateAvailableVersion && res.updateAvailableVersion !== currentVersion && !res.updateBannerDismissed) {
+                    newVersionText.textContent = `v${res.updateAvailableVersion}`;
+                    updateBanner.classList.remove('hidden');
+                }
+                else {
+                    updateBanner.classList.add('hidden');
+                }
+            }
             // Set URL input
             urlInput.value = res.wishlistUrl || DEFAULT_URL;
             // Set Last Updated time
@@ -228,6 +255,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (textEl)
                 textEl.textContent = 'Sync Wishlist';
         }
+    }
+    // Handle Extension Update banner dismiss click
+    const updateBannerDismissBtn = document.getElementById('update-banner-dismiss');
+    if (updateBannerDismissBtn) {
+        updateBannerDismissBtn.addEventListener('click', () => {
+            chrome.storage.local.set({ updateBannerDismissed: true }, () => {
+                const updateBanner = document.getElementById('extension-update-banner');
+                if (updateBanner) {
+                    updateBanner.classList.add('hidden');
+                }
+            });
+        });
     }
     // Initial UI update
     updateUI();
