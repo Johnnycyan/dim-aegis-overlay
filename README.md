@@ -97,12 +97,24 @@ Click the floating magnifying glass action button (FAB) in the bottom-right corn
 > No Chrome Web Store listing — load it as an unpacked extension in Developer Mode.
 
 ### Direct Download (Pre-built Package)
+
+For Chrome:
+
 1. Go to the [Releases](https://github.com/Maxeption/dim-aegis-overlay/releases) page on GitHub.
 2. Download the pre-built `dim-aegis-overlay-v1.2.0.zip` file.
 3. Unzip the file to a permanent folder.
 4. Open Chrome or Opera and navigate to `chrome://extensions/`.
 5. Enable **Developer mode** (toggle in the top-right corner).
 6. Click **Load unpacked** (top-left) and select the unzipped directory.
+
+For Firefox:
+1. Go to the [Releases](https://github.com/Maxeption/dim-aegis-overlay/releases) page on GitHub.
+2. Download the pre-built `dim-aegis-overlay-v1.2.0.zip` file.
+3. Unzip the file to a permanent folder.
+4. Go to the "Manage Extensions"
+5. Press the Gear at the top and select "Debug add-ons"
+6. Press "Load Temporary Add-on" and select the unzipped directory.
+
 
 ### Compile from Source (Developers)
 1. Clone and compile the repository:
