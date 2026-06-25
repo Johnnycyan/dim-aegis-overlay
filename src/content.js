@@ -347,6 +347,7 @@ function scoreSheetWeapon(sheetWeapon, perksMap, activeHashes) {
         upgradeAdvice = `💡 Upgrade available: Select ${perksStr} to rank up to ${potentialGrade}!`;
     }
     const finalGrade = currentGrade;
+    const upgradeAvailable = potIdx > curIdx;
     return {
         result: {
             grade: finalGrade,
@@ -355,6 +356,7 @@ function scoreSheetWeapon(sheetWeapon, perksMap, activeHashes) {
             missingPerks: [],
             notes: sheetWeapon.notes || '',
             wishlistPerks: [],
+            upgradeAvailable,
         },
         potentialGrade,
         upgradeAdvice,
@@ -738,8 +740,16 @@ function injectPopupSummary(popupContainer, result, scoringSource, sheetWeapon, 
     const gradeClass = `aegis-grade-${baseGradeLetter}`;
     const isLightGG = scoringSource === 'lightgg';
     let notesHtml = '';
-    if (result.notes) {
-        notesHtml = `<div class="aegis-popup-notes-text">${result.notes}</div>`;
+    let showNotes = result.notes;
+    if (sheetWeapon && showNotes === sheetWeapon.notes) {
+        showNotes = '';
+    }
+    if (result.wishlistNotes) {
+        showNotes = result.wishlistNotes;
+    }
+    if (showNotes) {
+        const titleLabel = isLightGG && !result.wishlistNotes ? 'Information' : 'Wishlist Notes';
+        notesHtml = `<div class="aegis-popup-notes-text"><strong>${titleLabel}:</strong> ${showNotes}</div>`;
     }
     let upgradeAdviceHtml = '';
     if (result.upgradeAdvice) {
@@ -928,31 +938,43 @@ function injectPopupSummary(popupContainer, result, scoringSource, sheetWeapon, 
           </div>
           ${superiorsHtml}
         `);
-                const rect = popupContainer.getBoundingClientRect();
-                const spaceLeft = rect.left;
-                const spaceRight = window.innerWidth - rect.right;
-                if (aegisLayoutSide === 'side' && window.innerWidth >= 1000 && (spaceLeft >= 330 || spaceRight >= 330)) {
-                    detailsCard.classList.add('aegis-side-panel');
-                    popupContainer.appendChild(detailsCard);
-                    detailsCard.style.setProperty('position', 'absolute', 'important');
-                    detailsCard.style.setProperty('top', '55px', 'important');
-                    if (spaceLeft >= 330) {
-                        detailsCard.style.setProperty('left', '-320px', 'important');
-                        detailsCard.style.setProperty('right', 'auto', 'important');
+                setTimeout(() => {
+                    const isSheet = popupContainer.matches('[class*="Sheet"], [class*="sheet"]');
+                    const rect = popupContainer.getBoundingClientRect();
+                    const spaceLeft = rect.left;
+                    const spaceRight = window.innerWidth - rect.right;
+                    if (aegisLayoutSide === 'side' && window.innerWidth >= 1000 && (isSheet || spaceLeft >= 330 || spaceRight >= 330)) {
+                        detailsCard.classList.add('aegis-side-panel');
+                        popupContainer.appendChild(detailsCard);
+                        detailsCard.style.setProperty('position', 'absolute', 'important');
+                        detailsCard.style.setProperty('top', '55px', 'important');
+                        if (isSheet || (spaceLeft >= spaceRight && spaceLeft >= 330)) {
+                            detailsCard.style.setProperty('left', '-320px', 'important');
+                            detailsCard.style.setProperty('right', 'auto', 'important');
+                        }
+                        else if (spaceRight >= 330) {
+                            detailsCard.style.setProperty('left', 'auto', 'important');
+                            detailsCard.style.setProperty('right', '-320px', 'important');
+                        }
+                        else {
+                            // Fallback to inline if neither side has enough space
+                            detailsCard.classList.remove('aegis-side-panel');
+                            detailsCard.style.removeProperty('position');
+                            detailsCard.style.removeProperty('top');
+                            detailsCard.style.removeProperty('left');
+                            detailsCard.style.removeProperty('right');
+                            insertTarget.after(detailsCard);
+                        }
                     }
                     else {
-                        detailsCard.style.setProperty('left', 'auto', 'important');
-                        detailsCard.style.setProperty('right', '-320px', 'important');
+                        detailsCard.classList.remove('aegis-side-panel');
+                        detailsCard.style.removeProperty('position');
+                        detailsCard.style.removeProperty('top');
+                        detailsCard.style.removeProperty('left');
+                        detailsCard.style.removeProperty('right');
+                        insertTarget.after(detailsCard);
                     }
-                }
-                else {
-                    detailsCard.classList.remove('aegis-side-panel');
-                    detailsCard.style.removeProperty('position');
-                    detailsCard.style.removeProperty('top');
-                    detailsCard.style.removeProperty('left');
-                    detailsCard.style.removeProperty('right');
-                    insertTarget.after(detailsCard);
-                }
+                }, 50);
             }
         }
     }
@@ -1001,6 +1023,12 @@ function injectBadge(el, result) {
         badge.classList.remove('aegis-badge-wide');
     }
     badge.textContent = gradeStr;
+    if (result.upgradeAvailable) {
+        const upgradeArrow = document.createElement('span');
+        upgradeArrow.className = 'aegis-badge-upgrade-arrow';
+        upgradeArrow.textContent = '▲';
+        badge.appendChild(upgradeArrow);
+    }
 }
 /**
  * Removes the Aegis badge overlay from a weapon tile if it exists.
@@ -1084,15 +1112,33 @@ function processElement(el) {
             if (grade) {
                 let aegisResult;
                 const useSheet = sheetWeapon && aegisDbMode !== 'wishlist';
+                const useWishlist = aegisDbMode !== 'spreadsheet';
+                let wishlistResult = null;
+                if (useWishlist && wishlistDb && wishlistDb[itemHash]) {
+                    wishlistResult = scoreWeapon(itemHash, perkHashes, wishlistDb, enhancedToNormalMap);
+                }
                 if (useSheet) {
                     const sheetScore = scoreSheetWeapon(sheetWeapon, perksMap, activeHashes);
                     aegisResult = sheetScore.result;
                     sheetPerks = sheetScore.sheetPerks;
                     aegisResult.upgradeAdvice = sheetScore.upgradeAdvice;
                     aegisResult.potentialGrade = sheetScore.potentialGrade;
+                    if (wishlistResult && wishlistResult.grade) {
+                        aegisResult.wishlistNotes = wishlistResult.notes;
+                    }
+                }
+                else if (useWishlist && wishlistResult) {
+                    aegisResult = wishlistResult;
                 }
                 else {
-                    aegisResult = scoreWeapon(itemHash, perkHashes, wishlistDb, enhancedToNormalMap);
+                    aegisResult = {
+                        grade: null,
+                        matchPercentage: 0,
+                        matchedPerks: [],
+                        missingPerks: [],
+                        notes: '',
+                        wishlistPerks: [],
+                    };
                 }
                 result = {
                     grade: grade,
@@ -1103,6 +1149,7 @@ function processElement(el) {
                     wishlistPerks: aegisResult.wishlistPerks,
                     upgradeAdvice: aegisResult.upgradeAdvice,
                     potentialGrade: aegisResult.potentialGrade,
+                    wishlistNotes: aegisResult.wishlistNotes,
                 };
             }
             else {
@@ -1119,15 +1166,22 @@ function processElement(el) {
         else {
             const useSheet = sheetWeapon && aegisDbMode !== 'wishlist';
             const useWishlist = aegisDbMode !== 'spreadsheet';
+            let wishlistResult = null;
+            if (useWishlist && wishlistDb && wishlistDb[itemHash]) {
+                wishlistResult = scoreWeapon(itemHash, perkHashes, wishlistDb, enhancedToNormalMap);
+            }
             if (useSheet) {
                 const sheetScore = scoreSheetWeapon(sheetWeapon, perksMap, activeHashes);
                 result = sheetScore.result;
                 sheetPerks = sheetScore.sheetPerks;
                 result.upgradeAdvice = sheetScore.upgradeAdvice;
                 result.potentialGrade = sheetScore.potentialGrade;
+                if (wishlistResult && wishlistResult.grade) {
+                    result.wishlistNotes = wishlistResult.notes;
+                }
             }
-            else if (useWishlist) {
-                result = scoreWeapon(itemHash, perkHashes, wishlistDb, enhancedToNormalMap);
+            else if (useWishlist && wishlistResult) {
+                result = wishlistResult;
             }
             else {
                 // Spreadsheet only mode but weapon is not in the spreadsheet
@@ -1207,11 +1261,76 @@ function processElement(el) {
         console.error('Error processing element in content script:', err);
     }
 }
+function setupSearchFilterObserver() {
+    const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]');
+    if (!searchInput)
+        return;
+    if (searchInput.hasAttribute('data-aegis-search-observer'))
+        return;
+    searchInput.setAttribute('data-aegis-search-observer', 'true');
+    searchInput.addEventListener('input', () => {
+        const val = searchInput.value.trim().toLowerCase();
+        // Check if search query has "aegis:grade"
+        const aegisMatch = val.match(/\baegis:([a-z0-9+:-]+)/);
+        if (aegisMatch) {
+            const targetQuery = aegisMatch[1].toLowerCase();
+            const items = document.querySelectorAll('[data-aegis-item-hash]');
+            items.forEach(item => {
+                const result = item._aegisResult;
+                const grade = result?.grade?.toLowerCase() || '';
+                let isMatch = false;
+                // Extract weapon rank and perk rank if it's a 2-tier grade (e.g. "bs+")
+                let weaponRank = '';
+                let perkRank = '';
+                const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
+                if (isTwoTier) {
+                    weaponRank = grade.charAt(0);
+                    perkRank = grade.substring(1);
+                }
+                else {
+                    perkRank = grade;
+                }
+                if (targetQuery === 'god') {
+                    isMatch = perkRank.includes('s') || perkRank.includes('s+');
+                }
+                else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
+                    const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
+                    isMatch = (weaponRank === targetRank);
+                }
+                else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
+                    const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
+                    isMatch = (perkRank === targetRank || perkRank.startsWith(targetRank));
+                }
+                else {
+                    // General match: combined grade, or weapon rank, or perk rank
+                    isMatch = (grade === targetQuery || weaponRank === targetQuery || perkRank === targetQuery || perkRank.startsWith(targetQuery));
+                }
+                if (isMatch) {
+                    item.style.setProperty('opacity', '1', 'important');
+                    item.style.setProperty('filter', 'none', 'important');
+                }
+                else {
+                    item.style.setProperty('opacity', '0.15', 'important');
+                    item.style.setProperty('filter', 'grayscale(80%)', 'important');
+                }
+            });
+        }
+        else {
+            // Restore all items
+            const items = document.querySelectorAll('[data-aegis-item-hash]');
+            items.forEach(item => {
+                item.style.removeProperty('opacity');
+                item.style.removeProperty('filter');
+            });
+        }
+    });
+}
 /**
  * Scans the page DOM for annotated item elements and processes them.
  */
 function reprocessAllElements() {
     setupRegistryObserver();
+    setupSearchFilterObserver();
     const elements = document.querySelectorAll('[data-aegis-item-hash]');
     for (let i = 0; i < elements.length; i++) {
         processElement(elements[i]);
@@ -1219,6 +1338,7 @@ function reprocessAllElements() {
 }
 // 1. Observe the DOM for additions or changes to 'data-aegis-item-hash' or 'data-aegis-perk-hashes'
 const observer = new MutationObserver((mutations) => {
+    setupSearchFilterObserver();
     for (let i = 0; i < mutations.length; i++) {
         const mutation = mutations[i];
         // Check if the custom data attributes were modified

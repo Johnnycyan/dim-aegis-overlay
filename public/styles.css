@@ -37,6 +37,26 @@
   letter-spacing: -0.2px !important;
 }
 
+.aegis-badge-upgrade-arrow {
+  position: absolute !important;
+  top: -4px !important;
+  right: -4px !important;
+  font-size: 6px !important;
+  background: #388e3c !important;
+  color: #ffffff !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+  font-family: sans-serif !important;
+  z-index: 100 !important;
+  line-height: 1 !important;
+}
+
 /* Badge Grade Gradients */
 .aegis-badge-s {
   background: linear-gradient(135deg, #ffd700, #ff8c00) !important; /* Gold */

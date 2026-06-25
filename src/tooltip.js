@@ -353,11 +353,19 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
       </div>
     `;
     }
-    if (result.notes) {
+    let showNotes = result.notes;
+    if (sheetWeapon && showNotes === sheetWeapon.notes) {
+        showNotes = '';
+    }
+    if (result.wishlistNotes) {
+        showNotes = result.wishlistNotes;
+    }
+    if (showNotes) {
+        const sectionTitle = isLightGGMode && !result.wishlistNotes ? 'Information' : 'Wishlist Notes';
         html += `
       <div class="aegis-tooltip-section aegis-notes-section">
-        <div class="aegis-tooltip-section-title">${isLightGGMode ? 'Information' : 'Aegis Notes'}</div>
-        <div class="aegis-tooltip-notes-text">${result.notes}</div>
+        <div class="aegis-tooltip-section-title">${sectionTitle}</div>
+        <div class="aegis-tooltip-notes-text">${showNotes}</div>
       </div>
     `;
     }

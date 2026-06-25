@@ -26,6 +26,8 @@ export interface ScoringResult {
   wishlistPerks: number[];
   upgradeAdvice?: string;
   potentialGrade?: string;
+  wishlistNotes?: string;
+  upgradeAvailable?: boolean;
 }
 
 /**
