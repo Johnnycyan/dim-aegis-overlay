@@ -1,86 +1,88 @@
-# New Version available in Beta
+# New Version available
 
 Please try out the latest version and report any problems or bugs.
 
-Either clone the WIP branch and build it or download the 1.1.0-beta release.
+Either clone the master branch and build it or download the latest release.
 
 
 # DIM Aegis Overlay
 
-A **Chrome / Opera MV3 browser extension** that overlays weapon roll grades directly inside [Destiny Item Manager (DIM)](https://app.destinyitemmanager.com), drawing from two sources:
+A **Chrome / Opera / Firefox MV3 browser extension** that overlays Aegis wishlist rankings and recommended perk checklists directly inside [Destiny Item Manager (DIM)](https://app.destinyitemmanager.com). 
 
-- **Aegis Wishlist** – a community `.txt` wishlist (DIM format) you configure via URL
-- **Light.gg Roll Appraiser** – live per-instance grades scraped from your Light.gg session
+It integrates Aegis's meta spreadsheet rankings, local DIM-format `.txt` wishlists, and Light.gg's community Roll Appraiser grades into a unified, seamless HUD overlay inside DIM.
 
 ---
 
-## Features
+## Key Features
 
 | Feature | Description |
 |---|---|
-| 🏅 **Grade badges** | S / A / B / C badges rendered directly on weapon tiles in DIM |
-| 🔍 **Hover tooltips** | Detailed breakdown of matched & missing perks on hover |
-| 🔄 **Auto-sync** | Wishlist fetched on install + every 24 hours via Chrome Alarms |
-| ⚡ **Manual sync** | Force a re-fetch from the popup at any time |
-| 🔎 **Weapon search** | Search your loaded wishlist by weapon name inside the popup |
-| 🌐 **Light.gg integration** | Scrapes Roll Appraiser grades from Light.gg and shows them in DIM |
-| ✨ **Enhanced perks** | Enhanced perks are correctly mapped to their normal counterparts |
-| 📦 **MV3 compliant** | Built on Manifest V3 with a service worker background script |
-
-<img width="666" height="764" alt="image" src="https://github.com/user-attachments/assets/1d837deb-8758-4b14-a29a-e515337f1418" />
-<img width="322" height="599" alt="image" src="https://github.com/user-attachments/assets/8913df9d-95f1-4a5c-8eaa-99e9c4531094" />
-<img width="280" height="369" alt="image" src="https://github.com/user-attachments/assets/a1a00453-42e8-4aa7-bb30-5c67d164760f" />
+| 🏅 **Badge Overlay Options** | Choose between standard grading (`S+`, `S`, `A`...) or the **2-Tier Grading** combination (`BS+`, `SA`, `SF`) indicating archetype tier and specific roll accuracy. |
+| 📋 **Aegis Recommended Perks** | View matched, selectable, and missing perks on your weapon in real-time. Can be toggled as a side-attached panel or inline sheet. |
+| 📊 **Best in Category Comparison** | Compares weapon archetype with category superiors (same frame/energy) to display viability and rankings. |
+| 🔍 **Aegis Database Explorer** | A slide-out panel launched via a floating action button (FAB) inside DIM allowing you to search, filter, and browse all weapon rankings. |
+| ⚡ **Vault Search & destiny.report** | One-click actions in the database explorer to filter specific items in your vault or inspect them on destiny.report. |
+| ⚙️ **Refreshed Settings Menu** | Modernized layout utilizing segmented toggles, outline buttons, and a CSS-only hover-driven guide tooltip with badge previews. |
+| 🔄 **Auto-sync** | Automatically checks for updates and refreshes databases in the background every 24 hours. |
+| ✨ **Enhanced Perk Mapping** | Enhanced perks are automatically normalized to match their standard counterparts for wishlist checks. |
 
 ---
 
 ## How It Works
 
 ```
-Light.gg Roll Appraiser          Aegis Wishlist (GitHub raw URL)
-        │                                   │
-  lightgg-content.ts               background.ts (fetch + parse)
-  (scrapes grades,                 (stores WishlistDatabase)
-   stores by item ID)                        │
-        │                                   │
-        └──────────────┬────────────────────┘
-                       │
-              main-world-content.ts
-         (runs in MAIN world, intercepts
-          DIM's React/Redux data, annotates
-          DOM elements with data-aegis-* attrs)
-                       │
-                  content.ts
-         (ISOLATED world, reads attrs,
-          calls scorer, injects badges)
-                       │
-                  tooltip.ts
-         (renders hover tooltip overlay)
+ Light.gg / Aegis wishlists
+             │
+  background.ts (fetches raw wishlist/spreadsheet)
+  (serializes databases to IndexedDB & local storage)
+             │
+   ┌─────────┴─────────┐
+   │                   │
+  lightgg-content.ts   main-world-content.ts
+  (scrapes Roll        (inspects React/Redux trees,
+   Appraiser grades)    annotates elements with attributes)
+   │                   │
+   └─────────┬─────────┘
+             │
+        content.ts
+   (isolated world, computes grades,
+    injects badges & summary panels)
+             │
+        tooltip.ts
+   (renders details hover tooltips)
 ```
 
-### Scripts
+### Script Directory
 
-| File | World | Purpose |
-|---|---|---|
-| `background.ts` | Service Worker | Fetches & caches wishlist; handles alarms & messages |
-| `main-world-content.ts` | MAIN | Hooks into DIM's live item data, annotates DOM elements |
-| `content.ts` | ISOLATED | Reads annotations, scores weapons, injects badges |
-| `lightgg-content.ts` | ISOLATED | Scrapes Roll Appraiser grades from Light.gg |
-| `scorer.ts` | – | Pure scoring logic (S/A/B/C grading algorithm) |
-| `parser.ts` | – | Parses DIM-format `.txt` wishlist files |
-| `popup.ts` | – | Settings popup UI logic |
-| `tooltip.ts` | – | Tooltip rendering |
+- `background.ts` — Background service worker; handles background database syncing, alarms, and cross-frame messages.
+- `main-world-content.ts` — Main world execution script; intercepts React Fiber nodes inside DIM to extract item instances and hashes, injecting descriptive `data-aegis-*` attributes.
+- `content.ts` — Content script; reads annotations, scores weapon instances, injects overlays, and coordinates side-panel detail views.
+- `lightgg-content.ts` — Content script; scrapes Roll Appraiser grades from Light.gg in the background.
+- `tooltip.ts` — Tooltip renderer; draws the custom glassmorphic hover panel.
+- `popup.ts` — Settings popup logic; handles settings updates and sync triggers.
 
-### Grading Logic (Aegis mode)
+---
 
-Weapons are scored against every wishlist entry for that item hash. The **best matching roll** wins:
+## Detailed Features
 
-| Missing perks | Grade |
-|---|---|
-| 0 | **S** |
-| 1 | **A** |
-| 2 | **B** |
-| 3 | **C** |
-| 4+ | *(no grade)* |
+### 📋 Aegis Recommended Perks Card
+Inspect any weapon in DIM to see a dedicated checklist showing exactly which perks are matched, selectable (inactive), or missing. Inspired by the excellent *Revadike/aegis-dim* userscript, this highlights:
+- **Matcheable Perks**: Colored green (`aegis-chip-active`) to verify active perks.
+- **Selectable Perks**: Highlighted in dashed blue (`aegis-chip-selectable`), pointing out recommended perks currently rolled but unselected.
+- **Missing Perks**: Colored muted red (`aegis-chip-missing`) to show which wishlist perks are absent.
+
+### 2-Tier Weapon Grading System
+Optionally toggle **2-Tier Badge Mode** in your settings to overlay archetype meta viability combined with specific roll accuracy:
+- **First Letter**: Archetype meta tier on the Aegis master list (`S`, `A`, `B`, `C`, `D`, `F`).
+- **Remaining Letters**: Specific roll accuracy grade (`S+`, `S`, `A`, `B`... etc.).
+  - *Example: **BS+** means the weapon archetype is B-Tier, but your roll is a perfect S+.*
+
+### 🔍 Floating Aegis Database Explorer
+Click the floating magnifying glass action button (FAB) in the bottom-right corner of DIM to slide out the database panel.
+- **Filters**: Filter by category, archetype frame, and elemental damage type.
+- **Collapsible Cards**: Click any weapon to expand its card and see action triggers.
+- **Vault Filtering**: Click "Filter in Vault" to instantly highlight all instances in your DIM inventory.
+- **Destiny.Report integration**: Click "Destiny.Report" to open the weapon's detailed profile page.
 
 ---
 
@@ -88,124 +90,38 @@ Weapons are scored against every wishlist entry for that item hash. The **best m
 
 > No Chrome Web Store listing — load it as an unpacked extension in Developer Mode.
 
-### Method A: Direct Download (Recommended for Users)
-
+### Direct Download (Pre-built Package)
 1. Go to the [Releases](https://github.com/Maxeption/dim-aegis-overlay/releases) page on GitHub.
-2. Download the pre-built `dim-aegis-overlay-v1.0.1.zip` file.
-3. Unzip the file to a permanent folder on your computer.
-4. Open Chrome or Opera and navigate to `chrome://extensions/` (or `opera://extensions/`).
+2. Download the pre-built `dim-aegis-overlay-v1.2.0.zip` file.
+3. Unzip the file to a permanent folder.
+4. Open Chrome or Opera and navigate to `chrome://extensions/`.
 5. Enable **Developer mode** (toggle in the top-right corner).
-6. Click **Load unpacked** (top-left) and select the unzipped folder (which contains `manifest.json`).
+6. Click **Load unpacked** (top-left) and select the unzipped directory.
 
----
-
-### Method B: Clone & Build (For Developers)
-
+### Compile from Source (Developers)
 1. Clone and compile the repository:
    ```bash
    git clone https://github.com/Maxeption/dim-aegis-overlay.git
    cd dim-aegis-overlay
    npm install
-   npm run build
+   npm run build:all
    ```
-   The compiled extension files will be created in the `dist/` directory.
-
-2. Load in Chrome or Opera:
-   - Go to `chrome://extensions/` (or `opera://extensions/`).
-   - Enable **Developer mode** (toggle, top-right).
-   - Click **Load unpacked** and select the compiled `dist/` folder.
+2. The compiled extension and packaging ZIP will be compiled inside the `/dist` directory.
+3. Open `chrome://extensions/` and load `/dist` as an unpacked extension.
 
 ---
 
-### Configuration
-
-1. Click the extension icon in your browser toolbar to open the settings popup.
-2. Select your preferred **Scoring Engine** (Aegis Wishlist or Light.gg Roll Appraiser).
-3. If using Aegis, click **Sync Wishlist** to fetch recommendations.
-4. If using Light.gg, click **Sync Grades** to download appraisals.
-5. Open or refresh Destiny Item Manager (DIM) — grade badges and pulsing gold glows will appear on your items.
-
----
-
-## Scoring Sources
-
-Switch between sources in the popup dropdown:
-
-### Aegis (default)
-Loads a community `.txt` wishlist file (DIM format) from any public URL. Grades are computed locally based on perk matching.
-
-**Default URL:**
-```
-https://raw.githubusercontent.com/charlesxcaliber/DIMAegisWeaponWishlist/main/MrCharlesWishlist_MRB_PPC2.txt
-```
-You can substitute any DIM-compatible wishlist URL.
-
-### Light.gg
-Navigate to [light.gg/god-roll/roll-appraiser](https://www.light.gg/god-roll/roll-appraiser/) with your weapons loaded. The extension scrapes the per-instance grades from that page and stores them locally. Then, back in DIM, badges reflect the Light.gg community grades.
-
----
-
-## Development
-
-```bash
-npm install      # install dev dependencies
-npm run dev      # start Vite in watch mode
-npm run build    # production build → dist/
-```
-
-> The build is intentionally **unminified** (`minify: false` in `vite.config.ts`) for auditability.
-
-### Stack
-
-- **TypeScript** — all source files
-- **Vite** — bundler with multiple entry points
-- **Chrome Extensions MV3** — service worker, content scripts, isolated / main worlds
-
----
-
-## Permissions
-
-| Permission | Reason |
-|---|---|
-| `storage` | Persist wishlist data & settings |
-| `alarms` | Periodic 24-hour wishlist sync |
-| `unlimitedStorage` | Large wishlist databases |
-| `https://raw.githubusercontent.com/*` | Fetch wishlist files |
-| `https://app.destinyitemmanager.com/*` | Inject content scripts into DIM |
-| `https://www.light.gg/*` | Scrape Roll Appraiser grades |
-
----
-
-## Project Structure
-
-```
-dim-aegis-overlay/
-├── public/
-│   ├── manifest.json       # Extension manifest (MV3)
-│   ├── popup.html          # Settings popup markup
-│   └── styles.css          # Badge & tooltip styles injected into DIM
-├── src/
-│   ├── background.ts       # Service worker
-│   ├── content.ts          # Badge injector (isolated world)
-│   ├── lightgg-content.ts  # Light.gg scraper (isolated world)
-│   ├── main-world-content.ts # DIM data interceptor (main world)
-│   ├── parser.ts           # Wishlist .txt parser
-│   ├── popup.ts            # Popup logic
-│   ├── scorer.ts           # Grading algorithm
-│   ├── tooltip.ts          # Tooltip renderer
-│   └── types.ts            # Shared TypeScript types
-├── vite.config.ts
-├── tsconfig.json
-└── package.json
-```
+## Configuration & Usage
+1. Click the extension toolbar icon to open the refreshed settings popup.
+2. **Scoring Engine**: Select between local Aegis evaluation or Light.gg Roll Appraiser syncing.
+3. **Database Toggles**: Choose whether to sync spreadsheet metadata, local wishlist files, or both.
+4. **Layout**: Switch the perks checklist between a side-docked panel (colliding-flipped dynamically when close to screen edges) or inline within the item details flow.
+5. Click **Sync Wishlist** or **Sync Grades** to fetch the latest databases.
 
 ---
 
 ## Credits
-
-- **Revadike/aegis-dim** – The "Aegis Recommended Perks" detail card overlay and category comparison layout features introduced in the Beta version (`v1.1.0-beta`+) are inspired by the original [Revadike/aegis-dim](https://github.com/Revadike/aegis-dim) user script. Huge thanks and credit to Revadike for their awesome design and layout concepts!
+- **Revadike/aegis-dim** – The "Aegis Recommended Perks" detail card overlay and category comparison layout features are inspired by the original [Revadike/aegis-dim](https://github.com/Revadike/aegis-dim) userscript. Huge thanks and credit to Revadike for their awesome design and layout concepts!
 
 ## License
-
 MIT
-
