@@ -448,6 +448,43 @@
   color: #000000;
 }
 
+/* Segmented Control Buttons (Toggle Buttons) */
+.segmented-control {
+  display: flex;
+  background: #08080c;
+  border: 1px solid #2c2c35;
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 2px;
+  gap: 2px;
+}
+
+.segmented-control button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #88888d;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.segmented-control button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.segmented-control button.active {
+  background: rgba(255, 179, 0, 0.12);
+  color: #ffb300;
+  border: 1px solid rgba(255, 179, 0, 0.2);
+}
+
+
 .btn-secondary:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-0.5px);

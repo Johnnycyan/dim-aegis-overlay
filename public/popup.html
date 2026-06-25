@@ -23,12 +23,22 @@
         <h2>Scoring Engine & Layout</h2>
         <p class="description">Select the roll ranking source and details layout.</p>
         <div class="input-group" style="margin-bottom: 8px;">
+          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Scoring Engine</label>
           <select id="scoring-source" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
             <option value="aegis">Aegis (DIM Wishlist)</option>
             <option value="lightgg">Light.gg (Roll Appraiser)</option>
           </select>
         </div>
+        <div id="aegis-db-toggle-group" class="input-group" style="margin-bottom: 8px;">
+          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Active Aegis Databases</label>
+          <div class="segmented-control" id="aegis-db-segmented">
+            <button type="button" data-value="both" class="active">Both</button>
+            <button type="button" data-value="spreadsheet">Spreadsheet</button>
+            <button type="button" data-value="wishlist">Wishlist txt</button>
+          </div>
+        </div>
         <div class="input-group">
+          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Recommended Perks Layout</label>
           <select id="aegis-layout-side" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
             <option value="side">Side Panel (Next to DIM sheet)</option>
             <option value="inline">Inline (Inside DIM sheet scroll)</option>

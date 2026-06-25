@@ -12,6 +12,7 @@ let wishlistDb: WishlistDatabase = {};
 let enhancedToNormalMap: Record<number, number> = {};
 let scoringSource = 'aegis';
 let aegisLayoutSide = 'side';
+let aegisDbMode = 'both';
 let lightggDb: Record<string, string> = {};
 let aegisSheetDb: AegisSheetDatabase | null = null;
 let hoveredElement: HTMLElement | null = null;
@@ -734,11 +735,12 @@ function initAegisExplorer() {
 }
 
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode'], (res) => {
   wishlistDb = res.wishlistData || {};
   enhancedToNormalMap = res.enhancedToNormal || {};
   scoringSource = res.scoringSource || 'aegis';
   aegisLayoutSide = res.aegisLayoutSide || 'side';
+  aegisDbMode = res.aegisDbMode || 'both';
   lightggDb = res.lightggData || {};
   aegisSheetDb = res.aegisSheetDb || null;
   console.log(`DIM Aegis Overlay: Loaded configuration. Source: ${scoringSource}`);
@@ -767,6 +769,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
     if (changes.aegisLayoutSide) {
       aegisLayoutSide = changes.aegisLayoutSide.newValue || 'side';
+      changed = true;
+    }
+    if (changes.aegisDbMode) {
+      aegisDbMode = changes.aegisDbMode.newValue || 'both';
       changed = true;
     }
     if (changes.lightggData) {
@@ -1233,8 +1239,9 @@ function processElement(el: HTMLElement) {
       const grade = lightggDb[instanceId];
       if (grade) {
         let aegisResult: ScoringResult;
-        if (sheetWeapon) {
-          const sheetScore = scoreSheetWeapon(sheetWeapon, perksMap, activeHashes);
+        const useSheet = sheetWeapon && aegisDbMode !== 'wishlist';
+        if (useSheet) {
+          const sheetScore = scoreSheetWeapon(sheetWeapon!, perksMap, activeHashes);
           aegisResult = sheetScore.result;
           sheetPerks = sheetScore.sheetPerks;
           aegisResult.upgradeAdvice = sheetScore.upgradeAdvice;
@@ -1263,23 +1270,37 @@ function processElement(el: HTMLElement) {
         };
       }
     } else {
-      if (sheetWeapon) {
-        const sheetScore = scoreSheetWeapon(sheetWeapon, perksMap, activeHashes);
+      const useSheet = sheetWeapon && aegisDbMode !== 'wishlist';
+      const useWishlist = aegisDbMode !== 'spreadsheet';
+
+      if (useSheet) {
+        const sheetScore = scoreSheetWeapon(sheetWeapon!, perksMap, activeHashes);
         result = sheetScore.result;
         sheetPerks = sheetScore.sheetPerks;
         result.upgradeAdvice = sheetScore.upgradeAdvice;
         result.potentialGrade = sheetScore.potentialGrade;
-      } else {
+      } else if (useWishlist) {
         result = scoreWeapon(itemHash, perkHashes, wishlistDb, enhancedToNormalMap);
+      } else {
+        // Spreadsheet only mode but weapon is not in the spreadsheet
+        result = {
+          grade: null,
+          matchPercentage: 0,
+          matchedPerks: [],
+          missingPerks: [],
+          notes: '',
+          wishlistPerks: [],
+        };
       }
     }
 
-    if (sheetWeapon) {
+    const hasSheetData = sheetWeapon && aegisDbMode !== 'wishlist';
+    if (hasSheetData) {
       const categoryTab = findWeaponCategory(weaponName);
-      const superiors = findSuperiors(categoryTab, sheetWeapon.energy, sheetWeapon.frame);
+      const superiors = findSuperiors(categoryTab, sheetWeapon!.energy, sheetWeapon!.frame);
       const bestW = superiors.byBoth || superiors.byFrame || superiors.byEnergy;
       if (bestW) {
-        if (bestW.name.toLowerCase() === sheetWeapon.name.toLowerCase()) {
+        if (bestW.name.toLowerCase() === sheetWeapon!.name.toLowerCase()) {
           isBestInClass = true;
         } else {
           bestAlternative = `${bestW.name} (${bestW.tier} #${bestW.rank})`;
@@ -1292,10 +1313,10 @@ function processElement(el: HTMLElement) {
     (el as any)._aegisName = weaponName;
     (el as any)._aegisPerksMap = perksMap;
     (el as any)._aegisActiveHashes = activeHashes;
-    (el as any)._aegisSheetWeapon = sheetWeapon;
+    (el as any)._aegisSheetWeapon = hasSheetData ? sheetWeapon : null;
     (el as any)._aegisBestAlternative = bestAlternative;
     (el as any)._aegisIsBestInClass = isBestInClass;
-    (el as any)._aegisSheetPerks = sheetPerks;
+    (el as any)._aegisSheetPerks = hasSheetData ? sheetPerks : null;
 
     if (result.grade) {
       const isPopup = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');

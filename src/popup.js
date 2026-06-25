@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightggSyncStatusText = document.getElementById('lightgg-sync-status-text');
     // Function to refresh UI from storage
     function updateUI() {
-        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync', 'aegisLayoutSide'], (res) => {
+        chrome.storage.local.get(['wishlistUrl', 'lastUpdated', 'parsedCount', 'syncStatus', 'syncError', 'scoringSource', 'lightggData', 'lightggLastSync', 'aegisLayoutSide', 'aegisDbMode'], (res) => {
             // Set URL input
             urlInput.value = res.wishlistUrl || DEFAULT_URL;
             // Set Last Updated time
@@ -65,6 +65,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set Scoring Source dropdown value
             if (sourceSelect) {
                 sourceSelect.value = res.scoringSource || 'aegis';
+                const dbToggleGroup = document.getElementById('aegis-db-toggle-group');
+                if (dbToggleGroup) {
+                    if (res.scoringSource === 'lightgg') {
+                        dbToggleGroup.style.display = 'none';
+                    }
+                    else {
+                        dbToggleGroup.style.display = 'block';
+                    }
+                }
+            }
+            // Set Aegis DB Mode buttons
+            const dbModeVal = res.aegisDbMode || 'both';
+            const segmentedControl = document.getElementById('aegis-db-segmented');
+            if (segmentedControl) {
+                segmentedControl.querySelectorAll('button').forEach(btn => {
+                    if (btn.getAttribute('data-value') === dbModeVal) {
+                        btn.classList.add('active');
+                    }
+                    else {
+                        btn.classList.remove('active');
+                    }
+                });
             }
             // Set Aegis Layout dropdown value
             const layoutSelect = document.getElementById('aegis-layout-side');
@@ -101,7 +123,24 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceSelect.addEventListener('change', () => {
             chrome.storage.local.set({ scoringSource: sourceSelect.value }, () => {
                 console.log(`[DIM Aegis Overlay] Scoring source changed to: ${sourceSelect.value}`);
+                updateUI();
             });
+        });
+    }
+    // Handle DB Mode segmented control click
+    const segmentedControl = document.getElementById('aegis-db-segmented');
+    if (segmentedControl) {
+        segmentedControl.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'BUTTON') {
+                const val = target.getAttribute('data-value');
+                if (val) {
+                    chrome.storage.local.set({ aegisDbMode: val }, () => {
+                        console.log(`[DIM Aegis Overlay] Aegis DB Mode changed to: ${val}`);
+                        updateUI();
+                    });
+                }
+            }
         });
     }
     // Handle layout preference change
