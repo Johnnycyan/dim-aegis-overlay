@@ -201,6 +201,8 @@ async function syncAllData(url) {
     }
     const wlRes = await fetchAndCacheWishlist();
     const sheetRes = await fetchAndCacheAegisSheet();
+    // Asynchronously trigger version check
+    checkForExtensionUpdates().catch(() => { });
     return {
         success: wlRes.success && sheetRes.success,
         count: wlRes.count,
@@ -219,6 +221,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.runtime.onInstalled.addListener(() => {
     console.log('DIM Aegis Overlay installed. Performing initial data sync...');
     syncAllData();
+    checkForExtensionUpdates().catch(() => { });
 });
 // Check/sync on startup if cache is missing or expired (older than 24 hours)
 chrome.runtime.onStartup.addListener(async () => {
@@ -229,6 +232,7 @@ chrome.runtime.onStartup.addListener(async () => {
         console.log('Cache missing or expired. Performing startup sync...');
         syncAllData();
     }
+    checkForExtensionUpdates().catch(() => { });
 });
 /**
  * Opens the Light.gg Roll Appraiser in a hidden (inactive) tab.
@@ -303,3 +307,52 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
     return false;
 });
+/**
+ * Compares two semantic version strings. Returns true if latest > current.
+ */
+function isNewerVersion(latest, current) {
+    const l = latest.split('.').map(Number);
+    const c = current.split('.').map(Number);
+    for (let i = 0; i < 3; i++) {
+        const latestNum = isNaN(l[i]) ? 0 : l[i];
+        const currentNum = isNaN(c[i]) ? 0 : c[i];
+        if (latestNum > currentNum)
+            return true;
+        if (latestNum < currentNum)
+            return false;
+    }
+    return false;
+}
+/**
+ * Checks GitHub repository for updates and flags storage if a new version is available.
+ */
+async function checkForExtensionUpdates() {
+    console.log('DIM Aegis Overlay: Checking for updates on GitHub...');
+    const repoUrl = 'https://raw.githubusercontent.com/Maxeption/dim-aegis-overlay/master/package.json';
+    try {
+        const response = await fetch(repoUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        const latestVersion = data.version;
+        const currentVersion = chrome.runtime.getManifest().version;
+        if (isNewerVersion(latestVersion, currentVersion)) {
+            const storage = await chrome.storage.local.get(['updateAvailableVersion']);
+            if (storage.updateAvailableVersion !== latestVersion) {
+                await chrome.storage.local.set({
+                    updateAvailableVersion: latestVersion,
+                    updateBannerDismissed: false
+                });
+                console.log(`DIM Aegis Overlay: New version v${latestVersion} available!`);
+            }
+        }
+        else {
+            await chrome.storage.local.remove(['updateAvailableVersion', 'updateBannerDismissed']);
+            console.log('DIM Aegis Overlay: Extension is up to date.');
+        }
+    }
+    catch (err) {
+        console.error('DIM Aegis Overlay: Failed to check for extension updates:', err);
+    }
+}
