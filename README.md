@@ -70,12 +70,16 @@ Inspect any weapon in DIM to see a dedicated checklist showing exactly which per
 - **Matcheable Perks**: Colored green (`aegis-chip-active`) to verify active perks.
 - **Selectable Perks**: Highlighted in dashed blue (`aegis-chip-selectable`), pointing out recommended perks currently rolled but unselected.
 - **Missing Perks**: Colored muted red (`aegis-chip-missing`) to show which wishlist perks are absent.
+<img width="307" height="534" alt="{8A7DAFD7-7AD6-4392-A592-B180DA0784B1}" src="https://github.com/user-attachments/assets/db9f72ac-a60f-4009-ab32-20b18e395e74" />
+
 
 ### 2-Tier Weapon Grading System
 Optionally toggle **2-Tier Badge Mode** in your settings to overlay archetype meta viability combined with specific roll accuracy:
 - **First Letter**: Archetype meta tier on the Aegis master list (`S`, `A`, `B`, `C`, `D`, `F`).
 - **Remaining Letters**: Specific roll accuracy grade (`S+`, `S`, `A`, `B`... etc.).
   - *Example: **BS+** means the weapon archetype is B-Tier, but your roll is a perfect S+.*
+  <img width="203" height="247" alt="image" src="https://github.com/user-attachments/assets/26f87796-8183-4c45-9461-8b4710365f8f" />
+
 
 ### 🔍 Floating Aegis Database Explorer
 Click the floating magnifying glass action button (FAB) in the bottom-right corner of DIM to slide out the database panel.
@@ -83,6 +87,8 @@ Click the floating magnifying glass action button (FAB) in the bottom-right corn
 - **Collapsible Cards**: Click any weapon to expand its card and see action triggers.
 - **Vault Filtering**: Click "Filter in Vault" to instantly highlight all instances in your DIM inventory.
 - **Destiny.Report integration**: Click "Destiny.Report" to open the weapon's detailed profile page.
+<img width="359" height="925" alt="{4E0821FD-F8EC-42A0-B863-ECDB1A4ACDE3}" src="https://github.com/user-attachments/assets/66f301d7-0b78-40d7-8253-4ea8fae9029e" />
+
 
 ---
 
