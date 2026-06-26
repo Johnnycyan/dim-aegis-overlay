@@ -143,5 +143,7 @@ For Firefox:
 - **Aegis** - For their amazing weapon ranks speadsheet! Check it out here [Destiny 2: Endgame Analysis](https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY/)
 - **LowCo + Azra** - For their amazing armor set bonuses spreadsheet! Check it out here [Armor Set Bonuses ](https://docs.google.com/spreadsheets/d/14LnzOhmeXzKaSV3OR35pQJkclg6vLC4YmKtlKTctY3o/htmlview)
 
+##
+If anyone wants to throw a few bucks my way so i can list this on the chrome store or just support me, here's my [Ko-fi](https://ko-fi.com/dilligafm8) I appreciate it !
 ## License
 MIT
