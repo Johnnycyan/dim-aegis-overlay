@@ -140,6 +140,8 @@ For Firefox:
 
 ## Credits
 - **Revadike/aegis-dim** – The "Aegis Recommended Perks" detail card overlay and category comparison layout features are inspired by the original [Revadike/aegis-dim](https://github.com/Revadike/aegis-dim) userscript. Huge thanks and credit to Revadike for their awesome design and layout concepts!
+- **Aegis** - For their amazing weapon ranks speadsheet! Check it out here [Destiny 2: Endgame Analysis](https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY/)
+- **LowCo + Azra** - For their amazing armor set bonuses spreadsheet! Check it out here [Armor Set Bonuses ](https://docs.google.com/spreadsheets/d/14LnzOhmeXzKaSV3OR35pQJkclg6vLC4YmKtlKTctY3o/htmlview)
 
 ## License
 MIT
