@@ -175,62 +175,134 @@ function registerPerks(perksMap: Record<number, PerkInfo>) {
  */
 function findReactFiber(el: HTMLElement): any {
   const key = Object.keys(el).find(
-    (k) => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$')
+    (k) => k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance')
   );
   return key ? (el as any)[key] : null;
 }
 
 /**
- * Traverses up the React Fiber tree to locate the component containing the 'item' prop.
+ * Extracts the item object from a fiber node's props.
+ * Returns the item if it has a `hash` property, otherwise null.
  */
-function findItemInFiber(fiber: any): any {
-  let curr = fiber;
-  while (curr) {
-    // Check memoizedProps
-    if (curr.memoizedProps) {
-      if (curr.memoizedProps.item && typeof curr.memoizedProps.item === 'object' && 'hash' in curr.memoizedProps.item) {
-        return curr.memoizedProps.item;
-      }
-      // Check children props wrapper
-      if (curr.memoizedProps.children && curr.memoizedProps.children.props && curr.memoizedProps.children.props.item) {
-        return curr.memoizedProps.children.props.item;
-      }
+function extractItemFromFiberProps(props: any): any {
+  if (!props) return null;
+  // Direct item prop
+  if (props.item && typeof props.item === 'object' && 'hash' in props.item) {
+    return props.item;
+  }
+  // dimItem prop (alternate naming used in some DIM components)
+  if (props.dimItem && typeof props.dimItem === 'object' && 'hash' in props.dimItem) {
+    return props.dimItem;
+  }
+  // Children wrapper pattern
+  if (props.children && props.children.props) {
+    const childProps = props.children.props;
+    if (childProps.item && typeof childProps.item === 'object' && 'hash' in childProps.item) {
+      return childProps.item;
     }
-    // Check pendingProps
-    if (curr.pendingProps) {
-      if (curr.pendingProps.item && typeof curr.pendingProps.item === 'object' && 'hash' in curr.pendingProps.item) {
-        return curr.pendingProps.item;
-      }
+    if (childProps.dimItem && typeof childProps.dimItem === 'object' && 'hash' in childProps.dimItem) {
+      return childProps.dimItem;
     }
-    // Check stateNode (component instance)
-    if (curr.stateNode && curr.stateNode.props) {
-      if (curr.stateNode.props.item && typeof curr.stateNode.props.item === 'object' && 'hash' in curr.stateNode.props.item) {
-        return curr.stateNode.props.item;
-      }
-    }
-    curr = curr.return; // Move up the React tree
   }
   return null;
 }
+
+/**
+ * Traverses the React Fiber tree (up AND down) to locate the component containing the 'item' prop.
+ */
+function findItemInFiber(fiber: any): any {
+  // --- Phase 1: Search UPWARD via curr.return ---
+  let curr = fiber;
+  let depth = 0;
+  while (curr && depth < 40) {
+    const item =
+      extractItemFromFiberProps(curr.memoizedProps) ||
+      extractItemFromFiberProps(curr.pendingProps) ||
+      extractItemFromFiberProps(curr.stateNode?.props);
+    if (item) return item;
+    curr = curr.return;
+    depth++;
+  }
+
+  // --- Phase 2: Search DOWNWARD via child/sibling traversal (BFS) ---
+  // Sometimes the fiber is a wrapper and the item prop is on a child component
+  const queue: any[] = [fiber];
+  const visited = new Set<any>();
+  let bfsDepth = 0;
+  while (queue.length > 0 && bfsDepth < 80) {
+    const node = queue.shift();
+    if (!node || visited.has(node)) continue;
+    visited.add(node);
+
+    const item =
+      extractItemFromFiberProps(node.memoizedProps) ||
+      extractItemFromFiberProps(node.pendingProps) ||
+      extractItemFromFiberProps(node.stateNode?.props);
+    if (item) return item;
+
+    if (node.child) queue.push(node.child);
+    if (node.sibling) queue.push(node.sibling);
+    bfsDepth++;
+  }
+
+  return null;
+}
+
 
 /**
  * Scans a DOM element for item properties in its React Fiber and writes them to attributes.
  */
 function processElement(el: HTMLElement) {
   try {
+    // Skip if any ancestor element is already annotated for an item.
+    // This prevents double-annotating nested elements (e.g. a container div
+    // AND its inner item tile both matching our selectors), which causes
+    // content.ts to call removeBadge() on the inner element and delete
+    // the badge that was just injected by the outer element's processing.
+    if (el.parentElement?.closest('[data-aegis-item-hash]')) {
+      return;
+    }
+
     const fiber = findReactFiber(el);
     if (!fiber) return;
 
     const item = findItemInFiber(fiber);
     if (!item || !item.hash) return;
 
-    // Check if this item is a weapon.
+    // Check if this item is a weapon or armor.
     const isWeapon =
       item.weapon === true ||
       item.bucket?.inWeapons === true ||
+      item.itemCategoryHashes?.includes(1) ||
       (item.sockets && item.typeName?.toLowerCase().includes('weapon'));
 
-    if (!isWeapon) return;
+    const isArmor =
+      item.bucket?.inArmor === true ||
+      (item.bucket && item.bucket.sort === 'Armor') ||
+      item.itemCategoryHashes?.includes(20) ||
+      ['helmet', 'gauntlets', 'chest armor', 'leg armor', 'class item'].some((t) => item.typeName?.toLowerCase().includes(t));
+
+    if (!isWeapon && !isArmor) return;
+
+    if (isArmor) {
+      const newHash = String(item.hash);
+      const existingHash = el.getAttribute('data-aegis-item-hash');
+      if (existingHash === newHash) {
+        return;
+      }
+      el.setAttribute('data-aegis-item-hash', newHash);
+      el.setAttribute('data-aegis-item-name', item.name || 'Unknown Armor');
+      el.setAttribute('data-aegis-item-type', 'armor');
+      const instanceId = item.id;
+      if (instanceId) {
+        el.setAttribute('data-aegis-instance-id', String(instanceId));
+      }
+      // Clear weapon-specific attributes
+      el.removeAttribute('data-aegis-perk-hashes');
+      el.removeAttribute('data-aegis-perks-data');
+      el.removeAttribute('data-aegis-active-perk-hashes');
+      return;
+    }
 
     let perkHashes: number[] = [];
     let activePerkHashes: number[] = []; // Only currently plugged perks
@@ -324,10 +396,11 @@ function processElement(el: HTMLElement) {
 
 
 const SELECTORS = [
-  'div[id^="item-"]',
-  'div[class*="item-"]',
-  'div[class*="StoreItem"]',
-  'div[class*="InventoryItem"]',
+  '[id^="item-"]',
+  '[class*="item-"]',
+  '[class*="StoreItem"]',
+  '[class*="InventoryItem"]',
+  '[class*="item-tile"]',
   '.item',
   '.item-tile',
   '[class*="ItemPopup"]',
@@ -377,9 +450,9 @@ function startObserver() {
     childList: true,
     subtree: true,
   });
+  scanPage();
 }
 startObserver();
 
-// Run initial scan once script loads
 console.log('DIM Aegis Overlay: React Fiber scanner initialized in MAIN world.');
-scanPage();
+

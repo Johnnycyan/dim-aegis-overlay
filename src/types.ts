@@ -63,12 +63,30 @@ export interface AegisSheetWeapon {
 }
 
 /**
+ * Data structure representing a single armor set parsed from the spreadsheet.
+ */
+export interface AegisArmorSet {
+  setName: string;
+  piece2Name: string;
+  piece2Desc: string;
+  piece2Numbers: string;
+  piece2Rating: string;
+  piece4Name: string;
+  piece4Desc: string;
+  piece4Numbers: string;
+  piece4Rating: string;
+  source: string;
+  sourceType: string;
+}
+
+/**
  * Registry of all weapons parsed from the Aegis spreadsheet tabs,
  * containing a flat map of weapons by normalized name and lists grouped by category.
  */
 export interface AegisSheetDatabase {
   weapons: Record<string, AegisSheetWeapon>;
   categories: Record<string, AegisSheetWeapon[]>;
+  armor?: Record<string, AegisArmorSet>;
 }
 
 /**

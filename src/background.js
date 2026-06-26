@@ -66,6 +66,8 @@ async function fetchAndCacheWishlist(url) {
     }
 }
 const SHEET_ID = '1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY';
+const ARMOR_SHEET_ID = '14LnzOhmeXzKaSV3OR35pQJkclg6vLC4YmKtlKTctY3o';
+const ARMOR_GID = '631213508';
 const ALL_TABS = [
     'Autos', 'Bows', 'HCs', 'Pulses', 'Scouts', 'Sidearms', 'SMGs',
     'BGLs', 'Fusions', 'Glaives', 'Shotguns', 'Snipers',
@@ -181,8 +183,48 @@ async function fetchAndCacheAegisSheet() {
             categories[tab] = categoryWeapons;
         });
         await Promise.all(promises);
+        // Fetch armor sets sheet
+        console.log('DIM Aegis Overlay: Fetching Aegis Armor Spreadsheet...');
+        const armorUrl = `https://docs.google.com/spreadsheets/d/${ARMOR_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${ARMOR_GID}`;
+        const armorRes = await fetch(armorUrl);
+        if (!armorRes.ok) {
+            throw new Error(`Failed to fetch armor sheet: ${armorRes.statusText}`);
+        }
+        const armorCsvText = await armorRes.text();
+        const armorRows = parseCSV(armorCsvText);
+        const armor = {};
+        if (armorRows.length >= 3) {
+            for (let r = 2; r < armorRows.length; r++) {
+                const row = armorRows[r];
+                const setName = (row[0] ?? '').trim();
+                if (!setName || setName === 'Set Name' || setName === 'Set Pick List') {
+                    continue;
+                }
+                if ((row[1] ?? '').trim() === 'Name' && (row[5] ?? '').trim() === 'Name') {
+                    continue;
+                }
+                if (setName.toLowerCase().includes('notes:') || setName.toLowerCase().includes('credit:')) {
+                    continue;
+                }
+                const armorData = {
+                    setName,
+                    piece2Name: (row[1] ?? '').trim(),
+                    piece2Desc: (row[2] ?? '').trim(),
+                    piece2Numbers: (row[3] ?? '').trim(),
+                    piece2Rating: (row[4] ?? '').trim(),
+                    piece4Name: (row[5] ?? '').trim(),
+                    piece4Desc: (row[6] ?? '').trim(),
+                    piece4Numbers: (row[7] ?? '').trim(),
+                    piece4Rating: (row[8] ?? '').trim(),
+                    source: (row[9] ?? '').trim(),
+                    sourceType: (row[10] ?? '').trim(),
+                };
+                const normalized = setName.toLowerCase().trim();
+                armor[normalized] = armorData;
+            }
+        }
         await chrome.storage.local.set({
-            aegisSheetDb: { weapons, categories },
+            aegisSheetDb: { weapons, categories, armor },
             aegisSheetLastSync: Date.now(),
         });
         console.log('DIM Aegis Overlay: Aegis spreadsheet sync completed successfully.');

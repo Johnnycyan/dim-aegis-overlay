@@ -4,6 +4,32 @@ function safeSetInnerHTML(element, htmlString) {
     const parsed = parser.parseFromString(htmlString, 'text/html');
     element.replaceChildren(...Array.from(parsed.body.childNodes));
 }
+function getGradeValue(grade) {
+    const g = (grade || '').trim().toUpperCase();
+    if (g.startsWith('S'))
+        return 100;
+    if (g === 'A+')
+        return 90;
+    if (g === 'A')
+        return 85;
+    if (g === 'B+')
+        return 75;
+    if (g === 'B')
+        return 70;
+    if (g === 'C+')
+        return 60;
+    if (g === 'C')
+        return 55;
+    if (g === 'D')
+        return 45;
+    if (g === 'PVP')
+        return 40;
+    if (g === 'E')
+        return 30;
+    if (g === 'F')
+        return 10;
+    return 0;
+}
 let tooltipEl = null;
 /**
  * Creates the global tooltip element in the DOM if it doesn't already exist.
@@ -99,9 +125,57 @@ function positionTooltip(target, tooltip) {
  * @param weaponName The weapon's display name.
  * @param localPerksMap Dictionary of socketed perk info extracted from this weapon.
  */
-export function showTooltip(target, result, weaponName, localPerksMap, activeHashes, isLightGG, sheetWeapon, bestAlternative, isBestInClass, sheetPerks, globalPerkNameToIcon) {
+export function showTooltip(target, result, weaponName, localPerksMap, activeHashes, isLightGG, sheetWeapon, bestAlternative, isBestInClass, sheetPerks, globalPerkNameToIcon, sheetArmor) {
     const tooltip = getOrCreateTooltip();
     const isLightGGMode = !!isLightGG;
+    if (sheetArmor) {
+        const val2 = getGradeValue(sheetArmor.piece2Rating);
+        const val4 = getGradeValue(sheetArmor.piece4Rating);
+        const betterRating = val2 >= val4 ? sheetArmor.piece2Rating : sheetArmor.piece4Rating;
+        let baseGradeLetter = betterRating.toLowerCase().trim();
+        if (baseGradeLetter.endsWith('+') || baseGradeLetter.endsWith('-')) {
+            baseGradeLetter = baseGradeLetter.slice(0, -1);
+        }
+        const gradeClass = `aegis-grade-${baseGradeLetter}`;
+        const piece2Class = `aegis-grade-${sheetArmor.piece2Rating.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const piece4Class = `aegis-grade-${sheetArmor.piece4Rating.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+        const html = `
+      <div class="aegis-tooltip-header">
+        <div class="aegis-tooltip-title-row">
+          <span class="aegis-tooltip-weapon-name">${weaponName}</span>
+          <span class="aegis-tooltip-grade ${gradeClass}">${result.grade}</span>
+        </div>
+        <div class="aegis-tooltip-sheet-meta">
+          <span class="aegis-tooltip-sheet-badge aegis-tier-source" style="background: linear-gradient(135deg, #1abc9c, #16a085) !important;">${sheetArmor.sourceType}</span>
+          <span class="aegis-tooltip-sheet-rank">Source: ${sheetArmor.source}</span>
+        </div>
+      </div>
+      
+      <div class="aegis-tooltip-body">
+        <div class="aegis-tooltip-section">
+          <div class="aegis-tooltip-section-title">2-Piece Bonus: <strong style="color: #fff;">${sheetArmor.piece2Name}</strong></div>
+          <div style="display: flex; gap: 8px; align-items: flex-start; margin-top: 4px;">
+            <span class="aegis-popup-grade-badge ${piece2Class}" style="flex-shrink: 0; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 10px; color: #fff; line-height: 1.2;">${sheetArmor.piece2Rating}</span>
+            <div class="aegis-tooltip-notes-text" style="margin: 0; line-height: 1.3;">${sheetArmor.piece2Desc}</div>
+          </div>
+          ${sheetArmor.piece2Numbers ? `<div class="aegis-armor-bonus-numbers" style="margin-top: 4px; font-size: 10px; color: #88c0d0; background: rgba(136, 192, 208, 0.1); padding: 4px 6px; border-radius: 4px; line-height: 1.2;">${sheetArmor.piece2Numbers}</div>` : ''}
+        </div>
+
+        <div class="aegis-tooltip-section" style="margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 10px;">
+          <div class="aegis-tooltip-section-title">4-Piece Bonus: <strong style="color: #fff;">${sheetArmor.piece4Name}</strong></div>
+          <div style="display: flex; gap: 8px; align-items: flex-start; margin-top: 4px;">
+            <span class="aegis-popup-grade-badge ${piece4Class}" style="flex-shrink: 0; padding: 2px 6px; border-radius: 4px; font-weight: 800; font-size: 10px; color: #fff; line-height: 1.2;">${sheetArmor.piece4Rating}</span>
+            <div class="aegis-tooltip-notes-text" style="margin: 0; line-height: 1.3;">${sheetArmor.piece4Desc}</div>
+          </div>
+          ${sheetArmor.piece4Numbers ? `<div class="aegis-armor-bonus-numbers" style="margin-top: 4px; font-size: 10px; color: #88c0d0; background: rgba(136, 192, 208, 0.1); padding: 4px 6px; border-radius: 4px; line-height: 1.2;">${sheetArmor.piece4Numbers}</div>` : ''}
+        </div>
+      </div>
+    `;
+        safeSetInnerHTML(tooltip, html);
+        positionTooltip(target, tooltip);
+        tooltip.classList.remove('hidden');
+        return;
+    }
     // Normalize grade to match CSS classes (extract roll grade part if using 2-tier)
     const gradeStr = result.grade || '';
     const isTwoTier = gradeStr.length > 2 || (gradeStr.length === 2 && !gradeStr.endsWith('+') && !gradeStr.endsWith('-'));

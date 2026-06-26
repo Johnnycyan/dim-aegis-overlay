@@ -1,11 +1,91 @@
 import { scoreWeapon } from './scorer';
-import { WishlistDatabase, ScoringResult, AegisSheetDatabase, AegisSheetWeapon, TooltipPerk } from './types';
+import { WishlistDatabase, ScoringResult, AegisSheetDatabase, AegisSheetWeapon, TooltipPerk, AegisArmorSet } from './types';
 import { showTooltip, hideTooltip } from './tooltip';
 /** Safely sets element HTML using DOMParser (avoids innerHTML linter warning). */
 function safeSetInnerHTML(element: HTMLElement, htmlString: string) {
   const parser = new DOMParser();
   const parsed = parser.parseFromString(htmlString, 'text/html');
   element.replaceChildren(...Array.from(parsed.body.childNodes));
+}
+
+function getGradeValue(grade: string): number {
+  const g = (grade || '').trim().toUpperCase();
+  if (g.startsWith('S')) return 100;
+  if (g === 'A+') return 90;
+  if (g === 'A') return 85;
+  if (g === 'B+') return 75;
+  if (g === 'B') return 70;
+  if (g === 'C+') return 60;
+  if (g === 'C') return 55;
+  if (g === 'D') return 45;
+  if (g === 'PVP') return 40;
+  if (g === 'E') return 30;
+  if (g === 'F') return 10;
+  return 0;
+}
+
+function findAegisArmorSet(itemName: string): AegisArmorSet | null {
+  if (!aegisSheetDb || !aegisSheetDb.armor) return null;
+
+  const normalizedName = itemName.toLowerCase().trim();
+
+  // Try direct substring match first
+  for (const [setName, data] of Object.entries(aegisSheetDb.armor)) {
+    if (normalizedName.includes(setName)) {
+      return data;
+    }
+  }
+
+  // Fallback map for raid/dungeon sets with unique naming schemes
+  const lowerName = normalizedName.replace(/[^a-z0-9\s]/g, '');
+
+  if (
+    lowerName.includes('kabr') ||
+    lowerName.includes('hezen lord') ||
+    lowerName.includes('prime zealot')
+  ) {
+    return aegisSheetDb.armor["atheon's memory"] || null;
+  }
+
+  if (
+    lowerName.includes('deathsinger') ||
+    lowerName.includes('unyielding favor') ||
+    lowerName.includes('will of the just')
+  ) {
+    return aegisSheetDb.armor["crota's memory"] || null;
+  }
+
+  if (
+    lowerName.includes('war numen') ||
+    lowerName.includes('mouth of ur') ||
+    lowerName.includes('doom of chelchis') ||
+    lowerName.includes('chasm of yul')
+  ) {
+    return aegisSheetDb.armor["oryx's memory"] || null;
+  }
+
+  if (
+    lowerName.includes('tmcogburn') ||
+    lowerName.includes('tmearp') ||
+    lowerName.includes('tmmoss')
+  ) {
+    return aegisSheetDb.armor["tm custom"] || null;
+  }
+
+  if (
+    lowerName.includes('iron companion') ||
+    lowerName.includes('iron forerunner') ||
+    lowerName.includes('iron truage') ||
+    lowerName.includes('iron remembrance') ||
+    lowerName.includes('iron fellowship') ||
+    lowerName.includes('iron pledge') ||
+    lowerName.includes('iron symmachy') ||
+    lowerName.includes('iron will')
+  ) {
+    return aegisSheetDb.armor["iron panoply"] || aegisSheetDb.armor["iron battalion"] || null;
+  }
+
+  return null;
 }
 
 let wishlistDb: WishlistDatabase = {};
@@ -817,6 +897,7 @@ function handleMouseEnter(e: MouseEvent) {
     const bestAlternative = (el as any)._aegisBestAlternative;
     const isBestInClass = (el as any)._aegisIsBestInClass;
     const sheetPerks = (el as any)._aegisSheetPerks;
+    const sheetArmor = (el as any)._aegisSheetArmor;
 
     showTooltip(
       el,
@@ -829,7 +910,8 @@ function handleMouseEnter(e: MouseEvent) {
       bestAlternative,
       isBestInClass,
       sheetPerks,
-      perkNameToIcon
+      perkNameToIcon,
+      sheetArmor
     );
   }
 }
@@ -850,7 +932,8 @@ function injectPopupSummary(
   result: ScoringResult,
   scoringSource: string,
   sheetWeapon?: AegisSheetWeapon,
-  sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] }
+  sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] },
+  sheetArmor?: AegisArmorSet | null
 ) {
   const titleEl = popupContainer.querySelector('h1, [class*="title"]');
   if (!titleEl) return;
@@ -871,6 +954,77 @@ function injectPopupSummary(
     summaryEl = document.createElement('div');
     summaryEl.className = 'aegis-popup-summary';
     titleEl.insertAdjacentElement('afterend', summaryEl);
+  }
+
+  if (sheetArmor) {
+    const val2 = getGradeValue(sheetArmor.piece2Rating);
+    const val4 = getGradeValue(sheetArmor.piece4Rating);
+    const betterRating = val2 >= val4 ? sheetArmor.piece2Rating : sheetArmor.piece4Rating;
+    let baseGradeLetter = betterRating.toLowerCase().trim();
+    if (baseGradeLetter.endsWith('+') || baseGradeLetter.endsWith('-')) {
+      baseGradeLetter = baseGradeLetter.slice(0, -1);
+    }
+    const gradeClass = `aegis-badge-${baseGradeLetter}`;
+    const wideClass = 'aegis-popup-grade-badge-wide';
+
+    safeSetInnerHTML(
+      summaryEl,
+      `
+      <div class="aegis-popup-summary-content">
+        <div class="aegis-popup-row">
+          <span class="aegis-popup-grade-badge ${gradeClass} ${wideClass}">${result.grade}</span>
+          <span class="aegis-popup-label">Armor Set Bonus Ratings</span>
+        </div>
+      </div>
+    `
+    );
+
+    // Inject armor detail card below sockets
+    const sockets = popupContainer.querySelector('[class*="sockets" i], [class*="Sockets" i]');
+    if (sockets) {
+      const detailsCard = document.createElement('div');
+      detailsCard.className = 'aegis-popup-details-card';
+      detailsCard.setAttribute('data-aegis-details', 'true');
+
+      safeSetInnerHTML(
+        detailsCard,
+        `
+        <div class="aegis-popup-details-title">Armor Set Bonuses</div>
+        
+        <div class="aegis-armor-bonus-section">
+          <div class="aegis-armor-bonus-header">
+            <span class="aegis-armor-bonus-title">2-Piece Bonus: <strong>${sheetArmor.piece2Name}</strong></span>
+            <span class="aegis-popup-grade-badge aegis-badge-${sheetArmor.piece2Rating.toLowerCase().replace(/[^a-z0-9]/g, '')}">${sheetArmor.piece2Rating}</span>
+          </div>
+          <div class="aegis-armor-bonus-desc">${sheetArmor.piece2Desc}</div>
+          ${sheetArmor.piece2Numbers ? `<div class="aegis-armor-bonus-numbers"><strong>In-Depth:</strong> ${sheetArmor.piece2Numbers}</div>` : ''}
+        </div>
+
+        <div class="aegis-popup-meta-divider"></div>
+
+        <div class="aegis-armor-bonus-section">
+          <div class="aegis-armor-bonus-header">
+            <span class="aegis-armor-bonus-title">4-Piece Bonus: <strong>${sheetArmor.piece4Name}</strong></span>
+            <span class="aegis-popup-grade-badge aegis-badge-${sheetArmor.piece4Rating.toLowerCase().replace(/[^a-z0-9]/g, '')}">${sheetArmor.piece4Rating}</span>
+          </div>
+          <div class="aegis-armor-bonus-desc">${sheetArmor.piece4Desc}</div>
+          ${sheetArmor.piece4Numbers ? `<div class="aegis-armor-bonus-numbers"><strong>In-Depth:</strong> ${sheetArmor.piece4Numbers}</div>` : ''}
+        </div>
+
+        <div class="aegis-popup-meta-divider"></div>
+
+        <div class="aegis-popup-meta-content">
+          <div class="aegis-popup-row" style="gap: 8px;">
+            <span class="aegis-popup-meta-badge aegis-tier-source" style="background: linear-gradient(135deg, #1abc9c, #16a085) !important;">${sheetArmor.sourceType}</span>
+            <span class="aegis-popup-meta-rank" style="color: #ccc;">Source: ${sheetArmor.source}</span>
+          </div>
+        </div>
+      `
+      );
+
+      sockets.insertAdjacentElement('afterend', detailsCard);
+    }
+    return;
   }
 
   const baseGradeLetter = result.grade.charAt(0).toLowerCase();
@@ -1150,15 +1304,12 @@ function injectPopupSummary(
  * Injects or updates the Aegis rank badge overlay inside a weapon tile.
  */
 function injectBadge(el: HTMLElement, result: ScoringResult) {
-  // Find the inner tile container (the square item box) to append the badge to,
-  // so the badge sits in the bottom-right of the image rather than overlapping the bottom bar (power level/wishlist tags).
   let badgeTarget = el.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"]') as HTMLElement | null;
-  if (badgeTarget) {
-    // Ensure the badge target is relatively positioned so the absolute badge is anchored to it
-    badgeTarget.style.setProperty('position', 'relative', 'important');
-  } else {
+  if (!badgeTarget) {
     badgeTarget = el;
   }
+  // Ensure the badge target is relatively positioned so the absolute badge is anchored to it
+  badgeTarget.style.setProperty('position', 'relative', 'important');
 
   // Handle S-tier gold glow class on the badge target
   if (badgeTarget) {
@@ -1177,22 +1328,33 @@ function injectBadge(el: HTMLElement, result: ScoringResult) {
   }
 
   // Remove existing grade classes
-  badge.classList.remove('aegis-badge-s', 'aegis-badge-a', 'aegis-badge-b', 'aegis-badge-c', 'aegis-badge-d', 'aegis-badge-f');
+  badge.className = 'aegis-badge';
   
   // Set grade class and text (normalizing S+ / A- etc. to the first letter class)
   const gradeStr = result.grade || '';
   const isTwoTier = gradeStr.length > 2 || (gradeStr.length === 2 && !gradeStr.endsWith('+') && !gradeStr.endsWith('-'));
+  const isArmor = gradeStr.includes('/');
   
-  // If it's a 2-tier grade (e.g. BS+ or SF), base color class on the actual roll matching grade (the last letter/symbol part)
-  const baseLetter = isTwoTier 
-    ? gradeStr.substring(1).charAt(0).toLowerCase() 
-    : (gradeStr ? gradeStr.charAt(0).toLowerCase() : '');
+  let baseLetter = '';
+  if (isArmor) {
+    const parts = gradeStr.split('/');
+    const val2 = getGradeValue(parts[0]);
+    const val4 = getGradeValue(parts[1]);
+    const betterRating = val2 >= val4 ? parts[0] : parts[1];
+    baseLetter = betterRating.toLowerCase().trim();
+    if (baseLetter.endsWith('+') || baseLetter.endsWith('-')) {
+      baseLetter = baseLetter.slice(0, -1);
+    }
+  } else {
+    // If it's a 2-tier grade (e.g. BS+ or SF), base color class on the actual roll matching grade (the last letter/symbol part)
+    baseLetter = isTwoTier 
+      ? gradeStr.substring(1).charAt(0).toLowerCase() 
+      : (gradeStr ? gradeStr.charAt(0).toLowerCase() : '');
+  }
     
   badge.classList.add(`aegis-badge-${baseLetter}`);
-  if (isTwoTier) {
+  if (isTwoTier || isArmor) {
     badge.classList.add('aegis-badge-wide');
-  } else {
-    badge.classList.remove('aegis-badge-wide');
   }
   badge.textContent = gradeStr;
 
@@ -1225,10 +1387,11 @@ function removeBadge(el: HTMLElement) {
  */
 function processElement(el: HTMLElement) {
   // If an ancestor is also annotated, this is a nested child element.
-  // We skip it to avoid double badges, but clean up any existing badge/listeners on it first.
+  // Skip it — the parent element handles badge injection for this item.
+  // Do NOT call removeBadge here: the badge was injected INTO this element
+  // by the parent's injectBadge() call, and removing it would destroy it.
   const parentWrapper = el.parentElement?.closest('[data-aegis-item-hash]');
   if (parentWrapper) {
-    removeBadge(el);
     if (el.hasAttribute('data-aegis-listeners')) {
       el.removeEventListener('mouseenter', handleMouseEnter);
       el.removeEventListener('mouseleave', handleMouseLeave);
@@ -1236,6 +1399,7 @@ function processElement(el: HTMLElement) {
     }
     return;
   }
+
 
   const itemHashStr = el.getAttribute('data-aegis-item-hash');
   const weaponName = el.getAttribute('data-aegis-item-name') || 'Unknown Weapon';
@@ -1250,6 +1414,75 @@ function processElement(el: HTMLElement) {
       const baseName = normName.replace(/\s*\([^)]+\)\s*$/, '').trim();
       nameToHash[baseName] = hash;
     }
+  }
+
+  const itemType = el.getAttribute('data-aegis-item-type') || 'weapon';
+
+  if (itemType === 'armor') {
+    if (!itemHashStr) return;
+    try {
+      const sheetArmor = findAegisArmorSet(weaponName);
+      let result: ScoringResult;
+
+      if (sheetArmor) {
+        result = {
+          grade: `${sheetArmor.piece2Rating}/${sheetArmor.piece4Rating}`,
+          matchPercentage: 100,
+          matchedPerks: [],
+          missingPerks: [],
+          notes: `2-Piece: ${sheetArmor.piece2Name} - ${sheetArmor.piece2Desc}\n4-Piece: ${sheetArmor.piece4Name} - ${sheetArmor.piece4Desc}`,
+          wishlistPerks: [],
+          wishlistNotes: `Source: ${sheetArmor.source} (${sheetArmor.sourceType})`,
+        };
+      } else {
+        result = {
+          grade: null,
+          matchPercentage: 0,
+          matchedPerks: [],
+          missingPerks: [],
+          notes: '',
+          wishlistPerks: [],
+        };
+      }
+
+      (el as any)._aegisResult = result;
+      (el as any)._aegisName = weaponName;
+      (el as any)._aegisSheetArmor = sheetArmor;
+
+      if (result.grade) {
+        const isPopup = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+
+        if (!isPopup) {
+          injectBadge(el, result);
+        }
+
+        const popupContainer = isPopup ? el : el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+        if (popupContainer) {
+          injectPopupSummary(popupContainer as HTMLElement, result, scoringSource, undefined, undefined, sheetArmor);
+        }
+
+        if (!isPopup && !el.hasAttribute('data-aegis-listeners')) {
+          el.addEventListener('mouseenter', handleMouseEnter);
+          el.addEventListener('mouseleave', handleMouseLeave);
+          el.setAttribute('data-aegis-listeners', 'true');
+        }
+      } else {
+        removeBadge(el);
+        const popupContainer = el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+        if (popupContainer) {
+          const summary = popupContainer.querySelector('.aegis-popup-summary');
+          if (summary) summary.remove();
+        }
+        if (el.hasAttribute('data-aegis-listeners')) {
+          el.removeEventListener('mouseenter', handleMouseEnter);
+          el.removeEventListener('mouseleave', handleMouseLeave);
+          el.removeAttribute('data-aegis-listeners');
+        }
+      }
+    } catch (err) {
+      console.error('Error processing armor element in content script:', err);
+    }
+    return;
   }
 
   if (!itemHashStr || !perkHashesStr) {
@@ -1464,31 +1697,50 @@ function setupSearchFilterObserver() {
       items.forEach(item => {
         const result = (item as any)._aegisResult as ScoringResult | undefined;
         const grade = result?.grade?.toLowerCase() || '';
-        
+           // Extract weapon rank and perk rank if it's a 2-tier grade (e.g. "bs+")
         let isMatch = false;
+        const isArmor = grade.includes('/');
 
-        // Extract weapon rank and perk rank if it's a 2-tier grade (e.g. "bs+")
-        let weaponRank = '';
-        let perkRank = '';
-        const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
-        if (isTwoTier) {
-          weaponRank = grade.charAt(0);
-          perkRank = grade.substring(1);
-        } else {
-          perkRank = grade;
-        }
+        if (isArmor) {
+          const parts = grade.split('/');
+          const rating2 = parts[0];
+          const rating4 = parts[1];
 
-        if (targetQuery === 'god') {
-          isMatch = perkRank.includes('s') || perkRank.includes('s+');
-        } else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
-          const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
-          isMatch = (weaponRank === targetRank);
-        } else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
-          const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
-          isMatch = (perkRank === targetRank || perkRank.startsWith(targetRank));
+          if (targetQuery.startsWith('2p:') || targetQuery.startsWith('2piece:')) {
+            const targetRank = targetQuery.startsWith('2p:') ? targetQuery.substring(3) : targetQuery.substring(7);
+            isMatch = (rating2 === targetRank || rating2.startsWith(targetRank));
+          } else if (targetQuery.startsWith('4p:') || targetQuery.startsWith('4piece:')) {
+            const targetRank = targetQuery.startsWith('4p:') ? targetQuery.substring(3) : targetQuery.substring(7);
+            isMatch = (rating4 === targetRank || rating4.startsWith(targetRank));
+          } else if (targetQuery.includes('/')) {
+            isMatch = (grade === targetQuery);
+          } else {
+            // General query matching either 2p or 4p rating
+            isMatch = (rating2 === targetQuery || rating2.startsWith(targetQuery) || rating4 === targetQuery || rating4.startsWith(targetQuery));
+          }
         } else {
-          // General match: combined grade, or weapon rank, or perk rank
-          isMatch = (grade === targetQuery || weaponRank === targetQuery || perkRank === targetQuery || perkRank.startsWith(targetQuery));
+          let weaponRank = '';
+          let perkRank = '';
+          const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
+          if (isTwoTier) {
+            weaponRank = grade.charAt(0);
+            perkRank = grade.substring(1);
+          } else {
+            perkRank = grade;
+          }
+
+          if (targetQuery === 'god') {
+            isMatch = perkRank.includes('s') || perkRank.includes('s+');
+          } else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
+            const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
+            isMatch = (weaponRank === targetRank);
+          } else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
+            const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
+            isMatch = (perkRank === targetRank || perkRank.startsWith(targetRank));
+          } else {
+            // General match: combined grade, or weapon rank, or perk rank
+            isMatch = (grade === targetQuery || weaponRank === targetQuery || perkRank === targetQuery || perkRank.startsWith(targetQuery));
+          }
         }
 
         if (isMatch) {

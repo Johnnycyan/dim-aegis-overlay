@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIM Aegis Overlay Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="popup-body">
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="logo-wrapper">
+        <svg class="shield-logo" viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <h1>DIM Aegis Overlay</h1>
+      </div>
+      <span class="version">v1.0.1</span>
+    </header>
+
+    <main class="popup-main">
+      <section class="settings-card">
+        <h2>Scoring Engine & Layout</h2>
+        <p class="description">Select the roll ranking source and details layout.</p>
+        <div class="input-group" style="margin-bottom: 8px;">
+          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Scoring Engine</label>
+          <select id="scoring-source" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
+            <option value="aegis">Aegis (DIM Wishlist)</option>
+            <option value="lightgg">Light.gg (Roll Appraiser)</option>
+          </select>
+        </div>
+        <div id="aegis-db-toggle-group" class="input-group" style="margin-bottom: 8px;">
+          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Active Aegis Databases</label>
+          <div class="segmented-control" id="aegis-db-segmented">
+            <button type="button" data-value="both" class="active">Both</button>
+            <button type="button" data-value="spreadsheet">Spreadsheet</button>
+            <button type="button" data-value="wishlist">Wishlist txt</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label style="display: block; font-size: 10px; color: #888; margin-bottom: 4px;">Recommended Perks Layout</label>
+          <select id="aegis-layout-side" style="width: 100%; background: #08080c; border: 1px solid #2c2c35; border-radius: 4px; color: #ffffff; padding: 8px 10px; font-size: 11px; outline: none; cursor: pointer; transition: border-color 0.2s ease;">
+            <option value="side">Side Panel (Next to DIM sheet)</option>
+            <option value="inline">Inline (Inside DIM sheet scroll)</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <h2>Wishlist Configuration</h2>
+        <p class="description">Enter the raw text URL of your Destiny Item Manager wishlist file.</p>
+        
+        <div class="input-group">
+          <input type="url" id="wishlist-url" placeholder="https://example.com/wishlist.txt" />
+        </div>
+
+        <button id="sync-button" class="btn btn-primary">
+          <span class="btn-text">Sync Wishlist</span>
+          <span class="spinner hidden"></span>
+        </button>
+      </section>
+
+      <section class="settings-card">
+        <h2>Light.gg Sync</h2>
+        <p class="description">Automatically opens Roll Appraiser in the background to fetch your weapon grades &mdash; no tab-switching needed.</p>
+        <div id="lightgg-sync-warning" class="error-msg-box hidden" style="margin-bottom: 12px; background: rgba(255, 179, 0, 0.1); border-color: rgba(255, 179, 0, 0.2); border-radius: 4px; padding: 8px;">
+          <p style="color: #ffb300; font-size: 10px; font-weight: 600; margin: 0;">⚠️ Light.gg cache is older than 48 hours. Syncing is recommended.</p>
+        </div>
+        <div class="btn-group" style="display: flex; gap: 8px;">
+          <button id="lightgg-sync-button" class="btn btn-secondary" style="flex: 1;">
+            <span class="btn-text">Sync Grades</span>
+            <span class="spinner hidden"></span>
+          </button>
+          <button id="lightgg-clear-button" class="btn" style="flex: 1; background: #2c2c35; color: #ffffff;">
+            <span class="btn-text">Clear Cache</span>
+          </button>
+        </div>
+        <div id="lightgg-sync-status-row" style="margin-top: 8px; font-size: 10.5px; display: none;">
+          <span id="lightgg-sync-status-text" style="color: #aaa;">Waiting...</span>
+        </div>
+      </section>
+
+      <section class="status-card">
+        <h2>Sync Status</h2>
+        <div class="status-list">
+          <div class="status-item">
+            <span class="status-label">Status:</span>
+            <span id="sync-status" class="status-value status-success">Idle</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Last Updated:</span>
+            <span id="last-updated" class="status-value">Never</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Weapons Indexed:</span>
+            <span id="weapons-count" class="status-value">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Light.gg Graded:</span>
+            <span id="lightgg-count" class="status-value">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Light.gg Synced:</span>
+            <span id="lightgg-last-updated" class="status-value">Never</span>
+          </div>
+          <div id="error-container" class="error-msg-box hidden">
+            <p id="error-message"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-card search-card">
+        <h2>Search Wishlist</h2>
+        <p class="description">Search weapon names to see their recommended rolls.</p>
+        <div class="input-group">
+          <input type="text" id="search-input" placeholder="Type weapon name... (e.g. Luna's Howl)" />
+        </div>
+        <div id="search-results" class="search-results-container hidden"></div>
+      </section>
+    </main>
+
+    <footer class="popup-footer">
+      <p>Wishlist files are parsed in the background and stored locally in your browser.</p>
+    </footer>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

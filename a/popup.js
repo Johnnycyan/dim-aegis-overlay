@@ -1,0 +1,316 @@
+function safeSetInnerHTML(element, htmlString) {
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlString, "text/html");
+  element.replaceChildren(...Array.from(parsed.body.childNodes));
+}
+const DEFAULT_URL = "https://raw.githubusercontent.com/charlesxcaliber/DIMAegisWeaponWishlist/main/MrCharlesWishlist_MRB_PPC2.txt";
+document.addEventListener("DOMContentLoaded", () => {
+  const urlInput = document.getElementById("wishlist-url");
+  const syncBtn = document.getElementById("sync-button");
+  const syncStatus = document.getElementById("sync-status");
+  const lastUpdated = document.getElementById("last-updated");
+  const weaponsCount = document.getElementById("weapons-count");
+  const errorContainer = document.getElementById("error-container");
+  const errorMessage = document.getElementById("error-message");
+  const sourceSelect = document.getElementById("scoring-source");
+  const lightggCount = document.getElementById("lightgg-count");
+  const lightggSyncBtn = document.getElementById("lightgg-sync-button");
+  const lightggClearBtn = document.getElementById("lightgg-clear-button");
+  const lightggSyncStatusRow = document.getElementById("lightgg-sync-status-row");
+  const lightggSyncStatusText = document.getElementById("lightgg-sync-status-text");
+  function updateUI() {
+    chrome.storage.local.get(
+      ["wishlistUrl", "lastUpdated", "parsedCount", "syncStatus", "syncError", "scoringSource", "lightggData", "lightggLastSync", "aegisLayoutSide", "aegisDbMode"],
+      (res) => {
+        urlInput.value = res.wishlistUrl || DEFAULT_URL;
+        if (res.lastUpdated) {
+          lastUpdated.textContent = new Date(res.lastUpdated).toLocaleString();
+        } else {
+          lastUpdated.textContent = "Never";
+        }
+        weaponsCount.textContent = (res.parsedCount || 0).toLocaleString();
+        const lggData = res.lightggData || {};
+        if (lightggCount) {
+          lightggCount.textContent = Object.keys(lggData).length.toLocaleString();
+        }
+        const lggLastUpdated = document.getElementById("lightgg-last-updated");
+        if (lggLastUpdated) {
+          if (res.lightggLastSync) {
+            lggLastUpdated.textContent = new Date(res.lightggLastSync).toLocaleString();
+          } else {
+            lggLastUpdated.textContent = "Never";
+          }
+        }
+        const warningBanner = document.getElementById("lightgg-sync-warning");
+        if (warningBanner) {
+          const hasGrades = Object.keys(lggData).length > 0;
+          const dayInMs = 24 * 60 * 60 * 1e3;
+          const isOutdated = res.lightggLastSync && Date.now() - res.lightggLastSync > 2 * dayInMs;
+          if (hasGrades && isOutdated) {
+            warningBanner.classList.remove("hidden");
+          } else {
+            warningBanner.classList.add("hidden");
+          }
+        }
+        if (sourceSelect) {
+          sourceSelect.value = res.scoringSource || "aegis";
+          const dbToggleGroup = document.getElementById("aegis-db-toggle-group");
+          if (dbToggleGroup) {
+            if (res.scoringSource === "lightgg") {
+              dbToggleGroup.style.display = "none";
+            } else {
+              dbToggleGroup.style.display = "block";
+            }
+          }
+        }
+        const dbModeVal = res.aegisDbMode || "both";
+        const segmentedControl2 = document.getElementById("aegis-db-segmented");
+        if (segmentedControl2) {
+          segmentedControl2.querySelectorAll("button").forEach((btn) => {
+            if (btn.getAttribute("data-value") === dbModeVal) {
+              btn.classList.add("active");
+            } else {
+              btn.classList.remove("active");
+            }
+          });
+        }
+        const layoutSelect2 = document.getElementById("aegis-layout-side");
+        if (layoutSelect2) {
+          layoutSelect2.value = res.aegisLayoutSide || "side";
+        }
+        const status = res.syncStatus || "success";
+        syncStatus.className = "status-value";
+        errorContainer.classList.add("hidden");
+        if (status === "loading") {
+          syncStatus.textContent = "Syncing...";
+          syncStatus.classList.add("status-loading");
+          setLoadingState(true);
+        } else if (status === "error") {
+          syncStatus.textContent = "Failed";
+          syncStatus.classList.add("status-error");
+          setLoadingState(false);
+          if (res.syncError) {
+            errorMessage.textContent = res.syncError;
+            errorContainer.classList.remove("hidden");
+          }
+        } else {
+          syncStatus.textContent = "Synced";
+          syncStatus.classList.add("status-success");
+          setLoadingState(false);
+        }
+      }
+    );
+  }
+  if (sourceSelect) {
+    sourceSelect.addEventListener("change", () => {
+      chrome.storage.local.set({ scoringSource: sourceSelect.value }, () => {
+        console.log(`[DIM Aegis Overlay] Scoring source changed to: ${sourceSelect.value}`);
+        updateUI();
+      });
+    });
+  }
+  const segmentedControl = document.getElementById("aegis-db-segmented");
+  if (segmentedControl) {
+    segmentedControl.addEventListener("click", (e) => {
+      const target = e.target;
+      if (target && target.tagName === "BUTTON") {
+        const val = target.getAttribute("data-value");
+        if (val) {
+          chrome.storage.local.set({ aegisDbMode: val }, () => {
+            console.log(`[DIM Aegis Overlay] Aegis DB Mode changed to: ${val}`);
+            updateUI();
+          });
+        }
+      }
+    });
+  }
+  const layoutSelect = document.getElementById("aegis-layout-side");
+  if (layoutSelect) {
+    layoutSelect.addEventListener("change", () => {
+      chrome.storage.local.set({ aegisLayoutSide: layoutSelect.value }, () => {
+        console.log(`[DIM Aegis Overlay] Aegis layout changed to: ${layoutSelect.value}`);
+      });
+    });
+  }
+  function setLoadingState(loading) {
+    var _a, _b;
+    if (loading) {
+      syncBtn.disabled = true;
+      urlInput.disabled = true;
+      (_a = syncBtn.querySelector(".spinner")) == null ? void 0 : _a.classList.remove("hidden");
+      const textEl = syncBtn.querySelector(".btn-text");
+      if (textEl) textEl.textContent = "Syncing...";
+    } else {
+      syncBtn.disabled = false;
+      urlInput.disabled = false;
+      (_b = syncBtn.querySelector(".spinner")) == null ? void 0 : _b.classList.add("hidden");
+      const textEl = syncBtn.querySelector(".btn-text");
+      if (textEl) textEl.textContent = "Sync Wishlist";
+    }
+  }
+  updateUI();
+  syncBtn.addEventListener("click", () => {
+    const url = urlInput.value.trim();
+    if (!url) {
+      alert("Please enter a valid URL.");
+      return;
+    }
+    setLoadingState(true);
+    syncStatus.textContent = "Syncing...";
+    syncStatus.className = "status-value status-loading";
+    errorContainer.classList.add("hidden");
+    chrome.runtime.sendMessage({ action: "syncNow", url }, (response) => {
+      setTimeout(() => {
+        updateUI();
+        if (response && !response.success) {
+          alert(`Sync failed: ${response.error}`);
+        }
+      }, 300);
+    });
+  });
+  function setLightGGLoading(loading) {
+    var _a, _b;
+    if (!lightggSyncBtn) return;
+    if (lightggClearBtn) lightggClearBtn.disabled = loading;
+    if (loading) {
+      lightggSyncBtn.disabled = true;
+      (_a = lightggSyncBtn.querySelector(".spinner")) == null ? void 0 : _a.classList.remove("hidden");
+      const textEl = lightggSyncBtn.querySelector(".btn-text");
+      if (textEl) textEl.textContent = "Syncing...";
+      if (lightggSyncStatusRow) lightggSyncStatusRow.style.display = "block";
+      if (lightggSyncStatusText) {
+        lightggSyncStatusText.textContent = "⏳ Opening Roll Appraiser in background...";
+        lightggSyncStatusText.style.color = "#ffb300";
+      }
+    } else {
+      lightggSyncBtn.disabled = false;
+      (_b = lightggSyncBtn.querySelector(".spinner")) == null ? void 0 : _b.classList.add("hidden");
+      const textEl = lightggSyncBtn.querySelector(".btn-text");
+      if (textEl) textEl.textContent = "Sync Grades";
+    }
+  }
+  if (lightggSyncBtn) {
+    lightggSyncBtn.addEventListener("click", () => {
+      setLightGGLoading(true);
+      chrome.runtime.sendMessage({ action: "syncLightGG" }, (response) => {
+        setLightGGLoading(false);
+        if (lightggSyncStatusRow) lightggSyncStatusRow.style.display = "block";
+        if (response && response.success) {
+          if (lightggSyncStatusText) {
+            lightggSyncStatusText.textContent = `✅ Done! ${(response.count || 0).toLocaleString()} weapons graded.`;
+            lightggSyncStatusText.style.color = "#4caf50";
+          }
+          updateUI();
+        } else {
+          if (lightggSyncStatusText) {
+            const errMsg = response && response.error ? response.error : "Unknown error";
+            lightggSyncStatusText.textContent = `❌ ${errMsg}`;
+            lightggSyncStatusText.style.color = "#f44336";
+          }
+        }
+      });
+    });
+  }
+  if (lightggClearBtn) {
+    lightggClearBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear your cached Light.gg weapon grades?")) {
+        chrome.storage.local.set({ lightggData: {}, lightggLastSync: 0 }, () => {
+          updateUI();
+          if (lightggSyncStatusRow) lightggSyncStatusRow.style.display = "block";
+          if (lightggSyncStatusText) {
+            lightggSyncStatusText.textContent = "🧹 Cache cleared successfully.";
+            lightggSyncStatusText.style.color = "#4caf50";
+          }
+        });
+      }
+    });
+  }
+  const searchInput = document.getElementById("search-input");
+  const searchResults = document.getElementById("search-results");
+  if (searchInput && searchResults) {
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        searchResults.replaceChildren();
+        searchResults.classList.add("hidden");
+        return;
+      }
+      chrome.storage.local.get(["wishlistData", "perkRegistry"], (res) => {
+        const wishlist = res.wishlistData || {};
+        const perkRegistry = res.perkRegistry || {};
+        const matches = {};
+        for (const [hashStr, rolls] of Object.entries(wishlist)) {
+          const hash = Number(hashStr);
+          if (!rolls || !Array.isArray(rolls)) continue;
+          for (const roll of rolls) {
+            const title = roll.title || `Weapon #${hash}`;
+            if (title.toLowerCase().includes(query)) {
+              if (!matches[title]) {
+                matches[title] = { hash, rolls: [] };
+              }
+              matches[title].rolls.push(roll);
+            }
+          }
+        }
+        const matchKeys = Object.keys(matches);
+        if (matchKeys.length === 0) {
+          safeSetInnerHTML(searchResults, '<div class="description" style="text-align: center; margin: 10px 0;">No matching weapons found.</div>');
+          searchResults.classList.remove("hidden");
+          return;
+        }
+        const displayKeys = matchKeys.slice(0, 15);
+        let html = "";
+        for (const title of displayKeys) {
+          const item = matches[title];
+          html += `
+            <div class="search-item">
+              <div class="search-item-header">
+                <span>${title}</span>
+                <span class="status-value" style="font-size: 10px; color: #ffb300;">${item.rolls.length} Roll${item.rolls.length > 1 ? "s" : ""}</span>
+              </div>
+              <div class="search-item-body">
+          `;
+          item.rolls.forEach((roll, idx) => {
+            const noteText = roll.notes || "No notes available.";
+            const perkPills = roll.perks.map((perkHash) => {
+              const perkInfo = perkRegistry[perkHash];
+              const perkName = perkInfo ? perkInfo.name : `Perk #${perkHash}`;
+              return `<span class="search-perk-pill">${perkName}</span>`;
+            }).join("");
+            html += `
+              <div class="search-roll">
+                <div class="search-roll-title">Recommendation #${idx + 1}</div>
+                <div class="search-roll-perks">${perkPills}</div>
+                <div class="search-roll-notes">${noteText}</div>
+              </div>
+            `;
+          });
+          html += `
+              </div>
+            </div>
+          `;
+        }
+        if (matchKeys.length > 15) {
+          html += `<div class="description" style="text-align: center; font-size: 9.5px; margin-top: 5px;">Showing 15 of ${matchKeys.length} matching weapons.</div>`;
+        }
+        safeSetInnerHTML(searchResults, html);
+        searchResults.classList.remove("hidden");
+        const items = searchResults.querySelectorAll(".search-item");
+        items.forEach((el) => {
+          el.addEventListener("click", (e) => {
+            const target = e.target;
+            if (target.classList.contains("search-perk-pill") || target.classList.contains("search-roll-notes") || target.closest(".search-roll")) {
+              return;
+            }
+            el.classList.toggle("active");
+          });
+        });
+      });
+    });
+  }
+  chrome.storage.onChanged.addListener((_changes, namespace) => {
+    if (namespace === "local") {
+      updateUI();
+    }
+  });
+});
