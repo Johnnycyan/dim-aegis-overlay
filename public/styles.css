@@ -1367,8 +1367,12 @@ div[id^="item-"][data-aegis-item-hash]:hover {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Allow elements to overflow the popup container/sheet boundaries */
-[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup {
+/* Allow elements to overflow the popup container/sheet boundaries only when they contain an Aegis details card */
+[class*="ItemPopup"]:has(.aegis-popup-details-card), 
+[class*="item-popup"]:has(.aegis-popup-details-card), 
+[class*="Sheet"]:has(.aegis-popup-details-card), 
+[class*="sheet"]:has(.aegis-popup-details-card), 
+.item-popup:has(.aegis-popup-details-card) {
   overflow: visible !important;
 }
 
