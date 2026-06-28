@@ -204,7 +204,15 @@ setTimeout(() => {
         signalCompletion();
     }
 }, 30000);
-// Run DOM scrape periodically
-setInterval(runDomScrape, 2000);
-setTimeout(runDomScrape, 1500);
+// Run DOM scrape periodically once DOM is ready
+function startDomScrape() {
+    setInterval(runDomScrape, 2000);
+    setTimeout(runDomScrape, 1500);
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startDomScrape);
+}
+else {
+    startDomScrape();
+}
 console.log('[DIM Aegis Overlay] Light.gg Roll Appraiser content script initialized (API intercept + DOM scrape).');

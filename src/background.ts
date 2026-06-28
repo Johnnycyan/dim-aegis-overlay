@@ -143,9 +143,15 @@ async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: st
         idx[col.trim()] = i;
       });
 
-      const getVal = (row: string[], key: string) => {
-        const i = idx[key];
-        return i !== undefined ? (row[i] ?? '').trim() : '';
+      const getVal = (row: string[], keys: string | string[]) => {
+        const keyList = Array.isArray(keys) ? keys : [keys];
+        for (const k of keyList) {
+          const i = idx[k];
+          if (i !== undefined) {
+            return (row[i] ?? '').trim();
+          }
+        }
+        return '';
       };
 
       const categoryWeapons: any[] = [];
@@ -161,14 +167,14 @@ async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: st
 
         const weaponData = {
           name: weaponName,
-          energy: getVal(row, 'Energy'),
+          energy: getVal(row, ['Energy', 'INFO Energy']),
           frame: getVal(row, 'Frame'),
-          barrel: getVal(row, 'PERKS Barrel'),
-          mag: getVal(row, 'Mag'),
-          perk1: getVal(row, 'Perk 1'),
-          perk2: getVal(row, 'Perk 2'),
-          origin: getVal(row, 'Origin Trait'),
-          notes: getVal(row, 'ANALYSIS Notes'),
+          barrel: getVal(row, ['PERKS Barrel', 'Barrel']),
+          mag: getVal(row, ['Mag', 'PERKS Mag']),
+          perk1: getVal(row, ['Perk 1', 'PERKS Perk 1']),
+          perk2: getVal(row, ['Perk 2', 'PERKS Perk 2']),
+          origin: getVal(row, ['Origin Trait', 'Origin']),
+          notes: getVal(row, ['ANALYSIS Notes', 'Notes']),
           rank: getVal(row, 'Rank'),
           tier: getVal(row, 'Tier'),
         };

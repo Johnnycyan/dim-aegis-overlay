@@ -727,7 +727,8 @@
 }
 
 .aegis-help-icon-btn,
-.github-link-btn {
+.github-link-btn,
+.kofi-link-btn {
   background: none;
   border: none;
   color: #8e8e93;
@@ -745,18 +746,22 @@
 .aegis-help-icon-btn:hover,
 .aegis-help-icon-btn:focus,
 .github-link-btn:hover,
-.github-link-btn:focus {
+.github-link-btn:focus,
+.kofi-link-btn:hover,
+.kofi-link-btn:focus {
   color: #ffb300;
   background: rgba(255, 179, 0, 0.1);
 }
 
 .aegis-help-icon-btn svg,
-.github-link-btn svg {
+.github-link-btn svg,
+.kofi-link-btn svg {
   transition: transform 0.2s ease;
 }
 
 .aegis-help-icon-btn:hover svg,
-.github-link-btn:hover svg {
+.github-link-btn:hover svg,
+.kofi-link-btn:hover svg {
   transform: scale(1.05);
 }
 
