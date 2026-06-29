@@ -4,6 +4,12 @@ Please try out the latest version and report any problems or bugs.
 
 Either clone the master branch and build it or download the latest release.
 
+# Download
+The extension is finally listed on FireFox!
+Get it [HERE](https://addons.mozilla.org/en-US/firefox/addon/dim-aegis-overlay/)
+
+I'm still in the procees of listing it on Chrome Webstore
+Opera soon as well.
 
 # DIM Aegis Overlay
 
