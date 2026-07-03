@@ -377,6 +377,13 @@
   background: #1c1c24;
   padding: 2px 6px;
   border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.version:hover {
+  background: #2a2a35;
+  color: #88c0d0;
 }
 
 /* Main Content */
@@ -2059,6 +2066,57 @@ div[id^="item-"][data-aegis-item-hash]:hover {
 
 .aegis-tier-source {
   background: linear-gradient(135deg, #1abc9c, #16a085) !important;
+}
+
+/* Search Filter Tooltip Grid Layout */
+.search-filter-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #88c0d0;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.filter-code {
+  font-family: monospace;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ebcb8b;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  min-width: 110px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.filter-desc {
+  font-size: 12px;
+  color: #d8dee9;
 }
 
 

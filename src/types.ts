@@ -87,6 +87,7 @@ export interface AegisSheetDatabase {
   weapons: Record<string, AegisSheetWeapon>;
   categories: Record<string, AegisSheetWeapon[]>;
   armor?: Record<string, AegisArmorSet>;
+  armorAegis?: Record<string, AegisArmorSet>;
 }
 
 /**

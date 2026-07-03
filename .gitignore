@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.local
 *.zip
+MOZILLA_REPRODUCTION.md

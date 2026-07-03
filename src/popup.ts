@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'aegisLayoutSide',
         'aegisDbMode',
         'aegisTwoTier',
+        'aegisArmorSource',
         'updateAvailableVersion',
         'updateBannerDismissed'
       ],
@@ -157,6 +158,19 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
+        // Set Aegis Armor Source segmented control
+        const armorSourceVal = res.aegisArmorSource || 'lowco';
+        const armorSourceSegmented = document.getElementById('aegis-armor-source-segmented');
+        if (armorSourceSegmented) {
+          armorSourceSegmented.querySelectorAll('button').forEach(btn => {
+            if (btn.getAttribute('data-value') === armorSourceVal) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+        }
+
         // Update status text and classes
         const status = res.syncStatus || 'success';
         syncStatus.className = 'status-value';
@@ -252,6 +266,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Handle Armor Source segmented control click
+  const armorSourceSegmented = document.getElementById('aegis-armor-source-segmented');
+  if (armorSourceSegmented) {
+    armorSourceSegmented.addEventListener('click', (e) => {
+      const target = e.target as HTMLButtonElement;
+      if (target && target.tagName === 'BUTTON') {
+        const val = target.getAttribute('data-value');
+        if (val) {
+          chrome.storage.local.set({ aegisArmorSource: val }, () => {
+            console.log(`[DIM Aegis Overlay] Aegis Armor Source changed to: ${val}`);
+            updateUI();
+          });
+        }
+      }
+    });
+  }
+
   function setLoadingState(loading: boolean) {
     if (loading) {
       syncBtn.disabled = true;
@@ -281,6 +312,92 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const wishlistSyncStatusRow = document.getElementById('wishlist-sync-status-row') as HTMLDivElement;
+  const wishlistSyncStatusText = document.getElementById('wishlist-sync-status-text') as HTMLSpanElement;
+
+  const sheetsSyncStatusRow = document.getElementById('sheets-sync-status-row') as HTMLDivElement;
+  const sheetsSyncStatusText = document.getElementById('sheets-sync-status-text') as HTMLSpanElement;
+
+  // Sync spreadsheets button event listener
+  const syncSheetsBtn = document.getElementById('sync-sheets-button') as HTMLButtonElement;
+  if (syncSheetsBtn) {
+    syncSheetsBtn.addEventListener('click', () => {
+      syncSheetsBtn.disabled = true;
+      syncSheetsBtn.querySelector('.spinner')?.classList.remove('hidden');
+      const textEl = syncSheetsBtn.querySelector('.btn-text');
+      if (textEl) textEl.textContent = 'Syncing...';
+
+      if (sheetsSyncStatusRow) sheetsSyncStatusRow.style.display = 'block';
+      if (sheetsSyncStatusText) {
+        sheetsSyncStatusText.textContent = '⏳ Syncing spreadsheets...';
+        sheetsSyncStatusText.style.color = '#ffb300';
+      }
+
+      chrome.runtime.sendMessage({ action: 'syncSpreadsheets' }, (response) => {
+        syncSheetsBtn.disabled = false;
+        syncSheetsBtn.querySelector('.spinner')?.classList.add('hidden');
+        if (textEl) textEl.textContent = 'Resync Spreadsheets';
+
+        if (response && response.success) {
+          if (sheetsSyncStatusText) {
+            sheetsSyncStatusText.textContent = '✅ Spreadsheets synced successfully!';
+            sheetsSyncStatusText.style.color = '#4caf50';
+          }
+          updateUI();
+        } else {
+          if (sheetsSyncStatusText) {
+            const errMsg = response?.error || 'Unknown error';
+            sheetsSyncStatusText.textContent = `❌ Sheets sync failed: ${errMsg}`;
+            sheetsSyncStatusText.style.color = '#f44336';
+          }
+        }
+      });
+    });
+  }
+
+  // Version click listener to check for updates
+  const updateCheckStatus = document.getElementById('update-check-status');
+  const versionText = document.getElementById('version-text');
+  if (versionText) {
+    versionText.addEventListener('click', () => {
+      versionText.style.opacity = '0.5';
+      if (updateCheckStatus) {
+        updateCheckStatus.textContent = 'Checking...';
+        updateCheckStatus.style.color = '#88888d';
+        updateCheckStatus.style.display = 'inline';
+      }
+
+      chrome.runtime.sendMessage({ action: 'checkUpdates' }, (response) => {
+        versionText.style.opacity = '1';
+        if (response && response.success) {
+          if (response.updateAvailable) {
+            if (updateCheckStatus) {
+              updateCheckStatus.textContent = 'Update available!';
+              updateCheckStatus.style.color = '#ffb300';
+              updateCheckStatus.style.display = 'inline';
+            }
+            updateUI();
+          } else {
+            if (updateCheckStatus) {
+              updateCheckStatus.textContent = 'Up to date';
+              updateCheckStatus.style.color = '#4caf50';
+              updateCheckStatus.style.display = 'inline';
+              setTimeout(() => {
+                updateCheckStatus.style.display = 'none';
+              }, 3000);
+            }
+          }
+        } else {
+          if (updateCheckStatus) {
+            updateCheckStatus.textContent = 'Check failed';
+            updateCheckStatus.style.color = '#f44336';
+            updateCheckStatus.style.display = 'inline';
+          }
+        }
+      });
+    });
+  }
+
   // Initial UI update
   updateUI();
 
@@ -298,12 +415,28 @@ document.addEventListener('DOMContentLoaded', () => {
     syncStatus.className = 'status-value status-loading';
     errorContainer.classList.add('hidden');
 
+    if (wishlistSyncStatusRow) wishlistSyncStatusRow.style.display = 'block';
+    if (wishlistSyncStatusText) {
+      wishlistSyncStatusText.textContent = '⏳ Syncing wishlist...';
+      wishlistSyncStatusText.style.color = '#ffb300';
+    }
+
     chrome.runtime.sendMessage({ action: 'syncNow', url }, (response) => {
       // Small timeout to let storage propagate
       setTimeout(() => {
+        setLoadingState(false);
         updateUI();
-        if (response && !response.success) {
-          alert(`Sync failed: ${response.error}`);
+        if (response && response.success) {
+          if (wishlistSyncStatusText) {
+            wishlistSyncStatusText.textContent = '✅ Wishlist synced successfully!';
+            wishlistSyncStatusText.style.color = '#4caf50';
+          }
+        } else {
+          if (wishlistSyncStatusText) {
+            const errMsg = response?.error || 'Unknown error';
+            wishlistSyncStatusText.textContent = `❌ Wishlist sync failed: ${errMsg}`;
+            wishlistSyncStatusText.style.color = '#f44336';
+          }
         }
       }, 300);
     });

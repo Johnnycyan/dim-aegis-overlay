@@ -229,8 +229,75 @@ async function fetchAndCacheAegisSheet() {
                 armor[normalized] = armorData;
             }
         }
+        // Fetch Aegis's own Set Bonuses tab
+        console.log('DIM Aegis Overlay: Fetching Aegis Set Bonuses tab...');
+        const aegisArmorUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Set Bonuses')}`;
+        const aegisArmorRes = await fetch(aegisArmorUrl);
+        const armorAegis = {};
+        if (aegisArmorRes.ok) {
+            const csvText = await aegisArmorRes.text();
+            const rows = parseCSV(csvText);
+            if (rows.length >= 2) {
+                for (let r = 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    if (row.length < 12)
+                        continue;
+                    const rawSet = row[2] || '';
+                    if (!rawSet.trim())
+                        continue;
+                    const parts = rawSet.split('\n');
+                    const setName = parts[0].trim();
+                    const source = parts[1] ? parts[1].trim() : '';
+                    const pcs = (row[5] || '').trim();
+                    const bonusName = (row[4] || '').trim();
+                    const trigger = (row[7] || '').trim();
+                    const effect = (row[8] || '').trim();
+                    const desc = (row[9] || '').trim();
+                    const tier = (row[11] || '').trim();
+                    const normalized = setName.toLowerCase().trim();
+                    if (!armorAegis[normalized]) {
+                        armorAegis[normalized] = {
+                            setName,
+                            piece2Name: 'None',
+                            piece2Desc: 'No 2-piece set bonus listed.',
+                            piece2Numbers: '',
+                            piece2Rating: 'F',
+                            piece4Name: 'None',
+                            piece4Desc: 'No 4-piece set bonus listed.',
+                            piece4Numbers: '',
+                            piece4Rating: 'F',
+                            source: source,
+                            sourceType: 'Activity',
+                        };
+                    }
+                    const setObj = armorAegis[normalized];
+                    if (pcs === '2') {
+                        setObj.piece2Name = bonusName;
+                        setObj.piece2Desc = desc;
+                        setObj.piece2Numbers = `Trigger: ${trigger} | Effect: ${effect}`;
+                        setObj.piece2Rating = tier;
+                    }
+                    else if (pcs === '4') {
+                        setObj.piece4Name = bonusName;
+                        setObj.piece4Desc = desc;
+                        setObj.piece4Numbers = `Trigger: ${trigger} | Effect: ${effect}`;
+                        setObj.piece4Rating = tier;
+                    }
+                }
+            }
+        }
+        // Copy source info from LowCo to Aegis where applicable
+        for (const [key, aegisData] of Object.entries(armorAegis)) {
+            const lowcoData = armor[key];
+            if (lowcoData) {
+                if (lowcoData.source)
+                    aegisData.source = lowcoData.source;
+                if (lowcoData.sourceType)
+                    aegisData.sourceType = lowcoData.sourceType;
+            }
+        }
         await chrome.storage.local.set({
-            aegisSheetDb: { weapons, categories, armor },
+            aegisSheetDb: { weapons, categories, armor, armorAegis },
             aegisSheetLastSync: Date.now(),
         });
         console.log('DIM Aegis Overlay: Aegis spreadsheet sync completed successfully.');
@@ -352,6 +419,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             .then((res) => sendResponse(res))
             .catch((err) => sendResponse({ success: false, error: err.message }));
         return true; // Keep message channel open for async sendResponse
+    }
+    if (message.action === 'syncSpreadsheets') {
+        fetchAndCacheAegisSheet()
+            .then((res) => sendResponse(res))
+            .catch((err) => sendResponse({ success: false, error: err.message }));
+        return true;
+    }
+    if (message.action === 'checkUpdates') {
+        checkForExtensionUpdates()
+            .then(() => {
+            chrome.storage.local.get(['updateAvailableVersion'], (res) => {
+                const currentVersion = chrome.runtime.getManifest().version;
+                if (res.updateAvailableVersion && isNewerVersion(res.updateAvailableVersion, currentVersion)) {
+                    sendResponse({ success: true, updateAvailable: true, version: res.updateAvailableVersion });
+                }
+                else {
+                    sendResponse({ success: true, updateAvailable: false, version: currentVersion });
+                }
+            });
+        })
+            .catch((err) => sendResponse({ success: false, error: err.message }));
+        return true;
     }
     return false;
 });

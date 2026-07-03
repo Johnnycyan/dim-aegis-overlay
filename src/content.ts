@@ -25,12 +25,18 @@ function getGradeValue(grade: string): number {
 }
 
 function findAegisArmorSet(itemName: string): AegisArmorSet | null {
-  if (!aegisSheetDb || !aegisSheetDb.armor) return null;
+  if (!aegisSheetDb) return null;
+
+  const db = (aegisArmorSource === 'aegis' && aegisSheetDb.armorAegis)
+    ? aegisSheetDb.armorAegis
+    : aegisSheetDb.armor;
+
+  if (!db) return null;
 
   const normalizedName = itemName.toLowerCase().trim();
 
   // Try direct substring match first
-  for (const [setName, data] of Object.entries(aegisSheetDb.armor)) {
+  for (const [setName, data] of Object.entries(db)) {
     if (normalizedName.includes(setName)) {
       return data;
     }
@@ -44,7 +50,7 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     lowerName.includes('hezen lord') ||
     lowerName.includes('prime zealot')
   ) {
-    return aegisSheetDb.armor["atheon's memory"] || null;
+    return db["atheon's memory"] || null;
   }
 
   if (
@@ -52,7 +58,7 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     lowerName.includes('unyielding favor') ||
     lowerName.includes('will of the just')
   ) {
-    return aegisSheetDb.armor["crota's memory"] || null;
+    return db["crota's memory"] || null;
   }
 
   if (
@@ -61,7 +67,7 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     lowerName.includes('doom of chelchis') ||
     lowerName.includes('chasm of yul')
   ) {
-    return aegisSheetDb.armor["oryx's memory"] || null;
+    return db["oryx's memory"] || null;
   }
 
   if (
@@ -69,7 +75,7 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     lowerName.includes('tmearp') ||
     lowerName.includes('tmmoss')
   ) {
-    return aegisSheetDb.armor["tm custom"] || null;
+    return db["tm custom"] || null;
   }
 
   if (
@@ -82,7 +88,7 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     lowerName.includes('iron symmachy') ||
     lowerName.includes('iron will')
   ) {
-    return aegisSheetDb.armor["iron panoply"] || aegisSheetDb.armor["iron battalion"] || null;
+    return db["iron panoply"] || db["iron battalion"] || null;
   }
 
   return null;
@@ -94,12 +100,14 @@ let scoringSource = 'aegis';
 let aegisLayoutSide = 'side';
 let aegisDbMode = 'both';
 let aegisTwoTier = false;
+let aegisArmorSource = 'lowco';
 let lightggDb: Record<string, string> = {};
 let aegisSheetDb: AegisSheetDatabase | null = null;
 let hoveredElement: HTMLElement | null = null;
 let registryObserver: MutationObserver | null = null;
 let nameToHash: Record<string, number> = {};
 let perkNameToIcon: Record<string, string> = {};
+let activeDetailsTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function updatePerkNameToIcon(perkRegistry: Record<string, { name: string, icon: string }>) {
   if (!perkRegistry) return;
@@ -818,13 +826,14 @@ function initAegisExplorer() {
 }
 
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource'], (res) => {
   wishlistDb = res.wishlistData || {};
   enhancedToNormalMap = res.enhancedToNormal || {};
   scoringSource = res.scoringSource || 'aegis';
   aegisLayoutSide = res.aegisLayoutSide || 'side';
   aegisDbMode = res.aegisDbMode || 'both';
   aegisTwoTier = res.aegisTwoTier || false;
+  aegisArmorSource = res.aegisArmorSource || 'lowco';
   lightggDb = res.lightggData || {};
   aegisSheetDb = res.aegisSheetDb || null;
   console.log(`DIM Aegis Overlay: Loaded configuration. Source: ${scoringSource}`);
@@ -861,6 +870,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
     if (changes.aegisTwoTier) {
       aegisTwoTier = changes.aegisTwoTier.newValue || false;
+      changed = true;
+    }
+    if (changes.aegisArmorSource) {
+      aegisArmorSource = changes.aegisArmorSource.newValue || 'lowco';
       changed = true;
     }
     if (changes.lightggData) {
@@ -940,6 +953,12 @@ function injectPopupSummary(
 
   const header = titleEl.parentElement;
   if (!header) return;
+
+  // Cancel any pending details card injection timeouts
+  if (activeDetailsTimeout) {
+    clearTimeout(activeDetailsTimeout);
+    activeDetailsTimeout = null;
+  }
 
   // Clean up any previously injected details card
   popupContainer.querySelectorAll('[data-aegis-details="true"]').forEach((el) => el.remove());
@@ -1258,7 +1277,8 @@ function injectPopupSummary(
         `
         );
         
-        setTimeout(() => {
+        activeDetailsTimeout = setTimeout(() => {
+          activeDetailsTimeout = null;
           const isSheet = popupContainer.matches('[class*="Sheet"], [class*="sheet"]');
           const rect = popupContainer.getBoundingClientRect();
           const spaceLeft = rect.left;
@@ -1678,6 +1698,39 @@ function processElement(el: HTMLElement) {
   }
 }
 
+const GRADE_VALUES: Record<string, number> = {
+  's+': 9,
+  's': 8,
+  'a+': 7,
+  'a': 6,
+  'b+': 5,
+  'b': 4,
+  'c': 3,
+  'd': 2,
+  'f': 1,
+  'none': 0
+};
+
+function compareGrades(itemGrade: string, queryStr: string): boolean {
+  const normalizedGrade = itemGrade.toLowerCase().trim();
+  const match = queryStr.match(/^([><]=?|==?)(.+)$/);
+  
+  if (match) {
+    const op = match[1];
+    const targetRank = match[2].trim();
+    const valItem = GRADE_VALUES[normalizedGrade] ?? 0;
+    const valTarget = GRADE_VALUES[targetRank] ?? 0;
+    
+    if (op === '>=') return valItem >= valTarget;
+    if (op === '>') return valItem > valTarget;
+    if (op === '<=') return valItem <= valTarget;
+    if (op === '<') return valItem < valTarget;
+    if (op === '=' || op === '==') return normalizedGrade === targetRank || normalizedGrade.startsWith(targetRank);
+  }
+  
+  return normalizedGrade === queryStr || normalizedGrade.startsWith(queryStr);
+}
+
 function setupSearchFilterObserver() {
   const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]') as HTMLInputElement;
   if (!searchInput) return;
@@ -1688,8 +1741,8 @@ function setupSearchFilterObserver() {
   searchInput.addEventListener('input', () => {
     const val = searchInput.value.trim().toLowerCase();
     
-    // Check if search query has "aegis:grade"
-    const aegisMatch = val.match(/\baegis:([a-z0-9+:-]+)/);
+    // Check if search query has "aegis:grade" (allowing comparison operators > < = /)
+    const aegisMatch = val.match(/\baegis:([a-z0-9+:-><=/]+)/);
     
     if (aegisMatch) {
       const targetQuery = aegisMatch[1].toLowerCase();
@@ -1697,49 +1750,59 @@ function setupSearchFilterObserver() {
       items.forEach(item => {
         const result = (item as any)._aegisResult as ScoringResult | undefined;
         const grade = result?.grade?.toLowerCase() || '';
-           // Extract weapon rank and perk rank if it's a 2-tier grade (e.g. "bs+")
+        // Extract weapon rank and perk rank if it's a 2-tier grade (e.g. "bs+")
         let isMatch = false;
         const isArmor = grade.includes('/');
 
         if (isArmor) {
+          let cleanQuery = targetQuery;
+          if (targetQuery.startsWith('a:') || targetQuery.startsWith('armor:')) {
+            cleanQuery = targetQuery.startsWith('a:') ? targetQuery.substring(2) : targetQuery.substring(6);
+          }
+
           const parts = grade.split('/');
           const rating2 = parts[0];
           const rating4 = parts[1];
 
-          if (targetQuery.startsWith('2p:') || targetQuery.startsWith('2piece:')) {
-            const targetRank = targetQuery.startsWith('2p:') ? targetQuery.substring(3) : targetQuery.substring(7);
-            isMatch = (rating2 === targetRank || rating2.startsWith(targetRank));
-          } else if (targetQuery.startsWith('4p:') || targetQuery.startsWith('4piece:')) {
-            const targetRank = targetQuery.startsWith('4p:') ? targetQuery.substring(3) : targetQuery.substring(7);
-            isMatch = (rating4 === targetRank || rating4.startsWith(targetRank));
-          } else if (targetQuery.includes('/')) {
-            isMatch = (grade === targetQuery);
+          if (cleanQuery.startsWith('2p:') || cleanQuery.startsWith('2piece:')) {
+            const targetRank = cleanQuery.startsWith('2p:') ? cleanQuery.substring(3) : cleanQuery.substring(7);
+            isMatch = compareGrades(rating2, targetRank);
+          } else if (cleanQuery.startsWith('4p:') || cleanQuery.startsWith('4piece:')) {
+            const targetRank = cleanQuery.startsWith('4p:') ? cleanQuery.substring(3) : cleanQuery.substring(7);
+            isMatch = compareGrades(rating4, targetRank);
+          } else if (cleanQuery.includes('/')) {
+            isMatch = (grade === cleanQuery);
           } else {
             // General query matching either 2p or 4p rating
-            isMatch = (rating2 === targetQuery || rating2.startsWith(targetQuery) || rating4 === targetQuery || rating4.startsWith(targetQuery));
+            isMatch = compareGrades(rating2, cleanQuery) || compareGrades(rating4, cleanQuery);
           }
         } else {
-          let weaponRank = '';
-          let perkRank = '';
-          const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
-          if (isTwoTier) {
-            weaponRank = grade.charAt(0);
-            perkRank = grade.substring(1);
+          // If the query starts with 'a:' or 'armor:', it's an armor-only filter, so weapons should not match.
+          if (targetQuery.startsWith('a:') || targetQuery.startsWith('armor:')) {
+            isMatch = false;
           } else {
-            perkRank = grade;
-          }
+            let weaponRank = '';
+            let perkRank = '';
+            const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
+            if (isTwoTier) {
+              weaponRank = grade.charAt(0);
+              perkRank = grade.substring(1);
+            } else {
+              perkRank = grade;
+            }
 
-          if (targetQuery === 'god') {
-            isMatch = perkRank.includes('s') || perkRank.includes('s+');
-          } else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
-            const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
-            isMatch = (weaponRank === targetRank);
-          } else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
-            const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
-            isMatch = (perkRank === targetRank || perkRank.startsWith(targetRank));
-          } else {
-            // General match: combined grade, or weapon rank, or perk rank
-            isMatch = (grade === targetQuery || weaponRank === targetQuery || perkRank === targetQuery || perkRank.startsWith(targetQuery));
+            if (targetQuery === 'god') {
+              isMatch = compareGrades(perkRank, '>=s');
+            } else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
+              const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
+              isMatch = compareGrades(weaponRank, targetRank);
+            } else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
+              const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
+              isMatch = compareGrades(perkRank, targetRank);
+            } else {
+              // General match: combined grade, or weapon rank, or perk rank
+              isMatch = compareGrades(grade, targetQuery) || compareGrades(weaponRank, targetQuery) || compareGrades(perkRank, targetQuery);
+            }
           }
         }
 
