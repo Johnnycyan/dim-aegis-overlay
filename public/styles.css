@@ -25,8 +25,19 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
   user-select: none !important;
   pointer-events: none !important;
-  transition: transform 0.2s ease !important;
+  transition: transform 0.2s ease, opacity 0.25s ease !important;
 }
+
+/* Ensure badge is dimmed if the parent store item is filtered or has low opacity */
+.aegis-badge {
+  opacity: inherit;
+}
+[class*="dimmed"] .aegis-badge,
+[style*="opacity: 0.15"] .aegis-badge,
+[style*="opacity:0.15"] .aegis-badge {
+  opacity: 0.2 !important;
+}
+
 
 .aegis-badge.aegis-badge-wide {
   width: auto !important;

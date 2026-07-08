@@ -1,0 +1,4371 @@
+{
+  "version": "0.6",
+  "reqId": "0",
+  "status": "ok",
+  "sig": "546053179",
+  "table": {
+    "cols": [
+      {
+        "id": "A",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "B",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "C",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "D",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "E",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "F",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "G",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "H",
+        "label": "",
+        "type": "string"
+      },
+      {
+        "id": "I",
+        "label": "",
+        "type": "string"
+      }
+    ],
+    "rows": [
+      {
+        "c": [
+          {
+            "v": "INFO"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "v": "ANALYSIS"
+          },
+          {
+            "v": null
+          }
+        ]
+      },
+      {
+        "c": [
+          {
+            "v": "🖼️"
+          },
+          {
+            "v": "Artifact"
+          },
+          {
+            "v": "Mod"
+          },
+          {
+            "v": "Tier"
+          },
+          {
+            "v": "Tags"
+          },
+          {
+            "v": "Trigger"
+          },
+          {
+            "v": "Effect"
+          },
+          {
+            "v": "Description"
+          },
+          {
+            "v": "Tier"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Blinding Jolts"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "jolted kill"
+          },
+          {
+            "v": "blind within 8m for 10s"
+          },
+          {
+            "v": "affected by Dominance/Shock nerf, but on paper very strong with constant jolt sources like Voltshot"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Kinetic Synthesis"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "3770 kinetic damage dealt or 12.5 kinetic kills (counter), 75% less progress for A499"
+          },
+          {
+            "v": "refills kinetic weapons and generates 33% of mag as ammo"
+          },
+          {
+            "v": "gives certain weapons infinite total (Chaperone catalyst is useless)"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Sniper's Meditation"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "sniper hit (5 stacks, heavy gives 2)"
+          },
+          {
+            "v": "2.8-15% sniper damage, ? stability, 15-45 reload for 7s, stowable"
+          },
+          {
+            "v": "15% boost to Still Hunt and A499 and Praedyth's and Conspiracy count me in"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Dielectric"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "arc-debuffed kill\n3 arc-debuffed kills within 6s of each"
+          },
+          {
+            "v": "Bolt Charge\n7.15% orb, 40 HP"
+          },
+          {
+            "v": "Bolt Charge on all jolt builds that don't have access, also free orbs"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Singularity Blade"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "melee or sword hit with void buff\nmelee or sword kill with void buff"
+          },
+          {
+            "v": "weaken applied on hit\nweaken burst within 4m"
+          },
+          {
+            "v": "great for debuff extension, unfortunately void buffs are some of the hardest to keep up during damage, good neutral though"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Sticker Shock"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "passive\nflux, fusion, magnetic kill"
+          },
+          {
+            "v": "60% flux, 30% fusion, 22.5% magnetic damage\n4 30m kinetic missiles on body"
+          },
+          {
+            "v": "would have been good before this meta, unfortunately not enough to boost grenades into DPS meta"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Sword Storm Combo"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "3 light 1 heavy sword combo"
+          },
+          {
+            "v": "disorienting damaging aura for 3s, does slightly more damage at edges, refresh on kill"
+          },
+          {
+            "v": "ends up being a 6-8% DPS increase for good swords in exchange for changing combo"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Combination Argent Blade"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "waiting 0.5s between sword attacks"
+          },
+          {
+            "v": "15% sword damage and 100 charge rate for 5s, not refreshable"
+          },
+          {
+            "v": "having to wait to activate in exchange for no Armor Charge cost is lowkey not worth it"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Counter Energy"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Champion stun"
+          },
+          {
+            "v": "25% energy to least-charged ability"
+          },
+          {
+            "v": "decent neutral but restricted application and not that noticeable"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Fierce Proxemics"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "finisher"
+          },
+          {
+            "v": "~20% grenade and melee"
+          },
+          {
+            "v": "not terrible but not really that potent in the grand scheme of things"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Kinetic Rupture"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "? kinetic damage to elite+"
+          },
+          {
+            "v": "spawns rupture on enemy, can be broken to do ?% damage (weapon-dependent)"
+          },
+          {
+            "v": "only really worth shooting with Izanagi's Burden, doesn't count as crit"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Power from Pain"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 consecutive weakened kills within 4s of each (weaken on killing blow counts)"
+          },
+          {
+            "v": "Devour for 5-7.5s, Void Breach"
+          },
+          {
+            "v": "would be better on NPA, honestly not that great given high weaken kill requirement"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Precision Equity"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "precision kills (counter to x10: minor: 1, elite: 2, miniboss: 5, champ+: 10)"
+          },
+          {
+            "v": "12.5% orb that gives global x2 surge for 11s"
+          },
+          {
+            "v": "while that is a really big orb, 10 counter requirement is pretty rough"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Reload at Range"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "bow or sniper crit (5 stacks)"
+          },
+          {
+            "v": "? reload per stack for 5s"
+          },
+          {
+            "v": "helps a lot with A499 during damage"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Tazer Tag"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "arc melee damage"
+          },
+          {
+            "v": "jolt on hit, small DoT applied (~800 over 8.75s)"
+          },
+          {
+            "v": "damage is okay but DoT takes way too long, jolt on hit is decent depending on melee"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Void Infestation"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "weakened kill"
+          },
+          {
+            "v": "15m tracking weakening 87 damage projectile"
+          },
+          {
+            "v": "not bad for chaining weakens for Power from Pain"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Armorsmith"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "breaking enemy shield"
+          },
+          {
+            "v": "Resist x1, +100% melee damage for 6s"
+          },
+          {
+            "v": "applies on finisher, but still not that great given generic resist override"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Elemental Orbs: Arc"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "4 arc weapon kills"
+          },
+          {
+            "v": "spawns 450 damage jolting orb"
+          },
+          {
+            "v": "orb does no damage and requires melee range pickup"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Press the Advantage"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "breaking enemy shield"
+          },
+          {
+            "v": "20? stability, 20? handling, 20 reload, ? guard resistance for 10s"
+          },
+          {
+            "v": "stats that do very little in PvE tied to a specific condition"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Rapid Remedy"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 machine gun kills within 3s of each"
+          },
+          {
+            "v": "15 HP and begins crit health regen"
+          },
+          {
+            "v": "way worse than Hold the Line"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Encrypted Data Disk"
+          },
+          {
+            "v": "Riposte"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "sword guard"
+          },
+          {
+            "v": "Unstoppable on hits for 3s"
+          },
+          {
+            "v": "currently does nothing due to inability to override sword intrinsic stun"
+          },
+          {
+            "v": "D"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Sniper's Meditation"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "sniper hit (5 stacks, heavy gives 2)"
+          },
+          {
+            "v": "2.8-15% sniper damage, ? stability, 15-45 reload for 7s, stowable"
+          },
+          {
+            "v": "15% boost to Still Hunt and A499 and Praedyth's and Conspiracy count me in"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Solar Fulmination"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "ignition"
+          },
+          {
+            "v": "extra 190 damage instance, 40-60 extra scorch if Char is equipped"
+          },
+          {
+            "v": "upgrades ignition builds significantly"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Argent Blade"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "sword damage with Armor Charge"
+          },
+          {
+            "v": "consumes one Armor Charge to give 15% sword damage and 100 charge rate for 5s"
+          },
+          {
+            "v": "would be higher if swords were good enough for this to matter"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Energy Diffusion Substrate"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "passive"
+          },
+          {
+            "v": "5?% DR"
+          },
+          {
+            "v": "free DR at tier I level"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Radiant Orbs"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "orb pick up with solar or Prismatic equipped"
+          },
+          {
+            "v": "Radiant for 10-15s"
+          },
+          {
+            "v": "good for general content, but especially great for more optimized runs"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Shieldcrush"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "Frost Armor, Void Overshield, or Woven Mail\nAmplified or Radiant"
+          },
+          {
+            "v": "?% melee recharge, 50% powered melee damage\n?% grenade recharge, 25% grenade damage\ngrapple melee gets 12% from both halves"
+          },
+          {
+            "v": "free ability regen for existing, damage boosts are nice too (much lower impact on grapple now)"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Sustained Fire"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10 auto rifle hits within 1.5s of each on one enemy (also works with support auto healing)"
+          },
+          {
+            "v": "Resist x2 for 6s, stowable"
+          },
+          {
+            "v": "skews primary selection towards auto, essentially free DR in harder content (for hit requirement)"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Targeting Autoloader"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "auto rifle kills (5 stacks, hallf stack if not within 15m of 3 enemies or at 5 stacks)"
+          },
+          {
+            "v": "20-40% of mag refilled, 10-20% stackable auto rifle damage, buff removed on non-auto rifle ready"
+          },
+          {
+            "v": "no other primary is getting the treatment autos are getting this patch, doubled Subsistence + extra damage perk"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Elemental Siphon"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 kinetic or super-matched weapon kills within 3?s of each"
+          },
+          {
+            "v": "super-matched elemental pickup"
+          },
+          {
+            "v": "worse version that doesn't give super, still decent in most builds"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Blade Stamina"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 sword kills within 5s of each"
+          },
+          {
+            "v": "3 ammo (2 for Praxic/Ergo)"
+          },
+          {
+            "v": "swords don't really need the ammo that much but why not"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Counter Energy"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Champion stun"
+          },
+          {
+            "v": "25% energy to least-charged ability"
+          },
+          {
+            "v": "decent neutral but restricted application and not that noticeable"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Creeping Chill"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "stasis-debuffed stasis kill"
+          },
+          {
+            "v": "6?m 20 slow burst"
+          },
+          {
+            "v": "requirement is a little tight, but effect is good if building into it"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Expanding Abyss"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "weakened enemy"
+          },
+          {
+            "v": "3.8% / 8.7% void damage (30% / 15% weaken)"
+          },
+          {
+            "v": "technically a free damage increase but very minor, not on the artifacts that boost the best void weapons"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Incendiary Rifle Rounds"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "solar sniper crit"
+          },
+          {
+            "v": "30-45 scorch"
+          },
+          {
+            "v": "quite niche, basically just for Still Hunt on the worse of the two Sniper's artifacts, maybe pair with Fulmination?"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Shock and Awe"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Amplified arc kill with arc or Prismatic equipped"
+          },
+          {
+            "v": "8m jolting 126 damage arc burst, 5s ICD"
+          },
+          {
+            "v": "free splash, ICD holds it back from being better"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Void Hegemony"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "weakened kill with void or Prismatic equipped"
+          },
+          {
+            "v": "15 HP Void Overshield"
+          },
+          {
+            "v": "smallish overshield, rest of artifact doesn't really provide weaken sources though"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Transference"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "Transcendent\nafter Transcendence ends"
+          },
+          {
+            "v": "10% grenade/melee damage\n4.2% light/darkness energy for next 12 weapon kills"
+          },
+          {
+            "v": "not really a highly desirable effect"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Press The Advantage"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "breaking enemy shield"
+          },
+          {
+            "v": "20? stability, 20? handling, 20 reload, ? guard resistance for 10s"
+          },
+          {
+            "v": "stats that do very little in PvE tied to a specific condition"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Threaded Blast"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Tangle destruction with strand damage"
+          },
+          {
+            "v": "extra ~285 damage 15m explosion"
+          },
+          {
+            "v": "long effective cooldown on not the most amazing effect"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Prismatic Transfer"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "super cast"
+          },
+          {
+            "v": "allies within 15m with a different super element get 20% non-stackable damage for 10s"
+          },
+          {
+            "v": "can't find a reason to ever use this"
+          },
+          {
+            "v": "D"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Hunter's Journal"
+          },
+          {
+            "v": "Bad Amplitude"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "arc ability Champion damage"
+          },
+          {
+            "v": "inflicts jolt"
+          },
+          {
+            "v": "almost unnoticeable"
+          },
+          {
+            "v": "D"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Argent Quiver"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "reloading bow with Armor Charge"
+          },
+          {
+            "v": "consumes one Armor Charge to give 3 bow shots of 35% stackable damage (25% for heavy), stowing removes stacks"
+          },
+          {
+            "v": "25% boost to Levi count me in, unfortunately not as good for Envious crossbow due to swap removal"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Cauterized Darkness"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "darkness-debuffed non-bosses, one target at a time"
+          },
+          {
+            "v": "75% solar damage (2s ICD, might need additional debuff application)"
+          },
+          {
+            "v": "75% is insane, but application conditions are definitely annoying in practice"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Elemental Benevolence"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "elemental buffing ally"
+          },
+          {
+            "v": "15?% class energy, 3?s ICD per ally"
+          },
+          {
+            "v": "pretty decent in larger fireteams, even if class is arguably least useful ability to gen"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Energy Acceleration"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "2 explosive damage instances with micro-missiles or micro-missile kill"
+          },
+          {
+            "v": "120 damage 7m Unstoppable kinetic shockwave, 2?s ICD"
+          },
+          {
+            "v": "basically a free third splash perk for rocket pulses and sidearms"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Horde Shuttle"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10% enemy health weapon damage to unraveled enemy\npassive"
+          },
+          {
+            "v": "Threadling on 0.5s ICD\nThreadlings sever"
+          },
+          {
+            "v": "must-have for any Threadling build, also good for grapple neutral"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Iron Lord's Vigor"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "sword readied\n3 sword kills within 3?s of each"
+          },
+          {
+            "v": "25% DR\n3 ammo (2 for Praxic/Ergo)"
+          },
+          {
+            "v": "ammo economy decent, DR should stack"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Pack Tactics"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "Threadling damage (infinite stacks)"
+          },
+          {
+            "v": "15% / 30% / ... Unstoppable Threadling damage (huge dropoff after x2) for 10s"
+          },
+          {
+            "v": "like Thunderous Retort for Needlestorm and also boosts Threadling neutral"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Semi-Auto Striker"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "5 scout, 3 bow, or 2 sniper hits with <2 Armor Charge"
+          },
+          {
+            "v": "Armor Charge"
+          },
+          {
+            "v": "pairs great with Argent Quiver, otherwise just decent for neutral"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Shieldcrush"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "Frost Armor, Void Overshield, or Woven Mail\nAmplified or Radiant"
+          },
+          {
+            "v": "?% melee recharge, 50% powered melee damage\n?% grenade recharge, 25% grenade damage\ngrapple melee gets 12% from both halves"
+          },
+          {
+            "v": "free ability regen for existing, damage boosts are nice too (much lower impact on grapple now)"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Shoulder to Shoulder"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "sustained precision damage within 15m of 2 allies"
+          },
+          {
+            "v": "Resist x2 for 10?s"
+          },
+          {
+            "v": "free DR for any sort of fireteam precision-based damage"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Elemental Daze"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "non-kinetic Champion stun"
+          },
+          {
+            "v": "280? damage 8m weapon-matched elemental effect explosion"
+          },
+          {
+            "v": "decent damage and splash but restricted application and not amazing"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Elemental Overdrive"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "elemental pickup"
+          },
+          {
+            "v": "x3 matching surge for 7s"
+          },
+          {
+            "v": "decent for roam but not mindblowing"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Fever and Chill"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "25% mag + 1 rounded down landed (bow needs 3) with solar or stasis weapons"
+          },
+          {
+            "v": "Radiant for 10-15s or Frost Armor x1 for 9s"
+          },
+          {
+            "v": "pretty decent especially for getting Radiant but other equivalents like Radiant Orbs are better"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Frigid Glare"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "stasis crit kill with Frost Armor"
+          },
+          {
+            "v": "6m freezing explosion"
+          },
+          {
+            "v": "steep requirement but solid effect"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Frost Renewal"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "critical health with Frost Armor"
+          },
+          {
+            "v": "12m freezing burst and 1x Frost Armor to allies"
+          },
+          {
+            "v": "fairly solid defensive effect all things considered, just build-dependent"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Radiant Shrapnel"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10% enemy health weapon damage while Radiant or scorched kill"
+          },
+          {
+            "v": "343 damage 20 scorch shrapnel released, 1s ICD"
+          },
+          {
+            "v": "shrapnel tracking is pretty bad, but pretty simple stagger activation requirement"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Refresh Threads"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "super-matching elemental pickup"
+          },
+          {
+            "v": "20?% energy to least-charged ability"
+          },
+          {
+            "v": "good general ability regen mod"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Tangled Web"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "strand-debuffed kill that results in Tangle creation"
+          },
+          {
+            "v": "?m suspending explosion"
+          },
+          {
+            "v": "decent effect but unfortunately locked to long Tangle cooldown"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "That Fresh Bullets Smell"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "ammo pickup"
+          },
+          {
+            "v": "x2 kinetic surge for 11s"
+          },
+          {
+            "v": "would be a lot better if available with Kinetic Synthesis, otherwise just okay"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Elemental Coalescence"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10-14 kills"
+          },
+          {
+            "v": "super-matched elemental pickup"
+          },
+          {
+            "v": "way too many kills just for one pickup"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Implement of Curiosity"
+          },
+          {
+            "v": "Threaded Blast"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Tangle destruction with strand damage"
+          },
+          {
+            "v": "extra ~285 damage 15m explosion"
+          },
+          {
+            "v": "long effective cooldown on not the most amazing effect"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Shatter Orbs"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "matching shield break"
+          },
+          {
+            "v": "7.15% orb"
+          },
+          {
+            "v": "enables super spam / special finisher loop"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Thunderous Retort"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "critical health or Amplified"
+          },
+          {
+            "v": "30% arc super damage (only applies while in super)"
+          },
+          {
+            "v": "specialized super damage boost (instead of Limit Break)"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Bricks from Beyond"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 elite+ void weapon kills"
+          },
+          {
+            "v": "50?% heavy ammo progress for allies within ?m"
+          },
+          {
+            "v": "another helping of heavy ammo gen on top of the many other sources of plentiful ammo fountains in the sandbox"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Passive Aggressive Guard"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "glaive readied"
+          },
+          {
+            "v": "25% DR within ?m"
+          },
+          {
+            "v": "free DR that should stack with Swordmaster during glaive block"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Sustained Fire"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10 auto rifle hits within 1.5s of each on one enemy (also works with support auto healing)"
+          },
+          {
+            "v": "Resist x2 for 6s, stowable"
+          },
+          {
+            "v": "skews primary selection towards auto, essentially free DR in harder content (for hit requirement)"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Targeting Autoloader"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "auto rifle kills (5 stacks, hallf stack if not within 15m of 3 enemies or at 5 stacks)"
+          },
+          {
+            "v": "20-40% of mag refilled, 10-20% stackable auto rifle damage, buff removed on non-auto rifle ready"
+          },
+          {
+            "v": "no other primary is getting the treatment autos are getting this patch, doubled Subsistence + extra damage perk"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Suppressing Glaive"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "glaive projectile damage"
+          },
+          {
+            "v": "Suppression for 10s"
+          },
+          {
+            "v": "no ICD on one of the strongest enemy disablers in the game"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Conductive Cosmic Needle"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "strand-debuffed enemy"
+          },
+          {
+            "v": "5% arc and void ability damage"
+          },
+          {
+            "v": "in isolation a good boss DPS effect but given that there are no other global boosters in this artifact, not so great"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Counter Charge"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Champion stun"
+          },
+          {
+            "v": "Armor Charge"
+          },
+          {
+            "v": "decent neutral but restricted application and not that noticeable"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Lightning Strikes Twice"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "arc grenade ability usage"
+          },
+          {
+            "v": "130% grenade recharge, arc kills extend by 3s up to 20s"
+          },
+          {
+            "v": "wouldn't this be so cool if it was paired with Sticker Shock"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Protective Breach"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Void Breach pickup"
+          },
+          {
+            "v": "45 Void Overshield for 10-15s"
+          },
+          {
+            "v": "really nice overshield but Void Breaches aren't commonplace enough to warrant A"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Shock and Awe"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Amplified arc kill with arc or Prismatic equipped"
+          },
+          {
+            "v": "8m jolting 126 damage arc burst, 5s ICD"
+          },
+          {
+            "v": "free splash, ICD holds it back from being better"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Supernova"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Void Breach pickup"
+          },
+          {
+            "v": "next void damage within 10s creates 5?m weaken burst"
+          },
+          {
+            "v": "mostly exists to synergize with other void artifact mods, not amazing in isolation"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Unto the Breach"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "void-debuffed kill with void equipped"
+          },
+          {
+            "v": "Void Breach"
+          },
+          {
+            "v": "easy Void Breach access for insane void artifact"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Void Weapon Channeling"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "void weapon kill with at least 1 charged void ability"
+          },
+          {
+            "v": "gives up to 4 void weapon surge stacks for every charged void ability for 11s"
+          },
+          {
+            "v": "little build-dependent but still very easy access to roam surges"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Volatile Flow"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "orb pickup"
+          },
+          {
+            "v": "Volatile Rounds for 9s"
+          },
+          {
+            "v": "free Volatile Rounds"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Improved Unraveling"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "passive"
+          },
+          {
+            "v": "15% unraveling thread damage"
+          },
+          {
+            "v": "not really a difference maker"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Overload Grenades"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "void grenade damage"
+          },
+          {
+            "v": "Overload"
+          },
+          {
+            "v": "1/3 of the sandbox now Overloads, very unneeded"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Squad Goals"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "finisher with super-matched elemental buff (Amplified, Devour, or Woven Mail)"
+          },
+          {
+            "v": "shares Amplified, Devour, and Woven Mail with allies within ?m"
+          },
+          {
+            "v": "sounds cool but isn't really that useful in practice"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Strand Soldier"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Woven Mail on strand"
+          },
+          {
+            "v": "Unraveling Rounds for 8s"
+          },
+          {
+            "v": "significantly lower value in a post-universal stun world, also would be a lot better on a strand artifact"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "NPA Repulsion Regulator"
+          },
+          {
+            "v": "Amped Up"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "arc or Prismatic equipped"
+          },
+          {
+            "v": "Amplified duration to 20s"
+          },
+          {
+            "v": "hard to notice, Amplified is almost always up"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Argent Ordnance"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "firing rocket with Armor Charge"
+          },
+          {
+            "v": "consumes one Armor Charge to give 15% rocket damage, ? reload, 0.?x reload duration for 4.5s"
+          },
+          {
+            "v": "15% boost to Truth and Hezen count me in"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Blast Radius"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "2 GL or rocket kills within ?s of each"
+          },
+          {
+            "v": "Armor Charge"
+          },
+          {
+            "v": "excellent Armor Charge source that pairs well with a variety of charge consumption mods"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Solo Operative"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "crit kills while solo (25 stacks, lost on death)"
+          },
+          {
+            "v": "1.2% weapon damage per stack (up to 30%)"
+          },
+          {
+            "v": "higher global stacking boost than anything else, just needs work to stack"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Hail The Storm"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "stasis crystal shatter\npassive"
+          },
+          {
+            "v": "5 homing 46 damage ? slow ice shards\n12.5% enemy shatter damage, 25% crystal shatter damage"
+          },
+          {
+            "v": "helps with chaining freezes in stasis builds, also a super damage boost for Glacial Quake"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Heart of the Flame"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "solar super cast (scales up to 5 nearby allies)"
+          },
+          {
+            "v": "gives allies within 15m Radiant, up to 15% super damage (Well caster gets buff for 5s)"
+          },
+          {
+            "v": "worse than Limit Break in most cases but situationally useful due to instant Radiant and Well potential"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Horde Shuttle"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10% enemy health weapon damage to unraveled enemy\npassive"
+          },
+          {
+            "v": "Threadling on 0.5s ICD\nThreadlings sever"
+          },
+          {
+            "v": "must-have for any Threadling build, also good for grapple neutral"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Perpetual Destruction"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "non-exotic rocket kills (counter: 4 minors, 3 elites, 1 miniboss+)"
+          },
+          {
+            "v": "10% heavy ammo rounded up, ? reload and 0.?x reload duration for 10s"
+          },
+          {
+            "v": "excellent for Bipod Pack rocket spamming"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "To Shreds"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "6 severed weapon damage instances\nsevered kill"
+          },
+          {
+            "v": "inflicts unravel\nmakes Into the Fray triple Woven Mail + 15 HP pulses on kill location"
+          },
+          {
+            "v": "first effect is sort of useless, second effect is great"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Wished Into Being"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "ability kill with >80% super but not charged"
+          },
+          {
+            "v": "3 7.14% orbs, ?s ICD"
+          },
+          {
+            "v": "basically gives 25% faster super if ability kills are being spammed"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Anti-Champion Nosecone"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "passive"
+          },
+          {
+            "v": "33% rocket damage to Champions"
+          },
+          {
+            "v": "limited applicability but obviously good if doing some sort rocket spam strat in a conquest or something similar"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Creeping Chill"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "stasis-debuffed stasis kill"
+          },
+          {
+            "v": "6?m 20 slow burst"
+          },
+          {
+            "v": "requirement is a little tight, but effect is good if building into it"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Fever and Chill"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "25% mag + 1 rounded down landed (bow needs 3) with solar or stasis weapons"
+          },
+          {
+            "v": "Radiant for 10-15s or Frost Armor x1 for 9s"
+          },
+          {
+            "v": "pretty decent especially for getting Radiant but other equivalents like Radiant Orbs are better"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Frigid Glare"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "stasis crit kill with Frost Armor"
+          },
+          {
+            "v": "6m freezing explosion"
+          },
+          {
+            "v": "steep requirement but solid effect"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Kindling Trigger"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Radiant solar weapon damage to non-scorched combatants, doesn't work in Well?"
+          },
+          {
+            "v": "30-45 scorch"
+          },
+          {
+            "v": "guarantees base-scaled ignition, maybe decent for solar add clear stagger"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Pillar of Ice"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "frozen kill"
+          },
+          {
+            "v": "stasis crystal (2 if boss kill)"
+          },
+          {
+            "v": "effort:crystal ratio is pretty good on this one"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Rays of Precision"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Radiant solar crit kills"
+          },
+          {
+            "v": "ignition"
+          },
+          {
+            "v": "basically a very powerful Firefly for solar weapons"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Revitalizing Blast"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Champion stun"
+          },
+          {
+            "v": "ignition"
+          },
+          {
+            "v": "satisfying and can chain into more ignitions but not really that impactful"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Unraveling Orbs"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "orb pickup or Tangle throw"
+          },
+          {
+            "v": "Unraveling Rounds for 14s"
+          },
+          {
+            "v": "synergizes with unravel requirements on other mods"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Torch"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "darkness-debuffed non-bosses"
+          },
+          {
+            "v": "5% weapon damage"
+          },
+          {
+            "v": "almost unnoticeable"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Armorsmith"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "breaking enemy shield"
+          },
+          {
+            "v": "Resist x1, +100% melee damage for 6s"
+          },
+          {
+            "v": "applies on finisher, but still not that great given generic resist override"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Queensfoil Censer"
+          },
+          {
+            "v": "Dragon's Bite"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 shield breaks using strand or stasis weapon"
+          },
+          {
+            "v": "suspend or freeze"
+          },
+          {
+            "v": "mediocre effect for 3 separate shield breaks"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Curative Orbs"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "first breaking an enemy shield\norb, elemental pickup, or Tangle destruction"
+          },
+          {
+            "v": "7.15% orb\n40 HP"
+          },
+          {
+            "v": "enables super spam / special finisher loop, better than Shatter due to less restrictive conditions and heal"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Arc Compounding"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "blinded enemy"
+          },
+          {
+            "v": "15% arc damage"
+          },
+          {
+            "v": "would be better if there was another global booster in this artifact, or if arc weapons were better"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Hail The Storm"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "stasis crystal shatter\npassive"
+          },
+          {
+            "v": "5 homing 46 damage ? slow ice shards\n12.5% enemy shatter damage, 25% crystal shatter damage"
+          },
+          {
+            "v": "helps with chaining freezes in stasis builds, also a super damage boost for Glacial Quake"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Total Carnage"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "elite+ finisher"
+          },
+          {
+            "v": "Resist x2 for 11s, 100 HP, starts health regen"
+          },
+          {
+            "v": "elite+ requirement can be annoying, but effect is pretty strong"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Debilitating Wave"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "finisher"
+          },
+          {
+            "v": "15m 180 super-matched wave, blind/weaken/slow if on arc/void/stasis"
+          },
+          {
+            "v": "decent finisher mod in probably the strongest finisher spam sandbox ever"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Conductive Cosmic Crystal"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "stasis-debuffed enemy"
+          },
+          {
+            "v": "5% arc and void ability damage"
+          },
+          {
+            "v": "in isolation a good boss DPS effect but given that there are no other global boosters in this artifact, not so great"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Crystalline Converter"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "8 / 12 / 15 Stasis Shard pickups, then powered stasis melee hit\nstasis weapon kill after class ability"
+          },
+          {
+            "v": "1 / 2 / 3 crystals spawned\nStasis Shard spawned"
+          },
+          {
+            "v": "pretty steep requirement, builds that benefit from crystals already spawn plenty of them"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Frost Renewal"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "critical health with Frost Armor"
+          },
+          {
+            "v": "12m freezing burst and 1x Frost Armor to allies"
+          },
+          {
+            "v": "fairly solid defensive effect all things considered, just build-dependent"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Power from Pain"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 consecutive weakened kills within 4s of each (weaken on killing blow counts)"
+          },
+          {
+            "v": "Devour for 5-7.5s, Void Breach"
+          },
+          {
+            "v": "would be better on NPA, honestly not that great given high weaken kill requirement"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Retinal Burn"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "2 arc non-blinded crits within ?s of each with Armor Charge"
+          },
+          {
+            "v": "consumes one Armor Charge to trigger ?m blinding burst for ?s"
+          },
+          {
+            "v": "basically just exists to pair with Arc Compounding"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Served Cold"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Stasis Shard pickup\nVoid Breach pickup"
+          },
+          {
+            "v": "10% class energy\n10% melee energy"
+          },
+          {
+            "v": "just supplements what pickups already do"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Supernova"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Void Breach pickup"
+          },
+          {
+            "v": "next void damage within 10s creates 5?m weaken burst"
+          },
+          {
+            "v": "mostly exists to synergize with other void artifact mods, not amazing in isolation"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "The Thick of It"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 kills within ?s of each within 15?m of 3 enemies\nwithin 15?m of 3 enemies"
+          },
+          {
+            "v": "Armor Charge\n? handling and ? charge rate"
+          },
+          {
+            "v": "decent way of getting easy Armor Charge, other benefits are not really significant besides maybe on Ergo"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Trace Evidence"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "2 arc-debuffed crits within 1?s of each or 3 arc-debuffed kills within ?s of each\nIonic Trace pickup\n"
+          },
+          {
+            "v": "Ionic Trace (4s ICD)\nArmor Charge"
+          },
+          {
+            "v": "free traces and Armor Charge, not the greatest uptime but still not bad"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Void Renewal"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "void weapon kills with Devour (counter: 6 minors, 3 elites, 2 miniboss+)\nVoid Breach pickup"
+          },
+          {
+            "v": "Void Breach\n? handling, ? reload, refills shotguns/GLs"
+          },
+          {
+            "v": "counter definitely a bit steep for just one Void Breach"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Weakened Clear"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "boss/champ GL damage or GL enemy shield break"
+          },
+          {
+            "v": "15% weaken for 20?s, non-refreshable, non-extensible, refills stowed weapons (10?s ICD)"
+          },
+          {
+            "v": "very long weaken but doesn't interact with extensions, refill has a long ICD"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Wind Chill"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "30% mag + 1 rounded down landed withins 3s of each with stasis weapons\nstasis weapon slowed/frozen damage"
+          },
+          {
+            "v": "Frost Armor\n?% chance to spawn Stasis Shard"
+          },
+          {
+            "v": "decent neutral, also has boss damage applications if using stasis weapons"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Kinetic Impacts"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "5 GL hits within 1?s of each"
+          },
+          {
+            "v": "372 damage kinetic Unstoppable shockwave, ?s ICD"
+          },
+          {
+            "v": "minuscule DPS increase for GLs, doesn't stack across fireteam"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Brain Freeze"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "enemy freeze"
+          },
+          {
+            "v": "~4?m radius nerfed slow mini duskfield for duration of freeze"
+          },
+          {
+            "v": "mini duskfield slow stacks are extremely slow and does almost no damage"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Old God's Rite"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Void Breach pickup"
+          },
+          {
+            "v": "next void damage within 10s creates 8 ~10m 334 damage homing void orbs"
+          },
+          {
+            "v": "orbs have horrible tracking and are very gimmicky"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Slayer Baron Apothecary Satchel"
+          },
+          {
+            "v": "Killing Breeze"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 weapon kills within 3s of each"
+          },
+          {
+            "v": "? mobility for 5s, refreshable"
+          },
+          {
+            "v": "does next to nothing in PvE"
+          },
+          {
+            "v": "D"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Elemental Supercharger"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "exhausted or severed super-matched kill"
+          },
+          {
+            "v": "2?% super energy"
+          },
+          {
+            "v": "best super generation, works with all Overload weapons"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Limit Break"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS"
+          },
+          {
+            "v": "super cast at critical health or with super-matched buff"
+          },
+          {
+            "v": "15% super damage (8s duration for burst supers)"
+          },
+          {
+            "v": "generic super damage boost"
+          },
+          {
+            "v": "S"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Defibrillating Blast"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "Champion stun\nBolt Charge discharge"
+          },
+          {
+            "v": "x10 Bolt Charge\ninflicts jolt, gives ~55 HP, starts crit health regen"
+          },
+          {
+            "v": "free damage sustain with Storm's Keep"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Dielectric"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "arc-debuffed kill\n3 arc-debuffed kills within 6s of each"
+          },
+          {
+            "v": "Bolt Charge\n7.15% orb, 40 HP"
+          },
+          {
+            "v": "Bolt Charge on all jolt builds that don't have access, also free orbs"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Elemental Siphon"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "3 kinetic or super-matched weapon kills within 3?s of each\nsuper-matched elemental pickup"
+          },
+          {
+            "v": "super-matched elemental pickup\n5% super, 2s ICD"
+          },
+          {
+            "v": "better version with super gains, especially good with pickup spam builds"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Flashover"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "reaching x10 Bolt Charge\npassive"
+          },
+          {
+            "v": "Amplified for 15s\n50% increased Bolt Charge damage"
+          },
+          {
+            "v": "given meta direction Flashover didn't need this much of a nerf but still a decent overall effect"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Gold from Lead"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "5-6 special brick pickups"
+          },
+          {
+            "v": "8% heavy ammo, rounded up"
+          },
+          {
+            "v": "another helping of heavy ammo gen on top of the many other sources of plentiful ammo fountains in the sandbox"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Harsh Refraction"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "3 matching debuffed trace rifle hits "
+          },
+          {
+            "v": "50% trace damage for 4s (35% for exotic special/Lodestar, 20% for Microcosm after 4 hits)"
+          },
+          {
+            "v": "good for trace add clear"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Heavy Ordnance Regeneration"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "8 LMG or 2 rocket damage instances within 7s of each"
+          },
+          {
+            "v": "Resist x2 for 15.5s, 85% base grenade/melee regen for 10s, elite+ kills disorient minors within ?m"
+          },
+          {
+            "v": "free generic DR when doing rocket DPS or LMG add clear"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Hold the Line"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "within 15m of 3 enemies with glaive or LMG readied"
+          },
+          {
+            "v": "? stability, 30 reload, weapon kills (including glaive melee) give 55 HP"
+          },
+          {
+            "v": "free healing when doing LMG add clear"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Horde Shuttle"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "10% enemy health weapon damage to unraveled enemy\npassive"
+          },
+          {
+            "v": "Threadling on 0.5s ICD\nThreadlings sever"
+          },
+          {
+            "v": "must-have for any Threadling build, also good for grapple neutral"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Maligned Harvest"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "inflicting volatile 4 times within ?s of each\ninflicting weaken (once per source)"
+          },
+          {
+            "v": "next void damage within 10s creates 5?m weaken burst\n25 HP Void Overshield for 10-15s"
+          },
+          {
+            "v": "excellent void build component"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Particle Reconstruction"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "fusion/LFR hits (5 stacks)\n50% fusion/LFR mag + 1 rounded down landed"
+          },
+          {
+            "v": "5% / 10.25% / 15.8% / 21.6% / 27.6% fusion/LFR damage for ?s\n10% mag refill, hits have 1s ICD\n"
+          },
+          {
+            "v": "best-in-class artifact debuff for non-Felwinter solos, also has a Rewind Rounds effect"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Perpetual Destruction"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "non-exotic rocket kills (counter: 4 minors, 3 elites, 1 miniboss+)"
+          },
+          {
+            "v": "10% heavy ammo rounded up, ? reload and 0.?x reload duration for 10s"
+          },
+          {
+            "v": "excellent for Bipod Pack rocket spamming"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "To Shreds"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "6 severed weapon damage instances\nsevered kill"
+          },
+          {
+            "v": "inflicts unravel\nmakes Into the Fray triple Woven Mail + 15 HP pulses on kill location"
+          },
+          {
+            "v": "first effect is sort of useless, second effect is great"
+          },
+          {
+            "v": "A"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "No Bell"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "DPS\nroam"
+          },
+          {
+            "v": "2 special glaive melee kills within 3?s of each\nblocking damage with glaive shield"
+          },
+          {
+            "v": "2 ammo to special glaives\nadditive 85% glaive melee damage for 6s"
+          },
+          {
+            "v": "definitely a lot worse now that melee bonus isn't multiplicative"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Vile Weave"
+          },
+          {
+            "v": "II"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "Tangle detonation\nTangle pickup"
+          },
+          {
+            "v": "sever for ?s\nTangle cooldown reduced by 4s"
+          },
+          {
+            "v": "decent sever chaining effect on the best strand artifact"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Void Flux"
+          },
+          {
+            "v": "III"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "weakened void weapon kill"
+          },
+          {
+            "v": "?m volatile burst (?m for elite+ kill)"
+          },
+          {
+            "v": "not the strongest effect given the requirements but not bad"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Volatile Marksman"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "25% mag + 1 rounded down landed (bow needs 2) or 3 kills within 3s of each with void weapon\nvolatile detonation\n"
+          },
+          {
+            "v": "Volatile Rounds for 10s\n10% class energy"
+          },
+          {
+            "v": "worse than Volatile Flow outside of damage"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Unraveling Orbs"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam\nDPS"
+          },
+          {
+            "v": "orb pickup or Tangle throw"
+          },
+          {
+            "v": "Unraveling Rounds for 14s"
+          },
+          {
+            "v": "synergizes with unravel requirements on other mods"
+          },
+          {
+            "v": "B"
+          }
+        ]
+      },
+      {
+        "c": [
+          null,
+          {
+            "v": "Tablet of Ruin"
+          },
+          {
+            "v": "Photonic Flare"
+          },
+          {
+            "v": "I"
+          },
+          {
+            "v": "roam"
+          },
+          {
+            "v": "exhausted or severed arc kill"
+          },
+          {
+            "v": "5?m blinding burst, 6?s ICD"
+          },
+          {
+            "v": "not the worst effect but ICD is very noticeable"
+          },
+          {
+            "v": "C"
+          }
+        ]
+      }
+    ],
+    "parsedNumHeaders": 0
+  }
+}
