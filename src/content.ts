@@ -45,32 +45,61 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
   // Fallback map for raid/dungeon sets with unique naming schemes
   const lowerName = normalizedName.replace(/[^a-z0-9\s]/g, '');
 
+  // 1. Vault of Glass (Atheon's Memory)
   if (
     lowerName.includes('kabr') ||
     lowerName.includes('hezen lord') ||
-    lowerName.includes('prime zealot')
+    lowerName.includes('prime zealot') ||
+    lowerName.includes('shattered vault') ||
+    lowerName.includes('fragment of the prime') ||
+    lowerName.includes('great prism')
   ) {
     return db["atheon's memory"] || null;
   }
 
+  // 2. Crota's End (Crota's Memory)
   if (
     lowerName.includes('deathsinger') ||
-    lowerName.includes('unyielding favor') ||
-    lowerName.includes('will of the just')
+    lowerName.includes('will of the just') ||
+    lowerName.includes('unyielding casque') ||
+    lowerName.includes('dogged gage') ||
+    lowerName.includes('relentless harness') ||
+    lowerName.includes('tireless strides') ||
+    lowerName.includes('shroud of flies')
   ) {
     return db["crota's memory"] || null;
   }
 
+  // 3. King's Fall (Oryx's Memory)
   if (
     lowerName.includes('war numen') ||
+    lowerName.includes('darkhollow') ||
     lowerName.includes('mouth of ur') ||
-    lowerName.includes('doom of chelchis') ||
-    lowerName.includes('chasm of yul')
+    lowerName.includes('chasm of yul') ||
+    lowerName.includes('fangs of shun') ||
+    lowerName.includes('path of xol') ||
+    lowerName.includes('bond of the wormlore')
   ) {
     return db["oryx's memory"] || null;
   }
 
+  // 4. Garden of Salvation (Kentarch 3)
+  if (lowerName.includes('kentarch')) {
+    return db["kentarch 3"] || null;
+  }
+
+  // 5. Root of Nightmares (Nezarec's Nightmare)
   if (
+    lowerName.includes('agonized') ||
+    lowerName.includes('detested') ||
+    lowerName.includes('trepidation')
+  ) {
+    return db["nezarec's nightmare"] || null;
+  }
+
+  // 6. Spire of the Watcher (TM Custom)
+  if (
+    lowerName.includes('tmgogburn') ||
     lowerName.includes('tmcogburn') ||
     lowerName.includes('tmearp') ||
     lowerName.includes('tmmoss')
@@ -78,6 +107,7 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     return db["tm custom"] || null;
   }
 
+  // 7. Iron Banner (Iron Panoply)
   if (
     lowerName.includes('iron companion') ||
     lowerName.includes('iron forerunner') ||
