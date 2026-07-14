@@ -97,7 +97,9 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
 
   // 5. Root of Nightmares (Nezarec's Nightmare)
   if (
+    lowerName.includes('agony') ||
     lowerName.includes('agonized') ||
+    lowerName.includes('detestation') ||
     lowerName.includes('detested') ||
     lowerName.includes('trepidation')
   ) {
@@ -128,18 +130,14 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     return db["iron panoply"] || db["iron battalion"] || null;
   }
 
-  // 8. Root of Nightmares (
-  if (lowerName.includes('agony') ||
-    lowerName.includes('trepidation') ||
-    lowerName.includes('detestation')) {
-    return db["nezarec's nightmare"] || null;
-    }
-  // 9. Grasp of Avarice (
-  if (lowerName.includes('descending echo') ||
+  // 8. Grasp of Avarice (Yearning Echo)
+  if (
+    lowerName.includes('descending echo') ||
     lowerName.includes('twisting echo') ||
-    lowerName.includes('corrupting echo')) {
+    lowerName.includes('corrupting echo')
+  ) {
     return db["yearning echo"] || null;
-    }
+  }
 
   return null;
 }
