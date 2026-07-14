@@ -20,14 +20,11 @@ const version = pkg.version;
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function zip(sourceDir, outFile) {
-  // Use PowerShell Compress-Archive (Windows) or zip (Unix)
+  if (fs.existsSync(outFile)) fs.unlinkSync(outFile);
+  // Use tar (bsdtar) on Windows to ensure forward slashes in ZIP archive paths.
+  // Firefox addons store rejects zips containing backslash path entries.
   if (process.platform === 'win32') {
-    // Remove existing zip first
-    if (fs.existsSync(outFile)) fs.unlinkSync(outFile);
-    execSync(
-      `powershell -Command "Compress-Archive -Path '${sourceDir}\\*' -DestinationPath '${outFile}'"`,
-      { stdio: 'inherit' }
-    );
+    execSync(`tar -a -cf "${outFile}" -C "${sourceDir}" .`, { stdio: 'inherit' });
   } else {
     execSync(`zip -rj "${outFile}" "${sourceDir}"`, { stdio: 'inherit' });
   }
@@ -49,11 +46,8 @@ if (fs.existsSync(srcZipOut)) fs.unlinkSync(srcZipOut);
 
 if (process.platform === 'win32') {
   const excludeList = ['node_modules', 'dist', '.git', '.github', '*.zip', 'scratch', '.agents', '.gemini'];
-  const excludeFilter = excludeList.map(item => `$_ -notlike '*\\${item}*' -and $_ -notlike '*\\${item}'`).join(' -and ');
-  execSync(
-    `powershell -Command "Get-ChildItem -Path '${root}' -Recurse | Where-Object { ${excludeFilter} } | Compress-Archive -DestinationPath '${srcZipOut}' -Force"`,
-    { stdio: 'inherit' }
-  );
+  const excludeArgs = excludeList.map(item => `--exclude="${item}"`).join(' ');
+  execSync(`tar -a -cf "${srcZipOut}" ${excludeArgs} .`, { stdio: 'inherit' });
 } else {
   execSync(`zip -r "${srcZipOut}" . -x "node_modules/*" "dist/*" ".git/*" ".github/*" "*.zip" "scratch/*" ".agents/*" ".gemini/*"`, { stdio: 'inherit' });
 }

@@ -128,107 +128,130 @@ async function fetchAndCacheAegisSheet() {
     const categories = {};
     try {
         const promises = ALL_TABS.map(async (tab) => {
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
-            const res = await fetch(url, { credentials: 'omit' });
-            if (!res.ok) {
-                throw new Error(`Failed to fetch tab ${tab}: ${res.statusText}`);
-            }
-            const csvText = await res.text();
-            const rows = parseCSV(csvText);
-            if (rows.length < 2)
-                return;
-            const header = rows[0];
-            const idx = {};
-            header.forEach((col, i) => {
-                idx[col.trim()] = i;
-            });
-            const getVal = (row, keys) => {
-                const keyList = Array.isArray(keys) ? keys : [keys];
-                for (const k of keyList) {
-                    const i = idx[k];
-                    if (i !== undefined) {
-                        return (row[i] ?? '').trim();
+            try {
+                const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+                const res = await fetch(url, { credentials: 'omit' });
+                if (!res.ok) {
+                    console.warn(`[Aegis] Skipping tab "${tab}": HTTP ${res.status} ${res.statusText}`);
+                    return;
+                }
+                const csvText = await res.text();
+                // Google sometimes returns an HTML login-redirect page instead of CSV
+                if (csvText.trimStart().startsWith('<')) {
+                    console.warn(`[Aegis] Skipping tab "${tab}": received HTML instead of CSV (possible auth redirect)`);
+                    return;
+                }
+                const rows = parseCSV(csvText);
+                if (rows.length < 2)
+                    return;
+                const header = rows[0];
+                const idx = {};
+                header.forEach((col, i) => {
+                    idx[col.trim()] = i;
+                });
+                const getVal = (row, keys) => {
+                    const keyList = Array.isArray(keys) ? keys : [keys];
+                    for (const k of keyList) {
+                        const i = idx[k];
+                        if (i !== undefined) {
+                            return (row[i] ?? '').trim();
+                        }
                     }
-                }
-                return '';
-            };
-            const categoryWeapons = [];
-            for (let r = 1; r < rows.length; r++) {
-                const row = rows[r];
-                const nameVal = getVal(row, 'Name');
-                if (!nameVal)
-                    continue;
-                const weaponName = nameVal.split('\n')[0].trim();
-                const normalized = normName(weaponName);
-                const baseNormalized = normName(stripEdition(weaponName));
-                const weaponData = {
-                    name: weaponName,
-                    energy: getVal(row, ['Energy', 'INFO Energy']),
-                    frame: getVal(row, 'Frame'),
-                    barrel: getVal(row, ['PERKS Barrel', 'Barrel']),
-                    mag: getVal(row, ['Mag', 'PERKS Mag']),
-                    perk1: getVal(row, ['Perk 1', 'PERKS Perk 1']),
-                    perk2: getVal(row, ['Perk 2', 'PERKS Perk 2']),
-                    origin: getVal(row, ['Origin Trait', 'Origin']),
-                    source: getVal(row, 'Source'),
-                    notes: getVal(row, ['ANALYSIS Notes', 'Notes']),
-                    rank: getVal(row, 'Rank'),
-                    tier: getVal(row, 'Tier'),
+                    return '';
                 };
-                weapons[normalized] = weaponData;
-                if (baseNormalized !== normalized) {
-                    weapons[baseNormalized] = weaponData;
+                const categoryWeapons = [];
+                for (let r = 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    const nameVal = getVal(row, 'Name');
+                    if (!nameVal)
+                        continue;
+                    const weaponName = nameVal.split('\n')[0].trim();
+                    const normalized = normName(weaponName);
+                    const baseNormalized = normName(stripEdition(weaponName));
+                    const weaponData = {
+                        name: weaponName,
+                        energy: getVal(row, ['Energy', 'INFO Energy']),
+                        frame: getVal(row, 'Frame'),
+                        barrel: getVal(row, ['PERKS Barrel', 'Barrel']),
+                        mag: getVal(row, ['Mag', 'PERKS Mag']),
+                        perk1: getVal(row, ['Perk 1', 'PERKS Perk 1']),
+                        perk2: getVal(row, ['Perk 2', 'PERKS Perk 2']),
+                        origin: getVal(row, ['Origin Trait', 'Origin']),
+                        source: getVal(row, 'Source'),
+                        notes: getVal(row, ['ANALYSIS Notes', 'Notes']),
+                        rank: getVal(row, 'Rank'),
+                        tier: getVal(row, 'Tier'),
+                    };
+                    weapons[normalized] = weaponData;
+                    if (baseNormalized !== normalized) {
+                        weapons[baseNormalized] = weaponData;
+                    }
+                    categoryWeapons.push(weaponData);
                 }
-                categoryWeapons.push(weaponData);
+                // Sort by rank ascending
+                categoryWeapons.sort((a, b) => {
+                    const rA = parseInt(a.rank, 10);
+                    const rB = parseInt(b.rank, 10);
+                    return (isNaN(rA) ? 999 : rA) - (isNaN(rB) ? 999 : rB);
+                });
+                categories[tab] = categoryWeapons;
             }
-            // Sort by rank ascending
-            categoryWeapons.sort((a, b) => {
-                const rA = parseInt(a.rank, 10);
-                const rB = parseInt(b.rank, 10);
-                return (isNaN(rA) ? 999 : rA) - (isNaN(rB) ? 999 : rB);
-            });
-            categories[tab] = categoryWeapons;
+            catch (tabErr) {
+                console.warn(`[Aegis] Skipping tab "${tab}" due to error: ${tabErr.message}`);
+            }
         });
         await Promise.all(promises);
         // Fetch armor sets sheet
         console.log('DIM Aegis Overlay: Fetching Aegis Armor Spreadsheet...');
         const armorUrl = `https://docs.google.com/spreadsheets/d/${ARMOR_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${ARMOR_GID}`;
-        const armorRes = await fetch(armorUrl, { credentials: 'omit' });
-        if (!armorRes.ok) {
-            throw new Error(`Failed to fetch armor sheet: ${armorRes.statusText}`);
-        }
-        const armorCsvText = await armorRes.text();
-        const armorRows = parseCSV(armorCsvText);
         const armor = {};
-        if (armorRows.length >= 3) {
-            for (let r = 2; r < armorRows.length; r++) {
-                const row = armorRows[r];
-                const setName = (row[0] ?? '').trim();
-                if (!setName || setName === 'Set Name' || setName === 'Set Pick List') {
-                    continue;
-                }
-                if ((row[1] ?? '').trim() === 'Name' && (row[5] ?? '').trim() === 'Name') {
-                    continue;
-                }
-                if (setName.toLowerCase().includes('notes:') || setName.toLowerCase().includes('credit:')) {
-                    continue;
-                }
-                const armorData = {
-                    setName,
-                    piece2Name: (row[1] ?? '').trim(),
-                    piece2Desc: (row[2] ?? '').trim(),
-                    piece2Numbers: (row[3] ?? '').trim(),
-                    piece2Rating: (row[4] ?? '').trim(),
-                    piece4Name: (row[5] ?? '').trim(),
-                    piece4Desc: (row[6] ?? '').trim(),
-                    piece4Numbers: (row[7] ?? '').trim(),
-                    piece4Rating: (row[8] ?? '').trim(),
-                    source: (row[9] ?? '').trim(),
-                    sourceType: (row[10] ?? '').trim(),
-                };
-                const normalized = setName.toLowerCase().trim();
-                armor[normalized] = armorData;
+        try {
+            const armorRes = await fetch(armorUrl, { credentials: 'omit' });
+            if (!armorRes.ok) {
+                console.warn(`[Aegis] Armor sheet fetch failed (HTTP ${armorRes.status}), skipping armor data.`);
             }
+            else {
+                const armorCsvText = await armorRes.text();
+                if (armorCsvText.trimStart().startsWith('<')) {
+                    console.warn('[Aegis] Armor sheet returned HTML instead of CSV, skipping armor data.');
+                }
+                else {
+                    const armorRows = parseCSV(armorCsvText);
+                    if (armorRows.length >= 3) {
+                        for (let r = 2; r < armorRows.length; r++) {
+                            const row = armorRows[r];
+                            const setName = (row[0] ?? '').trim();
+                            if (!setName || setName === 'Set Name' || setName === 'Set Pick List') {
+                                continue;
+                            }
+                            if ((row[1] ?? '').trim() === 'Name' && (row[5] ?? '').trim() === 'Name') {
+                                continue;
+                            }
+                            if (setName.toLowerCase().includes('notes:') || setName.toLowerCase().includes('credit:')) {
+                                continue;
+                            }
+                            const armorData = {
+                                setName,
+                                piece2Name: (row[1] ?? '').trim(),
+                                piece2Desc: (row[2] ?? '').trim(),
+                                piece2Numbers: (row[3] ?? '').trim(),
+                                piece2Rating: (row[4] ?? '').trim(),
+                                piece4Name: (row[5] ?? '').trim(),
+                                piece4Desc: (row[6] ?? '').trim(),
+                                piece4Numbers: (row[7] ?? '').trim(),
+                                piece4Rating: (row[8] ?? '').trim(),
+                                source: (row[9] ?? '').trim(),
+                                sourceType: (row[10] ?? '').trim(),
+                            };
+                            const normalized = setName.toLowerCase().trim();
+                            armor[normalized] = armorData;
+                        }
+                    }
+                }
+            }
+        }
+        catch (armorErr) {
+            console.warn(`[Aegis] Armor sheet error: ${armorErr.message}, skipping armor data.`);
         }
         // Fetch Aegis's own Set Bonuses tab
         console.log('DIM Aegis Overlay: Fetching Aegis Set Bonuses tab...');
