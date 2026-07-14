@@ -119,7 +119,7 @@ function findAegisArmorSet(itemName) {
         lowerName.includes('detestation')) {
         return db["nezarec's nightmare"] || null;
     }
-    // 8. Grasp of Avarice (
+    // 9. Grasp of Avarice (
     if (lowerName.includes('descending echo') ||
         lowerName.includes('twisting echo') ||
         lowerName.includes('corrupting echo')) {
