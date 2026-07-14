@@ -60,7 +60,9 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
   // 2. Crota's End (Crota's Memory)
   if (
     lowerName.includes('deathsinger') ||
-    lowerName.includes('will of the just') ||
+    lowerName.includes('bone circlet') ||
+    lowerName.includes('willbreaker') ||
+    lowerName.includes('mark of the pit') ||
     lowerName.includes('unyielding casque') ||
     lowerName.includes('dogged gage') ||
     lowerName.includes('relentless harness') ||
@@ -75,8 +77,8 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
     lowerName.includes('war numen') ||
     lowerName.includes('darkhollow') ||
     lowerName.includes('mouth of ur') ||
+    lowerName.includes('grasp of eir') ||
     lowerName.includes('chasm of yul') ||
-    lowerName.includes('fangs of shun') ||
     lowerName.includes('path of xol') ||
     lowerName.includes('bond of the wormlore')
   ) {
@@ -84,7 +86,12 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
   }
 
   // 4. Garden of Salvation (Kentarch 3)
-  if (lowerName.includes('kentarch')) {
+  if (lowerName.includes('kentarch') ||
+    lowerName.includes('righteousness') ||
+    lowerName.includes('exaltation') ||
+    lowerName.includes('transcendence') ||
+    lowerName.includes('ascendancy') ||
+    lowerName.includes('temptation')) {
     return db["kentarch 3"] || null;
   }
 
@@ -120,6 +127,19 @@ function findAegisArmorSet(itemName: string): AegisArmorSet | null {
   ) {
     return db["iron panoply"] || db["iron battalion"] || null;
   }
+
+  // 8. Root of Nightmares (
+  if (lowerName.includes('agony') ||
+    lowerName.includes('trepidation') ||
+    lowerName.includes('detestation')) {
+    return db["nezarec's nightmare"] || null;
+    }
+  // 9. Grasp of Avarice (
+  if (lowerName.includes('descending echo') ||
+    lowerName.includes('twisting echo') ||
+    lowerName.includes('corrupting echo')) {
+    return db["yearning echo"] || null;
+    }
 
   return null;
 }
