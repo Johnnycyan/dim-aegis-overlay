@@ -96,6 +96,56 @@ let registryObserver = null;
 let nameToHash = {};
 let perkNameToIcon = {};
 let activeDetailsTimeout = null;
+let completedWeapons = {};
+let chaseList = {};
+let activeTab = 'explorer';
+let perkNameToHash = {};
+const expandedChaseWeapons = new Set();
+const ownedItemsMap = new Map();
+let weaponPossiblePerksCache = {};
+const requestedWeapons = new Set();
+const failedWeaponRequests = new Map();
+const WEAPON_PERK_RETRY_DELAY_MS = 30_000;
+/**
+ * Chase cards created before optional component filters were introduced used the
+ * first spreadsheet barrel/mag/origin as an implicit requirement. Clear only
+ * those untouched defaults; deliberately chosen alternatives are preserved.
+ */
+function clearLegacyDefaultChaseFilters() {
+    if (!aegisSheetDb?.weapons)
+        return false;
+    let changed = false;
+    const firstRecommendation = (value) => value.split(/[\/\n,]+/).map(part => part.trim()).find(Boolean) || '';
+    for (const item of Object.values(chaseList)) {
+        const weapon = aegisSheetDb.weapons[item.name.toLowerCase().trim()];
+        if (!weapon)
+            continue;
+        for (const [key, recommendation] of [
+            ['barrel', firstRecommendation(weapon.barrel)],
+            ['mag', firstRecommendation(weapon.mag)],
+            ['origin', firstRecommendation(weapon.origin)],
+        ]) {
+            if (recommendation && item[key] === recommendation) {
+                item[key] = '';
+                changed = true;
+            }
+        }
+    }
+    return changed;
+}
+function updatePerkNameToHash(perkRegistry) {
+    if (!perkRegistry)
+        return;
+    perkNameToHash = {};
+    for (const [hashStr, p] of Object.entries(perkRegistry)) {
+        const hash = parseInt(hashStr, 10);
+        if (p && p.name && !isNaN(hash)) {
+            perkNameToHash[p.name.toLowerCase().trim()] = hash;
+            const clean = cleanPerkName(p.name);
+            perkNameToHash[clean] = hash;
+        }
+    }
+}
 function updatePerkNameToIcon(perkRegistry) {
     if (!perkRegistry)
         return;
@@ -132,8 +182,18 @@ function setupRegistryObserver() {
     if (registryObserver)
         return;
     const registryEl = document.getElementById('aegis-global-perk-registry');
-    if (!registryEl)
+    if (!registryEl) {
+        // Wait for the main world script to create the registry element
+        const bodyObserver = new MutationObserver(() => {
+            const el = document.getElementById('aegis-global-perk-registry');
+            if (el) {
+                bodyObserver.disconnect();
+                setupRegistryObserver();
+            }
+        });
+        bodyObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
         return;
+    }
     registryObserver = new MutationObserver((mutations) => {
         for (let i = 0; i < mutations.length; i++) {
             const mutation = mutations[i];
@@ -163,19 +223,55 @@ function setupRegistryObserver() {
                     }
                 }
             }
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-weapon-perks-response') {
+                const responseStr = registryEl.getAttribute('data-weapon-perks-response');
+                if (responseStr) {
+                    registryEl.removeAttribute('data-weapon-perks-response'); // Clear immediately
+                    try {
+                        const { results } = JSON.parse(responseStr);
+                        if (Array.isArray(results)) {
+                            for (const { name, possible, error } of results) {
+                                if (!name)
+                                    continue;
+                                const norm = name.toLowerCase().trim();
+                                if (possible) {
+                                    failedWeaponRequests.delete(norm);
+                                    addDiagnosticLog(`Received perks response for "${name}" (Col3: ${possible.perk1s?.length || 0}, Col4: ${possible.perk2s?.length || 0}, Barrels: ${possible.barrels?.length || 0}, Mags: ${possible.mags?.length || 0}).`);
+                                    weaponPossiblePerksCache[norm] = possible;
+                                }
+                                else {
+                                    // Keep the spreadsheet fallback visible and retry only after a short
+                                    // cooldown, rather than immediately entering a render/request loop.
+                                    requestedWeapons.delete(norm);
+                                    failedWeaponRequests.set(norm, Date.now());
+                                    addDiagnosticLog(`Could not load perks for "${name}": ${error || 'unknown error'}`);
+                                }
+                            }
+                            renderResults();
+                        }
+                    }
+                    catch (e) {
+                        // Ignore
+                    }
+                }
+            }
         }
     });
     registryObserver.observe(registryEl, {
         attributes: true,
-        attributeFilter: ['data-registry'],
+        attributeFilter: ['data-registry', 'data-weapon-perks-response'],
     });
 }
 function cleanPerkName(name) {
     return (name ?? '')
         .toLowerCase()
         .replace(/\s*\([^)]+\)\s*/g, '') // strip parentheses (e.g. (best), (PvE))
-        .replace(/[*+]/g, '') // strip markers like * or +
+        .replace(/[*+]/g, '') // strip markers like or +
         .trim();
+}
+/** Treat DIM's enhanced display names as the same chase target as their base perk. */
+function cleanPerkNameForMatch(name) {
+    return cleanPerkName(name).replace(/^enhanced\s+/, '').trim();
 }
 function findAegisWeapon(name) {
     if (!aegisSheetDb || !aegisSheetDb.weapons)
@@ -501,124 +597,582 @@ function populateFilters() {
     }
     populateFramesFilter(catSelect ? catSelect.value : '');
 }
+function updateProgressIndicator() {
+    let totalWeaponsCount = 0;
+    let completedWeaponsCount = 0;
+    if (aegisSheetDb && aegisSheetDb.weapons) {
+        const uniqueWeapons = new Set();
+        for (const w of Object.values(aegisSheetDb.weapons)) {
+            uniqueWeapons.add(w.name);
+        }
+        totalWeaponsCount = uniqueWeapons.size;
+        for (const name of uniqueWeapons) {
+            if (completedWeapons[name.toLowerCase().trim()]) {
+                completedWeaponsCount++;
+            }
+        }
+    }
+    const progressText = document.querySelector('.aegis-explorer-progress-text');
+    const progressBar = document.querySelector('.aegis-explorer-progress-bar');
+    if (progressText && progressBar) {
+        const pct = totalWeaponsCount > 0 ? Math.round((completedWeaponsCount / totalWeaponsCount) * 100) : 0;
+        progressText.textContent = `Completed: ${completedWeaponsCount}/${totalWeaponsCount} (${pct}%)`;
+        progressBar.style.width = `${pct}%`;
+    }
+}
+function triggerDimSearchForIds(instanceIds) {
+    const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]');
+    if (searchInput && instanceIds.length > 0) {
+        const query = instanceIds.map(id => `id:${id}`).join(' or ');
+        searchInput.value = query;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        searchInput.dispatchEvent(new Event('change', { bubbles: true }));
+        const wrapper = searchInput.parentElement;
+        if (wrapper) {
+            wrapper.classList.remove('aegis-search-flash');
+            void wrapper.offsetWidth; // Force reflow
+            wrapper.classList.add('aegis-search-flash');
+        }
+    }
+}
+function buildSelectHtml(currentValue, recommendedList, globalSet) {
+    const cleanRecs = recommendedList.map(r => r.toLowerCase().trim());
+    const otherOptions = Array.from(globalSet)
+        .filter(o => !cleanRecs.includes(o.toLowerCase().trim()))
+        .sort();
+    let html = `<option value="">Any</option>`;
+    if (recommendedList.length > 0) {
+        html += `
+      <optgroup label="Recommended">
+        ${recommendedList.map(r => `<option value="${r}" ${currentValue === r ? 'selected' : ''}>${r}</option>`).join('')}
+      </optgroup>
+    `;
+    }
+    if (otherOptions.length > 0) {
+        html += `
+      <optgroup label="All Others">
+        ${otherOptions.map(o => `<option value="${o}" ${currentValue === o ? 'selected' : ''}>${o}</option>`).join('')}
+      </optgroup>
+    `;
+    }
+    return html;
+}
 function renderResults() {
     const resultsContainer = document.querySelector('.aegis-explorer-results');
     if (!resultsContainer)
         return;
-    if (!aegisSheetDb || !aegisSheetDb.weapons) {
+    const db = aegisSheetDb;
+    addDiagnosticLog(`renderResults called. activeTab: "${activeTab}". Has db: ${!!db}. Weapons count: ${db ? Object.keys(db.weapons || {}).length : 0}. Items in chaseList: ${JSON.stringify(Object.keys(chaseList))}`);
+    if (!db || !db.weapons) {
         resultsContainer.innerHTML = '<div class="aegis-explorer-empty">Loading database...</div>';
         return;
     }
-    const searchInput = document.querySelector('.aegis-explorer-search-input');
-    const catSelect = document.querySelector('.aegis-explorer-category-select');
-    const frameSelect = document.querySelector('.aegis-explorer-frame-select');
-    const elementSelect = document.querySelector('.aegis-explorer-element-select');
-    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedCat = catSelect ? catSelect.value : '';
-    const selectedFrame = frameSelect ? frameSelect.value : '';
-    const selectedElement = elementSelect ? elementSelect.value : '';
-    const matches = [];
-    for (const [cat, list] of Object.entries(aegisSheetDb.categories)) {
-        if (selectedCat && cat !== selectedCat)
-            continue;
-        for (const w of list) {
-            if (selectedFrame && w.frame !== selectedFrame)
-                continue;
-            if (selectedElement && w.energy.toLowerCase().trim() !== selectedElement.toLowerCase().trim())
-                continue;
-            if (query) {
-                const nameMatch = w.name.toLowerCase().includes(query);
-                const notesMatch = w.notes.toLowerCase().includes(query);
-                const frameMatch = w.frame.toLowerCase().includes(query);
-                const perksMatch = (w.perk1 + ' ' + w.perk2).toLowerCase().includes(query);
-                if (!nameMatch && !notesMatch && !frameMatch && !perksMatch)
-                    continue;
-            }
-            matches.push({ weapon: w, category: cat });
-        }
-    }
-    matches.sort((a, b) => {
-        if (a.category !== b.category) {
-            return a.category.localeCompare(b.category);
-        }
-        const rA = parseInt(a.weapon.rank, 10);
-        const rB = parseInt(b.weapon.rank, 10);
-        return (isNaN(rA) ? 999 : rA) - (isNaN(rB) ? 999 : rB);
-    });
-    if (matches.length === 0) {
-        resultsContainer.innerHTML = '<div class="aegis-explorer-empty">No matching weapons found.</div>';
-        return;
-    }
-    let html = '';
-    for (const m of matches) {
-        const w = m.weapon;
-        const tierLetter = w.tier ? w.tier.charAt(0).toLowerCase() : '';
-        const tierClass = `aegis-tier-${tierLetter}`;
-        const rankLabel = w.rank ? `#${w.rank}` : '-';
-        const normName = w.name.toLowerCase().trim();
-        const baseName = normName.replace(/\s*\([^)]+\)\s*$/, '').trim();
-        const weaponHash = nameToHash[normName] || nameToHash[baseName];
-        let destinyReportBtnHtml = '';
-        if (weaponHash) {
-            destinyReportBtnHtml = `<a class="aegis-action-btn aegis-btn-report" href="https://destiny.report/w/${weaponHash}" target="_blank" rel="noopener noreferrer">Destiny.Report ↗</a>`;
-        }
-        else {
-            destinyReportBtnHtml = `<button class="aegis-action-btn aegis-btn-disabled" title="Weapon ID not resolved. Ensure the weapon is in your wishlist or has been viewed/scanned on screen in DIM." disabled>Destiny.Report (Unknown ID)</button>`;
-        }
-        html += `
-      <div class="aegis-explorer-row" data-weapon-name="${w.name.replace(/"/g, '&quot;')}">
-        <div class="aegis-explorer-row-header">
-          <span class="aegis-explorer-row-name">${w.name}</span>
-          <div class="aegis-explorer-row-badges">
-            <span class="aegis-explorer-row-badge ${tierClass}">${w.tier || 'F'}</span>
-            <span class="aegis-explorer-row-rank">${rankLabel}</span>
+    try {
+        // 1. CHASE LIST TAB RENDERER
+        if (activeTab === 'chase') {
+            updateProgressIndicator();
+            let html = '';
+            const items = Object.values(chaseList).sort((a, b) => a.name.localeCompare(b.name));
+            if (items.length === 0) {
+                resultsContainer.innerHTML = `
+          <div class="aegis-explorer-empty" style="padding: 30px 15px; text-align: center; line-height: 1.5; color: #aaa;">
+            Your chase list is empty.<br/><br/>
+            Search for weapons in the <strong>Database Explorer</strong> tab and click <strong>+ Chase</strong> to pin them here!
           </div>
-        </div>
-        <div class="aegis-explorer-row-details">
-          <span class="aegis-explorer-row-meta">${w.energy} / ${w.frame}</span>
-          <span class="aegis-explorer-row-cat">${m.category}</span>
-        </div>
-        ${w.notes ? `<div class="aegis-explorer-row-notes">${w.notes}</div>` : ''}
-        <div class="aegis-explorer-row-actions">
-          <button class="aegis-action-btn aegis-btn-highlight" data-action="filter-vault">Filter in Vault</button>
-          ${destinyReportBtnHtml}
-        </div>
-      </div>
-    `;
-    }
-    resultsContainer.innerHTML = html;
-    const rows = resultsContainer.querySelectorAll('.aegis-explorer-row');
-    rows.forEach((row) => {
-        row.addEventListener('click', (e) => {
-            const target = e.target;
-            if (target.closest('.aegis-explorer-row-actions')) {
+        `;
                 return;
             }
-            // Accordion: collapse other rows
-            rows.forEach((otherRow) => {
-                if (otherRow !== row) {
-                    otherRow.classList.remove('expanded');
+            const pendingManifestRequests = [];
+            for (const item of items) {
+                try {
+                    const normName = item.name.toLowerCase().trim();
+                    const w = db.weapons[normName];
+                    const sourceStr = w?.source ? w.source : 'Unknown Source';
+                    const parseRecs = (str) => {
+                        if (!str)
+                            return [];
+                        return str.split(/[\/\n,]+/).map(s => s.trim()).filter(Boolean);
+                    };
+                    const barrels = w ? parseRecs(w.barrel) : [];
+                    const mags = w ? parseRecs(w.mag) : [];
+                    const perk1s = w ? parseRecs(w.perk1) : [];
+                    const perk2s = w ? parseRecs(w.perk2) : [];
+                    const origins = w ? parseRecs(w.origin) : [];
+                    const possiblePerks = weaponPossiblePerksCache[normName];
+                    const hasManifestPerks = possiblePerks && possiblePerks.isFromManifest;
+                    addDiagnosticLog(`Loop item: "${item.name}". w exists: ${!!w}. possiblePerks exists: ${!!possiblePerks} (isFromManifest: ${!!hasManifestPerks}). requestedHas: ${requestedWeapons.has(normName)}`);
+                    const lastFailure = failedWeaponRequests.get(normName) || 0;
+                    const canRetryManifestRequest = Date.now() - lastFailure >= WEAPON_PERK_RETRY_DELAY_MS;
+                    if (!hasManifestPerks && !requestedWeapons.has(normName) && canRetryManifestRequest) {
+                        pendingManifestRequests.push(normName);
+                        addDiagnosticLog(`Cache miss (or partial cache) for "${item.name}". Queueing possible perks from manifest...`);
+                    }
+                    // When Fiber data isn't available yet, fall back to the weapon's own sheet entry
+                    // so we at least show the sheet-recommended options rather than every perk in the game.
+                    const sheetBarrels = new Set(barrels);
+                    const sheetMags = new Set(mags);
+                    const sheetPerk1sSet = new Set(perk1s);
+                    const sheetPerk2sSet = new Set(perk2s);
+                    const sheetOrigins = new Set(origins);
+                    // Manifest data can be incomplete for unusual sockets. Keep sheet recommendations
+                    // and the saved selection available rather than replacing them with an empty list.
+                    const mergeOptions = (recommended, manifest, selected) => new Set([...recommended, ...(manifest || []), ...(selected ? [selected] : [])]);
+                    const barrelsSet = mergeOptions(sheetBarrels, possiblePerks?.barrels, item.barrel);
+                    const magsSet = mergeOptions(sheetMags, possiblePerks?.mags, item.mag);
+                    // Column-specific perk sets: perk1sSet for column 3, perk2sSet for column 4.
+                    const perk1sSet = mergeOptions(sheetPerk1sSet, possiblePerks?.perk1s, item.perk1);
+                    const perk2sSet = mergeOptions(sheetPerk2sSet, possiblePerks?.perk2s, item.perk2);
+                    const perk1Alt1Set = mergeOptions(sheetPerk1sSet, possiblePerks?.perk1s, item.perk1Alt1);
+                    const perk2Alt1Set = mergeOptions(sheetPerk2sSet, possiblePerks?.perk2s, item.perk2Alt1);
+                    const perk1Alt2Set = mergeOptions(sheetPerk1sSet, possiblePerks?.perk1s, item.perk1Alt2);
+                    const perk2Alt2Set = mergeOptions(sheetPerk2sSet, possiblePerks?.perk2s, item.perk2Alt2);
+                    const originsSet = mergeOptions(sheetOrigins, possiblePerks?.origins, item.origin);
+                    // Scan owned matching weapons
+                    const owned = Array.from(ownedItemsMap.values()).filter(oi => oi.name.toLowerCase().trim() === normName);
+                    const matches = [];
+                    for (const oi of owned) {
+                        let match = true;
+                        const failedSelections = [];
+                        const checkPerkMatch = (selectedPerk, label) => {
+                            if (!selectedPerk)
+                                return true;
+                            const norm = selectedPerk.toLowerCase().trim();
+                            const clean = cleanPerkName(selectedPerk);
+                            // 1. Fast path: hash lookup
+                            const targetHash = perkNameToHash[norm] ?? perkNameToHash[clean];
+                            if (targetHash !== undefined) {
+                                const hashMatch = oi.perkHashes.some(hash => hash === targetHash || enhancedToNormalMap[hash] === targetHash);
+                                if (hashMatch)
+                                    return true;
+                            }
+                            // 2. Name comparison handles late registry hydration, enhanced traits,
+                            // and DIM display-name punctuation differences.
+                            const selectedMatchName = cleanPerkNameForMatch(selectedPerk);
+                            const nameMatch = oi.perkNames.some(ownedPerk => isPerkMatch(ownedPerk, selectedPerk) ||
+                                isPerkMatch(cleanPerkNameForMatch(ownedPerk), selectedMatchName));
+                            if (!nameMatch)
+                                failedSelections.push(`${label}: ${selectedPerk}`);
+                            return nameMatch;
+                        };
+                        if (!checkPerkMatch(item.barrel, 'Barrel'))
+                            match = false;
+                        if (!checkPerkMatch(item.mag, 'Magazine'))
+                            match = false;
+                        if (!checkPerkMatch(item.perk1, 'Perk 1'))
+                            match = false;
+                        if (item.perk1Alt1 && !checkPerkMatch(item.perk1Alt1, 'Perk 1 (Slot B)'))
+                            match = false;
+                        if (item.perk1Alt2 && !checkPerkMatch(item.perk1Alt2, 'Perk 1 (Slot C)'))
+                            match = false;
+                        if (!checkPerkMatch(item.perk2, 'Perk 2'))
+                            match = false;
+                        if (item.perk2Alt1 && !checkPerkMatch(item.perk2Alt1, 'Perk 2 (Slot B)'))
+                            match = false;
+                        if (item.perk2Alt2 && !checkPerkMatch(item.perk2Alt2, 'Perk 2 (Slot C)'))
+                            match = false;
+                        if (item.origin && !checkPerkMatch(item.origin, 'Origin'))
+                            match = false;
+                        if (match) {
+                            matches.push(oi.instanceId);
+                        }
+                        else if (failedSelections.length > 0) {
+                            addDiagnosticLog(`Chase match failed for "${item.name}" instance ${oi.instanceId}: ${failedSelections.join('; ')}`);
+                        }
+                    }
+                    let statusHtml = '';
+                    let highlightBtnHtml = '';
+                    if (owned.length === 0) {
+                        statusHtml = `<span class="aegis-chase-status aegis-status-none">🔴 Not in Inventory</span>`;
+                    }
+                    else if (matches.length > 0) {
+                        statusHtml = `<span class="aegis-chase-status aegis-status-match">🟢 Obtained (${matches.length} matching)</span>`;
+                        highlightBtnHtml = `<button class="aegis-action-btn" data-action="highlight-matching" data-ids="${matches.join(',')}" style="flex: none !important; height: 28px !important; padding: 0 10px !important; font-size: 11px !important; background: rgba(30, 215, 96, 0.08) !important; border: 1px solid rgba(30, 215, 96, 0.25) !important; color: #1ed760 !important; cursor: pointer !important; font-weight: 600 !important; border-radius: 6px !important;">Highlight in Vault</button>`;
+                    }
+                    else {
+                        statusHtml = `<span class="aegis-chase-status aegis-status-have-weapon">🟡 Have weapon, wrong perks</span>`;
+                    }
+                    const baseNameForReport = normName.replace(/\s*\([^)]+\)\s*$/, '').trim();
+                    const weaponHashForReport = nameToHash[normName] || nameToHash[baseNameForReport];
+                    let destinyReportBtnHtml = '';
+                    if (weaponHashForReport) {
+                        destinyReportBtnHtml = `<a class="aegis-action-btn aegis-btn-report" href="https://destiny.report/w/${weaponHashForReport}" target="_blank" rel="noopener noreferrer" style="flex: none !important; padding: 0 10px !important;">Destiny.Report ↗</a>`;
+                    }
+                    else {
+                        destinyReportBtnHtml = `<button class="aegis-action-btn aegis-btn-disabled" title="Weapon ID not resolved. Ensure the weapon is in your wishlist or has been viewed/scanned on screen in DIM." disabled style="flex: none !important; padding: 0 10px !important;">Destiny.Report (Unknown ID)</button>`;
+                    }
+                    const isExpanded = expandedChaseWeapons.has(normName);
+                    const isCompleted = !!completedWeapons[normName];
+                    html += `
+            <div class="aegis-chase-row ${isExpanded ? 'expanded' : ''} ${isCompleted ? 'completed' : ''}" data-weapon-name="${item.name.replace(/"/g, '&quot;')}">
+              <div class="aegis-chase-row-header">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="aegis-chase-chevron" style="font-size: 10px; color: #888; transition: transform 0.2s ease; display: inline-block;">▶</span>
+                  <label class="aegis-checklist-toggle" style="display: flex; align-items: center; cursor: pointer;" title="Mark as obtained/completed">
+                    <input type="checkbox" class="aegis-chase-completed-checkbox" ${isCompleted ? 'checked' : ''} style="margin: 0; cursor: pointer;" />
+                  </label>
+                  <span class="aegis-chase-name">${item.name}</span>
+                </div>
+                <button class="aegis-chase-delete" data-action="delete-chase" title="Remove from Chase List">&times;</button>
+              </div>
+              <div class="aegis-chase-meta">
+                Source: ${sourceStr}
+              </div>
+              <div class="aegis-chase-selectors">
+                <div class="aegis-chase-select-group">
+                  <label>Barrel</label>
+                  <select class="aegis-chase-select" data-type="barrel">
+                    ${buildSelectHtml(item.barrel, barrels, barrelsSet)}
+                  </select>
+                </div>
+                <div class="aegis-chase-select-group">
+                  <label>Mag</label>
+                  <select class="aegis-chase-select" data-type="mag">
+                    ${buildSelectHtml(item.mag, mags, magsSet)}
+                  </select>
+                </div>
+
+                <div class="aegis-chase-select-group">
+                  <label>Perk 1 (Slot A)</label>
+                  <select class="aegis-chase-select" data-type="perk1">
+                    ${buildSelectHtml(item.perk1, perk1s, perk1sSet)}
+                  </select>
+                </div>
+                <div class="aegis-chase-select-group">
+                  <label>Perk 2 (Slot A)</label>
+                  <select class="aegis-chase-select" data-type="perk2">
+                    ${buildSelectHtml(item.perk2, perk2s, perk2sSet)}
+                  </select>
+                </div>
+
+                <div class="aegis-chase-select-group">
+                  <label>Perk 1 (Slot B)</label>
+                  <select class="aegis-chase-select" data-type="perk1Alt1">
+                    ${buildSelectHtml(item.perk1Alt1 || '', perk1s, perk1Alt1Set)}
+                  </select>
+                </div>
+                <div class="aegis-chase-select-group">
+                  <label>Perk 2 (Slot B)</label>
+                  <select class="aegis-chase-select" data-type="perk2Alt1">
+                    ${buildSelectHtml(item.perk2Alt1 || '', perk2s, perk2Alt1Set)}
+                  </select>
+                </div>
+
+                <div class="aegis-chase-select-group">
+                  <label>Perk 1 (Slot C)</label>
+                  <select class="aegis-chase-select" data-type="perk1Alt2">
+                    ${buildSelectHtml(item.perk1Alt2 || '', perk1s, perk1Alt2Set)}
+                  </select>
+                </div>
+                <div class="aegis-chase-select-group">
+                  <label>Perk 2 (Slot C)</label>
+                  <select class="aegis-chase-select" data-type="perk2Alt2">
+                    ${buildSelectHtml(item.perk2Alt2 || '', perk2s, perk2Alt2Set)}
+                  </select>
+                </div>
+
+                <div class="aegis-chase-select-group span-2">
+                  <label>Origin</label>
+                  <select class="aegis-chase-select" data-type="origin">
+                    ${buildSelectHtml(item.origin || '', origins, originsSet)}
+                  </select>
+                </div>
+              </div>
+              <div class="aegis-chase-status-row" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                ${statusHtml}
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  ${highlightBtnHtml}
+                  ${destinyReportBtnHtml}
+                </div>
+              </div>
+            </div>
+          `;
                 }
-            });
-            row.classList.toggle('expanded');
-        });
-        const filterBtn = row.querySelector('[data-action="filter-vault"]');
-        if (filterBtn) {
-            filterBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+                catch (e) {
+                    addDiagnosticLog(`Error processing item "${item?.name}": ${e.message}\n${e.stack}`);
+                }
+            }
+            // Send one batched request after every card has been inspected. The old
+            // one-attribute-per-card approach overwrote earlier requests during a render.
+            if (pendingManifestRequests.length > 0) {
+                const registryEl = document.getElementById('aegis-global-perk-registry');
+                if (registryEl) {
+                    const requestNames = [...new Set(pendingManifestRequests)];
+                    requestNames.forEach(name => requestedWeapons.add(name));
+                    registryEl.setAttribute('data-request-weapon-perks', JSON.stringify(requestNames));
+                }
+            }
+            resultsContainer.innerHTML = html;
+            // Bind Chase List event handlers
+            const chaseRows = resultsContainer.querySelectorAll('.aegis-chase-row');
+            chaseRows.forEach(row => {
                 const name = row.getAttribute('data-weapon-name');
-                if (name) {
-                    triggerDimSearch(name);
+                if (!name)
+                    return;
+                const norm = name.toLowerCase().trim();
+                row.addEventListener('click', (e) => {
+                    const target = e.target;
+                    if (target.closest('.aegis-chase-select') || target.closest('[data-action="delete-chase"]') || target.closest('[data-action="highlight-matching"]') || target.closest('.aegis-checklist-toggle')) {
+                        return;
+                    }
+                    const currentlyExpanded = row.classList.toggle('expanded');
+                    if (currentlyExpanded) {
+                        expandedChaseWeapons.add(norm);
+                    }
+                    else {
+                        expandedChaseWeapons.delete(norm);
+                    }
+                });
+                const checkbox = row.querySelector('.aegis-chase-completed-checkbox');
+                if (checkbox) {
+                    checkbox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                    checkbox.addEventListener('change', () => {
+                        if (checkbox.checked) {
+                            completedWeapons[norm] = true;
+                            row.classList.add('completed');
+                        }
+                        else {
+                            delete completedWeapons[norm];
+                            row.classList.remove('completed');
+                        }
+                        chrome.storage.local.set({ aegisCompletedWeapons: completedWeapons });
+                        updateProgressIndicator();
+                        renderResults();
+                    });
                 }
+                const deleteBtn = row.querySelector('[data-action="delete-chase"]');
+                deleteBtn?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    delete chaseList[norm];
+                    chrome.storage.local.set({ aegisChaseList: chaseList });
+                    renderResults();
+                });
+                const highlightBtn = row.querySelector('[data-action="highlight-matching"]');
+                highlightBtn?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idsAttr = highlightBtn.getAttribute('data-ids') || '';
+                    const ids = idsAttr.split(',').filter(Boolean);
+                    if (ids.length > 0) {
+                        triggerDimSearchForIds(ids);
+                    }
+                });
+                const selects = row.querySelectorAll('.aegis-chase-select');
+                selects.forEach(select => {
+                    select.addEventListener('change', () => {
+                        const type = select.getAttribute('data-type');
+                        const val = select.value;
+                        if (chaseList[norm] && type) {
+                            chaseList[norm][type] = val;
+                            chrome.storage.local.set({ aegisChaseList: chaseList });
+                            renderResults();
+                        }
+                    });
+                });
             });
+            return;
         }
-        const reportBtn = row.querySelector('.aegis-btn-report');
-        if (reportBtn) {
-            reportBtn.addEventListener('click', (e) => {
+        // 2. EXPLORER DATABASE TAB RENDERER
+        updateProgressIndicator();
+        const searchInput = document.querySelector('.aegis-explorer-search-input');
+        const catSelect = document.querySelector('.aegis-explorer-category-select');
+        const frameSelect = document.querySelector('.aegis-explorer-frame-select');
+        const elementSelect = document.querySelector('.aegis-explorer-element-select');
+        const hideCompletedCheckbox = document.querySelector('.aegis-explorer-hide-completed');
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const selectedCat = catSelect ? catSelect.value : '';
+        const selectedFrame = frameSelect ? frameSelect.value : '';
+        const selectedElement = elementSelect ? elementSelect.value : '';
+        const hideCompleted = hideCompletedCheckbox ? hideCompletedCheckbox.checked : false;
+        const matches = [];
+        for (const [cat, list] of Object.entries(db.categories)) {
+            if (selectedCat && cat !== selectedCat)
+                continue;
+            for (const w of list) {
+                const normName = w.name.toLowerCase().trim();
+                if (hideCompleted && completedWeapons[normName])
+                    continue;
+                if (selectedFrame && w.frame !== selectedFrame)
+                    continue;
+                if (selectedElement && w.energy.toLowerCase().trim() !== selectedElement.toLowerCase().trim())
+                    continue;
+                if (query) {
+                    const nameMatch = w.name.toLowerCase().includes(query);
+                    const notesMatch = w.notes.toLowerCase().includes(query);
+                    const frameMatch = w.frame.toLowerCase().includes(query);
+                    const perksMatch = (w.perk1 + ' ' + w.perk2).toLowerCase().includes(query);
+                    if (!nameMatch && !notesMatch && !frameMatch && !perksMatch)
+                        continue;
+                }
+                matches.push({ weapon: w, category: cat });
+            }
+        }
+        matches.sort((a, b) => {
+            if (a.category !== b.category) {
+                return a.category.localeCompare(b.category);
+            }
+            const rA = parseInt(a.weapon.rank, 10);
+            const rB = parseInt(b.weapon.rank, 10);
+            return (isNaN(rA) ? 999 : rA) - (isNaN(rB) ? 999 : rB);
+        });
+        if (matches.length === 0) {
+            resultsContainer.innerHTML = '<div class="aegis-explorer-empty">No matching weapons found.</div>';
+            return;
+        }
+        let html = '';
+        for (const m of matches) {
+            const w = m.weapon;
+            const normName = w.name.toLowerCase().trim();
+            const isCompleted = !!completedWeapons[normName];
+            const completedClass = isCompleted ? 'completed' : '';
+            const tierLetter = w.tier ? w.tier.charAt(0).toLowerCase() : '';
+            const tierClass = `aegis-tier-${tierLetter}`;
+            const rankLabel = w.rank ? (w.rank === '1' ? '👑 Best in Archetype' : `#${w.rank}`) : '-';
+            const baseName = normName.replace(/\s*\([^)]+\)\s*$/, '').trim();
+            const weaponHash = nameToHash[normName] || nameToHash[baseName];
+            let destinyReportBtnHtml = '';
+            if (weaponHash) {
+                destinyReportBtnHtml = `<a class="aegis-action-btn aegis-btn-report" href="https://destiny.report/w/${weaponHash}" target="_blank" rel="noopener noreferrer">Destiny.Report ↗</a>`;
+            }
+            else {
+                destinyReportBtnHtml = `<button class="aegis-action-btn aegis-btn-disabled" title="Weapon ID not resolved. Ensure the weapon is in your wishlist or has been viewed/scanned on screen in DIM." disabled>Destiny.Report (Unknown ID)</button>`;
+            }
+            const isChasing = !!chaseList[normName];
+            const chaseText = isChasing ? 'Remove Chase' : '+ Chase';
+            const chaseClass = isChasing ? 'aegis-btn-chase-active' : '';
+            html += `
+        <div class="aegis-explorer-row ${completedClass}" data-weapon-name="${w.name.replace(/"/g, '&quot;')}">
+          <div class="aegis-explorer-row-header">
+            <label class="aegis-checklist-toggle" style="display: flex; align-items: center; margin-right: 8px; cursor: pointer;" title="Mark as obtained/completed">
+              <input type="checkbox" class="aegis-checklist-checkbox" ${isCompleted ? 'checked' : ''} style="margin: 0; cursor: pointer;" />
+            </label>
+            <span class="aegis-explorer-row-name">${w.name}</span>
+            <div class="aegis-explorer-row-badges">
+              <span class="aegis-explorer-row-badge ${tierClass}">${w.tier || 'F'}</span>
+              <span class="aegis-explorer-row-rank">${rankLabel}</span>
+            </div>
+          </div>
+          <div class="aegis-explorer-row-details">
+            <span class="aegis-explorer-row-meta">${w.energy} / ${w.frame}</span>
+            <span class="aegis-explorer-row-cat">${m.category}</span>
+            ${w.source ? `<div class="aegis-explorer-row-source" style="margin-top: 4px; font-size: 11px; color: #ffd700;"><span style="color: #aaa; font-weight: 500;">Source:</span> ${w.source}</div>` : ''}
+          </div>
+          ${w.notes ? `<div class="aegis-explorer-row-notes">${w.notes}</div>` : ''}
+          <div class="aegis-explorer-row-actions">
+            <button class="aegis-action-btn aegis-btn-highlight" data-action="filter-vault">Filter in Vault</button>
+            <button class="aegis-action-btn aegis-btn-chase ${chaseClass}" data-action="chase-weapon">${chaseText}</button>
+            ${destinyReportBtnHtml}
+          </div>
+        </div>
+      `;
+        }
+        resultsContainer.innerHTML = html;
+        // Bind Explorer List event handlers
+        const rows = resultsContainer.querySelectorAll('.aegis-explorer-row');
+        rows.forEach((row) => {
+            const name = row.getAttribute('data-weapon-name');
+            if (!name)
+                return;
+            const norm = name.toLowerCase().trim();
+            const w = db.weapons[norm];
+            // Row expand listener
+            row.addEventListener('click', (e) => {
+                const target = e.target;
+                if (target.closest('.aegis-explorer-row-actions') || target.closest('.aegis-checklist-toggle')) {
+                    return;
+                }
+                // Accordion: collapse other rows
+                rows.forEach((otherRow) => {
+                    if (otherRow !== row) {
+                        otherRow.classList.remove('expanded');
+                    }
+                });
+                row.classList.toggle('expanded');
+            });
+            // Checklist checkbox change listener
+            const checkbox = row.querySelector('.aegis-checklist-checkbox');
+            if (checkbox) {
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        completedWeapons[norm] = true;
+                        row.classList.add('completed');
+                    }
+                    else {
+                        delete completedWeapons[norm];
+                        row.classList.remove('completed');
+                    }
+                    chrome.storage.local.set({ aegisCompletedWeapons: completedWeapons });
+                    updateProgressIndicator();
+                    if (hideCompleted) {
+                        renderResults();
+                    }
+                });
+            }
+            // Filter in Vault button listener
+            const highlightBtn = row.querySelector('[data-action="filter-vault"]');
+            highlightBtn?.addEventListener('click', (e) => {
                 e.stopPropagation();
+                triggerDimSearch(norm);
             });
+            // Toggle Chase button listener
+            const chaseBtn = row.querySelector('[data-action="chase-weapon"]');
+            if (chaseBtn && w) {
+                chaseBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (chaseList[norm]) {
+                        delete chaseList[norm];
+                        chaseBtn.classList.remove('aegis-btn-chase-active');
+                        chaseBtn.textContent = '+ Chase';
+                    }
+                    else {
+                        const parseRecs = (str) => {
+                            if (!str)
+                                return [];
+                            return str.split(/[\/\n,]+/).map(s => s.trim()).filter(Boolean);
+                        };
+                        const perk1s = parseRecs(w.perk1);
+                        const perk2s = parseRecs(w.perk2);
+                        chaseList[norm] = {
+                            name: w.name,
+                            // Trait rolls are the chase defaults.  Barrel, magazine, and origin
+                            // selections remain optional filters rather than silently rejecting
+                            // a weapon that has the requested trait pair.
+                            barrel: '',
+                            mag: '',
+                            perk1: perk1s[0] || '',
+                            perk1Alt1: '',
+                            perk1Alt2: '',
+                            perk2: perk2s[0] || '',
+                            perk2Alt1: '',
+                            perk2Alt2: '',
+                            origin: '',
+                        };
+                        chaseBtn.classList.add('aegis-btn-chase-active');
+                        chaseBtn.textContent = 'Remove Chase';
+                    }
+                    chrome.storage.local.set({ aegisChaseList: chaseList });
+                    renderResults();
+                });
+            }
+            // Destiny.Report button listener
+            const reportBtn = row.querySelector('.aegis-btn-report');
+            if (reportBtn) {
+                reportBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+        });
+    }
+    catch (e) {
+        addDiagnosticLog(`Error in renderResults: ${e.message}\n${e.stack}`);
+        const resultsContainer = document.querySelector('.aegis-explorer-results');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = `<div class="aegis-explorer-empty">Error rendering: ${e.message}</div>`;
         }
-    });
+    }
 }
 function triggerDimSearch(weaponName) {
     const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]');
@@ -653,6 +1207,10 @@ function initAegisExplorer() {
       <span class="aegis-explorer-title">Aegis Database Explorer</span>
       <button class="aegis-explorer-close" title="Close Explorer">&times;</button>
     </div>
+    <div class="aegis-explorer-tabs">
+      <button class="aegis-explorer-tab active" data-tab="explorer">Database Explorer</button>
+      <button class="aegis-explorer-tab" data-tab="chase">My Chase List</button>
+    </div>
     <div class="aegis-explorer-search-group">
       <input type="text" class="aegis-explorer-search-input" placeholder="Search weapon, notes, perks..." />
       <div class="aegis-explorer-selects">
@@ -672,18 +1230,39 @@ function initAegisExplorer() {
           <option value="Strand">Strand</option>
         </select>
       </div>
+      <div class="aegis-explorer-sub-controls">
+        <label class="aegis-explorer-checkbox-label">
+          <input type="checkbox" class="aegis-explorer-hide-completed" />
+          Hide Checked-off
+        </label>
+        <div class="aegis-explorer-progress-container">
+          <span class="aegis-explorer-progress-text">Completed: 0/0 (0%)</span>
+          <div class="aegis-explorer-progress-bg">
+            <div class="aegis-explorer-progress-bar"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="aegis-explorer-results">
       <div class="aegis-explorer-empty">Loading database...</div>
     </div>
+    <details class="aegis-diagnostic-logs" style="border-top: 1px solid #333; margin-top: auto; font-size: 10px; font-family: monospace; color: #aaa; background: #161a22; padding: 4px 8px; flex-shrink: 0; display: flex; flex-direction: column;">
+      <summary style="cursor: pointer; padding: 4px 0; color: #ffd700; font-weight: bold; user-select: none;">Aegis Diagnostic Logs</summary>
+      <div class="aegis-diagnostic-logs-content" style="max-height: 120px; overflow-y: auto; white-space: pre-wrap; margin-top: 4px; padding-bottom: 8px; font-size: 9px; line-height: 1.3;"></div>
+    </details>
   `;
     document.body.appendChild(fab);
     document.body.appendChild(panel);
+    const diagContent = panel.querySelector('.aegis-diagnostic-logs-content');
+    if (diagContent) {
+        diagContent.textContent = diagnosticLogs.join('\n') + (diagnosticLogs.length > 0 ? '\n' : '');
+    }
     const closeBtn = panel.querySelector('.aegis-explorer-close');
     const searchInput = panel.querySelector('.aegis-explorer-search-input');
     const catSelect = panel.querySelector('.aegis-explorer-category-select');
     const frameSelect = panel.querySelector('.aegis-explorer-frame-select');
     const elementSelect = panel.querySelector('.aegis-explorer-element-select');
+    const hideCompletedCheckbox = panel.querySelector('.aegis-explorer-hide-completed');
     fab.addEventListener('click', () => {
         panel.classList.toggle('open');
         if (panel.classList.contains('open')) {
@@ -693,6 +1272,25 @@ function initAegisExplorer() {
     });
     closeBtn?.addEventListener('click', () => {
         panel.classList.remove('open');
+    });
+    // Tab switching setup
+    const tabs = panel.querySelectorAll('.aegis-explorer-tab');
+    const searchGroup = panel.querySelector('.aegis-explorer-search-group');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeTab = tab.getAttribute('data-tab') || 'explorer';
+            if (activeTab === 'chase') {
+                if (searchGroup)
+                    searchGroup.style.display = 'none';
+            }
+            else {
+                if (searchGroup)
+                    searchGroup.style.display = 'flex';
+            }
+            renderResults();
+        });
     });
     const onUpdate = () => {
         renderResults();
@@ -704,11 +1302,14 @@ function initAegisExplorer() {
     });
     frameSelect?.addEventListener('change', onUpdate);
     elementSelect?.addEventListener('change', onUpdate);
+    hideCompletedCheckbox?.addEventListener('change', onUpdate);
 }
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList'], (res) => {
     wishlistDb = res.wishlistData || {};
     enhancedToNormalMap = res.enhancedToNormal || {};
+    completedWeapons = res.aegisCompletedWeapons || {};
+    chaseList = res.aegisChaseList || {};
     scoringSource = res.scoringSource || 'aegis';
     aegisLayoutSide = res.aegisLayoutSide || 'side';
     aegisDbMode = res.aegisDbMode || 'both';
@@ -716,9 +1317,13 @@ chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', '
     aegisArmorSource = res.aegisArmorSource || 'lowco';
     lightggDb = res.lightggData || {};
     aegisSheetDb = res.aegisSheetDb || null;
+    if (clearLegacyDefaultChaseFilters()) {
+        chrome.storage.local.set({ aegisChaseList: chaseList });
+    }
     console.log(`DIM Aegis Overlay: Loaded configuration. Source: ${scoringSource}`);
     updateNameToHashFromWishlist();
     updatePerkNameToIcon(res.perkRegistry || {});
+    updatePerkNameToHash(res.perkRegistry || {});
     reprocessAllElements();
     initAegisExplorer();
 });
@@ -761,11 +1366,23 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         }
         if (changes.aegisSheetDb) {
             aegisSheetDb = changes.aegisSheetDb.newValue || null;
+            if (clearLegacyDefaultChaseFilters()) {
+                chrome.storage.local.set({ aegisChaseList: chaseList });
+            }
             changed = true;
         }
         if (changes.perkRegistry) {
             updatePerkNameToIcon(changes.perkRegistry.newValue || {});
+            updatePerkNameToHash(changes.perkRegistry.newValue || {});
             changed = true;
+        }
+        if (changes.aegisCompletedWeapons) {
+            completedWeapons = changes.aegisCompletedWeapons.newValue || {};
+            renderResults();
+        }
+        if (changes.aegisChaseList) {
+            chaseList = changes.aegisChaseList.newValue || {};
+            renderResults();
         }
         if (changed) {
             console.log('DIM Aegis Overlay: Storage updated, re-scoring elements.');
@@ -1081,7 +1698,10 @@ function injectPopupSummary(popupContainer, result, scoringSource, sheetWeapon, 
             }
             if (perksRowsHtml || superiorsHtml) {
                 safeSetInnerHTML(detailsCard, `
-          <div class="aegis-details-header">Aegis Recommended Perks</div>
+          <div class="aegis-details-header" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <span>Aegis Recommended Perks</span>
+            ${sheetWeapon.source ? `<span class="aegis-details-source-badge" style="font-size: 10px; font-weight: 500; color: #ffd700; background: rgba(255, 215, 0, 0.08); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255, 215, 0, 0.2); font-family: sans-serif; letter-spacing: 0.1px;">Source: ${sheetWeapon.source}</span>` : ''}
+          </div>
           <div class="aegis-details-body aegis-perks-body" style="margin-bottom: ${superiorsHtml ? '10px' : '0'};">
             ${perksRowsHtml}
           </div>
@@ -1308,9 +1928,13 @@ function processElement(el) {
             .split(',')
             .map((h) => parseInt(h.trim(), 10))
             .filter((h) => !isNaN(h));
+        const instanceId = el.getAttribute('data-aegis-instance-id');
         let perksMap = {};
         if (perksDataStr) {
-            perksMap = JSON.parse(perksDataStr);
+            try {
+                perksMap = JSON.parse(perksDataStr);
+            }
+            catch (e) { /* ignore */ }
             for (const p of Object.values(perksMap)) {
                 if (p && p.name && p.icon) {
                     const cleanName = cleanPerkName(p.name);
@@ -1318,6 +1942,35 @@ function processElement(el) {
                     perkNameToIcon[p.name.toLowerCase().trim()] = p.icon;
                 }
             }
+        }
+        // Build perkNames from the perksDataMap (all hashes → names) for name-based matching fallback
+        const perkNames = Object.values(perksMap)
+            .map(p => p?.name?.toLowerCase().trim())
+            .filter(Boolean);
+        if (instanceId && weaponName && weaponName !== 'Unknown Weapon') {
+            ownedItemsMap.set(instanceId, {
+                instanceId,
+                name: weaponName,
+                hash: itemHash,
+                perkHashes,
+                perkNames,
+            });
+        }
+        // Read the categorized possible perks written by the main world script (perk1s/perk2s separated by column)
+        const possiblePerksAttr = el.getAttribute('data-aegis-weapon-possible-perks');
+        if (possiblePerksAttr && weaponName && weaponName !== 'Unknown Weapon') {
+            try {
+                const possible = JSON.parse(possiblePerksAttr);
+                const norm = weaponName.toLowerCase().trim();
+                // Only update if we got real perk data (non-empty perk columns)
+                if (possible && (possible.perk1s?.length > 0 || possible.perk2s?.length > 0 || possible.barrels?.length > 0)) {
+                    const existing = weaponPossiblePerksCache[norm];
+                    if (!existing || !existing.isFromManifest) {
+                        weaponPossiblePerksCache[norm] = possible;
+                    }
+                }
+            }
+            catch (e) { /* ignore */ }
         }
         const activePerksDataStr = el.getAttribute('data-aegis-active-perk-hashes');
         let activeHashes = [];
@@ -1651,6 +2304,7 @@ const observer = new MutationObserver((mutations) => {
             });
         }
     }
+    updateBadgesOpacity();
 });
 function startObserver() {
     if (!document.body) {
@@ -1665,5 +2319,109 @@ function startObserver() {
     });
 }
 startObserver();
+function getItemContainer(badge) {
+    const parent = badge.parentElement;
+    if (!parent)
+        return null;
+    // Case A: The parent itself is the item container
+    if (parent.hasAttribute('data-aegis-item-hash')) {
+        return parent;
+    }
+    // Case B: The item container is a sibling inside the parent (e.g. parent is .item-drag-container)
+    const siblingContainer = parent.querySelector('[data-aegis-item-hash]');
+    if (siblingContainer) {
+        return siblingContainer;
+    }
+    // Case C: The item container is an ancestor of parent
+    const ancestorContainer = parent.closest('[data-aegis-item-hash]');
+    if (ancestorContainer) {
+        return ancestorContainer;
+    }
+    return null;
+}
+function updateBadgesOpacity() {
+    const badges = document.querySelectorAll('.aegis-badge');
+    badges.forEach((badge) => {
+        const parent = badge.parentElement;
+        if (!parent)
+            return;
+        let isDimmed = false;
+        // 1. Walk up from parent to document.body (detect parent card dimming)
+        let currentAncestor = parent;
+        while (currentAncestor && currentAncestor !== document.body) {
+            const style = window.getComputedStyle(currentAncestor);
+            const opacity = parseFloat(style.opacity || '1');
+            const filter = style.filter || '';
+            if (opacity < 0.9 || filter.includes('opacity') || filter.includes('grayscale')) {
+                isDimmed = true;
+                break;
+            }
+            currentAncestor = currentAncestor.parentElement;
+        }
+        // 2. Find the item container and check its direct children
+        if (!isDimmed) {
+            const container = getItemContainer(badge);
+            if (container) {
+                // A. Check container itself
+                const containerStyle = window.getComputedStyle(container);
+                const containerOpacity = parseFloat(containerStyle.opacity || '1');
+                const containerFilter = containerStyle.filter || '';
+                if (containerOpacity < 0.9 || containerFilter.includes('opacity') || containerFilter.includes('grayscale')) {
+                    isDimmed = true;
+                }
+                // B. Check direct children of the container (e.g. the .item wrapper)
+                if (!isDimmed) {
+                    const children = container.children;
+                    for (let i = 0; i < children.length; i++) {
+                        const child = children[i];
+                        if (child.classList.contains('aegis-badge'))
+                            continue;
+                        const style = window.getComputedStyle(child);
+                        const opacity = parseFloat(style.opacity || '1');
+                        const filter = style.filter || '';
+                        if (opacity < 0.9 || filter.includes('opacity') || filter.includes('grayscale')) {
+                            isDimmed = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        // Apply or remove style overrides accordingly
+        if (isDimmed) {
+            badge.style.setProperty('opacity', '0.25', 'important');
+            badge.style.setProperty('filter', 'grayscale(0.8)', 'important');
+        }
+        else {
+            badge.style.removeProperty('opacity');
+            badge.style.removeProperty('filter');
+        }
+    });
+}
 // Run initial scan once script loads
 reprocessAllElements();
+updateBadgesOpacity();
+setupRegistryObserver();
+// Run periodic checks to keep badge opacity in sync with React state updates
+setInterval(updateBadgesOpacity, 300);
+// Diagnostic logging framework
+const diagnosticLogs = [];
+function addDiagnosticLog(msg) {
+    console.log(`[Aegis Diagnostic] ${msg}`);
+    const time = new Date().toTimeString().split(' ')[0];
+    const formatted = `[${time}] ${msg}`;
+    diagnosticLogs.push(formatted);
+    const content = document.querySelector('.aegis-diagnostic-logs-content');
+    if (content) {
+        content.textContent += `${formatted}\n`;
+        content.scrollTop = content.scrollHeight;
+    }
+}
+// Receive logs from main world context
+document.addEventListener('aegis-diagnostic-log', (e) => {
+    if (e.detail) {
+        addDiagnosticLog(e.detail);
+    }
+});
+// Setup initial log entry
+addDiagnosticLog('Aegis isolated-world script initialized.');

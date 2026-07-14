@@ -219,6 +219,7 @@ export function showTooltip(target, result, weaponName, localPerksMap, activeHas
         ${rankText ? `<span class="aegis-tooltip-sheet-rank">${rankText}</span>` : ''}
         ${categoryMetaText}
       </div>
+      ${sheetWeapon.source ? `<div class="aegis-tooltip-weapon-source" style="font-size: 11px; margin-top: 4px; color: #ffd700;"><span style="color: #aaa; font-weight: 500;">Source:</span> ${sheetWeapon.source}</div>` : ''}
     `;
         // Shortened recommended perks
         const cleanPerk1 = sheetWeapon.perk1 ? sheetWeapon.perk1.split('\n')[0].trim() : '';

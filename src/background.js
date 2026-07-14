@@ -129,7 +129,7 @@ async function fetchAndCacheAegisSheet() {
     try {
         const promises = ALL_TABS.map(async (tab) => {
             const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { credentials: 'omit' });
             if (!res.ok) {
                 throw new Error(`Failed to fetch tab ${tab}: ${res.statusText}`);
             }
@@ -170,6 +170,7 @@ async function fetchAndCacheAegisSheet() {
                     perk1: getVal(row, ['Perk 1', 'PERKS Perk 1']),
                     perk2: getVal(row, ['Perk 2', 'PERKS Perk 2']),
                     origin: getVal(row, ['Origin Trait', 'Origin']),
+                    source: getVal(row, 'Source'),
                     notes: getVal(row, ['ANALYSIS Notes', 'Notes']),
                     rank: getVal(row, 'Rank'),
                     tier: getVal(row, 'Tier'),
@@ -192,7 +193,7 @@ async function fetchAndCacheAegisSheet() {
         // Fetch armor sets sheet
         console.log('DIM Aegis Overlay: Fetching Aegis Armor Spreadsheet...');
         const armorUrl = `https://docs.google.com/spreadsheets/d/${ARMOR_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${ARMOR_GID}`;
-        const armorRes = await fetch(armorUrl);
+        const armorRes = await fetch(armorUrl, { credentials: 'omit' });
         if (!armorRes.ok) {
             throw new Error(`Failed to fetch armor sheet: ${armorRes.statusText}`);
         }
@@ -232,7 +233,7 @@ async function fetchAndCacheAegisSheet() {
         // Fetch Aegis's own Set Bonuses tab
         console.log('DIM Aegis Overlay: Fetching Aegis Set Bonuses tab...');
         const aegisArmorUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Set Bonuses')}`;
-        const aegisArmorRes = await fetch(aegisArmorUrl);
+        const aegisArmorRes = await fetch(aegisArmorUrl, { credentials: 'omit' });
         const armorAegis = {};
         if (aegisArmorRes.ok) {
             const csvText = await aegisArmorRes.text();

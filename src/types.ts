@@ -43,6 +43,18 @@ export interface LocalStorageSchema {
   enhancedToNormal?: Record<number, number>;
   aegisSheetDb?: AegisSheetDatabase;
   aegisSheetLastSync?: number;
+  aegisChaseList?: Record<string, {
+    name: string;
+    barrel: string;
+    mag: string;
+    perk1: string;
+    perk1Alt1?: string;
+    perk1Alt2?: string;
+    perk2: string;
+    perk2Alt1?: string;
+    perk2Alt2?: string;
+    origin?: string;
+  }>;
 }
 
 /**
@@ -57,6 +69,7 @@ export interface AegisSheetWeapon {
   perk1: string;
   perk2: string;
   origin: string;
+  source?: string;
   notes: string;
   rank: string;
   tier: string;

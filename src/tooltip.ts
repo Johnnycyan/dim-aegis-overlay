@@ -252,6 +252,7 @@ export function showTooltip(
         ${rankText ? `<span class="aegis-tooltip-sheet-rank">${rankText}</span>` : ''}
         ${categoryMetaText}
       </div>
+      ${sheetWeapon.source ? `<div class="aegis-tooltip-weapon-source" style="font-size: 11px; margin-top: 4px; color: #ffd700;"><span style="color: #aaa; font-weight: 500;">Source:</span> ${sheetWeapon.source}</div>` : ''}
     `;
 
     // Shortened recommended perks

@@ -33,10 +33,23 @@
   opacity: inherit;
 }
 [class*="dimmed"] .aegis-badge,
+[class*="filtered"] .aegis-badge,
+.dimmed .aegis-badge,
+.search-dimmed .aegis-badge,
 [style*="opacity: 0.15"] .aegis-badge,
-[style*="opacity:0.15"] .aegis-badge {
-  opacity: 0.2 !important;
+[style*="opacity:0.15"] .aegis-badge,
+[style*="opacity: 0.2"] .aegis-badge,
+[style*="opacity:0.2"] .aegis-badge,
+[style*="opacity: 0.3"] .aegis-badge,
+[style*="opacity:0.3"] .aegis-badge,
+[style*="opacity: 0.4"] .aegis-badge,
+[style*="opacity:0.4"] .aegis-badge,
+[style*="opacity: 0.5"] .aegis-badge,
+[style*="opacity:0.5"] .aegis-badge {
+  opacity: 0.25 !important;
+  filter: grayscale(0.8) !important;
 }
+
 
 
 .aegis-badge.aegis-badge-wide {
@@ -2128,6 +2141,334 @@ div[id^="item-"][data-aegis-item-hash]:hover {
 .filter-desc {
   font-size: 12px;
   color: #d8dee9;
+}
+
+/* ------------------------------------------
+   8. Aegis Database Explorer Checklist & Progress Styles
+   ------------------------------------------ */
+.aegis-explorer-sub-controls {
+  margin-top: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  font-size: 11px !important;
+}
+
+.aegis-explorer-checkbox-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #aaa !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  font-weight: 500 !important;
+}
+
+.aegis-explorer-checkbox-label input[type="checkbox"] {
+  margin: 0 !important;
+  cursor: pointer !important;
+  accent-color: #ffd700 !important;
+}
+
+.aegis-explorer-progress-container {
+  flex-grow: 1 !important;
+  max-width: 180px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 3px !important;
+}
+
+.aegis-explorer-progress-text {
+  color: #ffd700 !important;
+  font-weight: 600 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.2px !important;
+}
+
+.aegis-explorer-progress-bg {
+  width: 100% !important;
+  height: 4px !important;
+  background: #252525 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.aegis-explorer-progress-bar {
+  width: 0% !important;
+  height: 100% !important;
+  background: #ffd700 !important;
+  border-radius: 2px !important;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.aegis-checklist-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.aegis-checklist-checkbox {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 15px !important;
+  height: 15px !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  border-radius: 3px !important;
+  background: transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s ease, border-color 0.15s ease !important;
+  outline: none !important;
+}
+
+.aegis-checklist-checkbox:checked {
+  background: #ffd700 !important;
+  border-color: #ffd700 !important;
+}
+
+.aegis-checklist-checkbox:checked::after {
+  content: "" !important;
+  width: 4px !important;
+  height: 8px !important;
+  border: solid #000000 !important;
+  border-width: 0 2px 2px 0 !important;
+  transform: rotate(45deg) translate(-0.5px, -1px) !important;
+  display: block !important;
+}
+
+.aegis-explorer-row.completed {
+  opacity: 0.55 !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.aegis-explorer-row.completed .aegis-explorer-row-name {
+  text-decoration: line-through !important;
+  color: #777 !important;
+}
+
+.aegis-chase-row.completed {
+  opacity: 0.55 !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.aegis-chase-row.completed .aegis-chase-name {
+  text-decoration: line-through !important;
+  color: #777 !important;
+}
+
+/* ------------------------------------------
+   Chase List UI Tab Switcher & Pinned Items
+   ------------------------------------------ */
+.aegis-explorer-tabs {
+  display: flex !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 0 4px !important;
+  margin-bottom: 0 !important;
+}
+
+.aegis-explorer-tab {
+  flex: 1 !important;
+  background: none !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  padding: 10px 4px !important;
+  color: #888 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.aegis-explorer-tab:hover {
+  color: #e3e3e8 !important;
+}
+
+.aegis-explorer-tab.active {
+  color: #ffd700 !important;
+  border-bottom-color: #ffd700 !important;
+}
+
+/* Pinned Chase Card Rows */
+.aegis-chase-row {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  margin-bottom: 12px !important;
+  box-sizing: border-box !important;
+  animation: aegis-fade-in 0.2s ease !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.aegis-chase-row:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 179, 0, 0.25) !important;
+}
+
+.aegis-chase-row.expanded {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 179, 0, 0.2) !important;
+}
+
+.aegis-chase-row.expanded .aegis-chase-chevron {
+  transform: rotate(90deg) !important;
+  color: #ffd700 !important;
+}
+
+.aegis-chase-row-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
+}
+
+.aegis-chase-name {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+.aegis-chase-delete {
+  background: none !important;
+  border: none !important;
+  color: #888 !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  padding: 0 4px !important;
+  line-height: 1 !important;
+  transition: color 0.15s ease !important;
+}
+
+.aegis-chase-delete:hover {
+  color: #ff5c5c !important;
+}
+
+.aegis-chase-meta {
+  font-size: 11px !important;
+  color: #ffd700 !important;
+  margin-bottom: 4px !important;
+}
+
+.aegis-chase-selectors {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  margin-bottom: 0 !important;
+  transition: max-height 0.25s ease-out, opacity 0.2s ease-out, margin-bottom 0.2s ease-out, margin-top 0.2s ease-out !important;
+  margin-top: 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 8px !important;
+}
+
+.aegis-chase-row.expanded .aegis-chase-selectors {
+  max-height: 500px !important;
+  opacity: 1 !important;
+  margin-bottom: 12px !important;
+  margin-top: 10px !important;
+}
+
+.aegis-chase-select-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.aegis-chase-select-group label {
+  font-size: 9px !important;
+  color: #888 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.2px !important;
+}
+
+.aegis-chase-select {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 4px !important;
+  color: #e3e3e8 !important;
+  font-size: 11px !important;
+  padding: 4px 6px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease !important;
+}
+
+.aegis-chase-select:focus {
+  border-color: #ffd700 !important;
+}
+
+.aegis-chase-status-row {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: 8px !important;
+}
+
+.aegis-chase-status {
+  font-weight: 600 !important;
+}
+
+.aegis-status-none {
+  color: #ff5c5c !important;
+}
+
+.aegis-status-match {
+  color: #1ed760 !important;
+}
+
+.aegis-status-have-weapon {
+  color: #ffb300 !important;
+}
+
+.aegis-chase-btn-highlight {
+  background: rgba(30, 215, 96, 0.1) !important;
+  border: 1px solid rgba(30, 215, 96, 0.3) !important;
+  border-radius: 4px !important;
+  color: #1ed760 !important;
+  cursor: pointer !important;
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+
+.aegis-chase-btn-highlight:hover {
+  background: rgba(30, 215, 96, 0.2) !important;
+  border-color: #1ed760 !important;
+}
+
+.aegis-btn-chase {
+  background: rgba(255, 215, 0, 0.05) !important;
+  border: 1px solid rgba(255, 215, 0, 0.2) !important;
+  color: #ffd700 !important;
+}
+
+.aegis-btn-chase:hover {
+  background: rgba(255, 215, 0, 0.15) !important;
+}
+
+.aegis-btn-chase-active {
+  background: #ffd700 !important;
+  color: #000000 !important;
+  border-color: #ffd700 !important;
+}
+
+.aegis-btn-chase-active:hover {
+  background: #ffea70 !important;
+  border-color: #ffea70 !important;
 }
 
 

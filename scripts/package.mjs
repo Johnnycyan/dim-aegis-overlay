@@ -40,5 +40,27 @@ console.log(`📦  Packaging Extension → ${path.basename(zipOut)}`);
 zip(distDir, zipOut);
 console.log(`    ✓ Done`);
 
-console.log('\n✅  Zip is ready:');
+// ── Package Source Zip ──────────────────────────────────────────────────────
+
+const srcZipOut = path.join(root, `dim-aegis-overlay-src.zip`);
+console.log(`📦  Packaging Source Code → ${path.basename(srcZipOut)}`);
+
+if (fs.existsSync(srcZipOut)) fs.unlinkSync(srcZipOut);
+
+if (process.platform === 'win32') {
+  const excludeList = ['node_modules', 'dist', '.git', '.github', '*.zip', 'scratch', '.agents', '.gemini'];
+  const excludeFilter = excludeList.map(item => `$_ -notlike '*\\${item}*' -and $_ -notlike '*\\${item}'`).join(' -and ');
+  execSync(
+    `powershell -Command "Get-ChildItem -Path '${root}' -Recurse | Where-Object { ${excludeFilter} } | Compress-Archive -DestinationPath '${srcZipOut}' -Force"`,
+    { stdio: 'inherit' }
+  );
+} else {
+  execSync(`zip -r "${srcZipOut}" . -x "node_modules/*" "dist/*" ".git/*" ".github/*" "*.zip" "scratch/*" ".agents/*" ".gemini/*"`, { stdio: 'inherit' });
+}
+console.log(`    ✓ Done`);
+
+console.log('\n✅  Zips are ready:');
 console.log(`   ${path.basename(zipOut)}`);
+console.log(`   ${path.basename(srcZipOut)}`);
+
+
