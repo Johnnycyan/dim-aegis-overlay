@@ -35,17 +35,7 @@
 [class*="dimmed"] .aegis-badge,
 [class*="filtered"] .aegis-badge,
 .dimmed .aegis-badge,
-.search-dimmed .aegis-badge,
-[style*="opacity: 0.15"] .aegis-badge,
-[style*="opacity:0.15"] .aegis-badge,
-[style*="opacity: 0.2"] .aegis-badge,
-[style*="opacity:0.2"] .aegis-badge,
-[style*="opacity: 0.3"] .aegis-badge,
-[style*="opacity:0.3"] .aegis-badge,
-[style*="opacity: 0.4"] .aegis-badge,
-[style*="opacity:0.4"] .aegis-badge,
-[style*="opacity: 0.5"] .aegis-badge,
-[style*="opacity:0.5"] .aegis-badge {
+.search-dimmed .aegis-badge {
   opacity: 0.25 !important;
   filter: grayscale(0.8) !important;
 }
@@ -1052,6 +1042,13 @@ div[id^="item-"][data-aegis-item-hash]:hover {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
 }
 
+/* Suppress hover transforms while scrolling: tiles passing under the cursor
+   would otherwise each trigger a scale animation + full tile repaint */
+body.aegis-scrolling div[id^="item-"][data-aegis-item-hash]:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 /* 3. Tooltip Tag badges styling */
 .aegis-tooltip-tags-row {
   display: flex !important;
@@ -1712,9 +1709,9 @@ div[id^="item-"][data-aegis-item-hash]:hover {
   width: 48px !important;
   height: 48px !important;
   border-radius: 50% !important;
-  background: rgba(22, 22, 33, 0.8) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  background: rgba(22, 22, 33, 0.95) !important;
+  /* No backdrop-filter here: an always-visible fixed element with backdrop blur
+     forces Firefox to re-blur everything behind it on every scroll frame. */
   border: 1px solid rgba(255, 179, 0, 0.4) !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(255, 179, 0, 0.15) !important;
   z-index: 9999 !important;

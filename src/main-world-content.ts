@@ -420,7 +420,25 @@ function setupRegistryObserver(registryEl: HTMLElement) {
 
 /**
  * Updates the global perk registry DOM element with newly seen perks.
+ * Serializing the entire registry on every scan pass is expensive and floods
+ * the isolated-world observer with huge JSON.parse jobs, so flushes are
+ * throttled to a trailing write at most once per second.
  */
+let registryFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushRegistry() {
+  registryFlushTimer = null;
+  const registryEl = document.getElementById('aegis-global-perk-registry');
+  if (registryEl) {
+    registryEl.setAttribute('data-registry', JSON.stringify(globalRegistry));
+  }
+}
+
+function scheduleRegistryFlush() {
+  if (registryFlushTimer) return;
+  registryFlushTimer = setTimeout(flushRegistry, 1000);
+}
+
 function registerPerks(perksMap: Record<number, PerkInfo>) {
   let updated = false;
   for (const [hashStr, info] of Object.entries(perksMap)) {
@@ -442,18 +460,27 @@ function registerPerks(perksMap: Record<number, PerkInfo>) {
   }
 
   if (updated) {
-    registryEl.setAttribute('data-registry', JSON.stringify(globalRegistry));
+    scheduleRegistryFlush();
   }
 }
 
 
 /**
  * Finds the React Fiber node associated with a DOM element.
+ * The React fiber key name is stable per session, so cache it after the
+ * first lookup to avoid allocating the full key array on every call.
  */
+let cachedFiberKey: string | null = null;
+
 function findReactFiber(el: HTMLElement): any {
+  if (cachedFiberKey) {
+    const fiber = (el as any)[cachedFiberKey];
+    if (fiber) return fiber;
+  }
   const key = Object.keys(el).find(
     (k) => k.startsWith('__reactFiber') || k.startsWith('__reactInternalInstance')
   );
+  if (key) cachedFiberKey = key;
   return key ? (el as any)[key] : null;
 }
 
@@ -811,8 +838,6 @@ const SELECTORS = [
   '.item-tile',
   '[class*="ItemPopup"]',
   '[class*="item-popup"]',
-  '[class*="Sheet"]',
-  '[class*="sheet"]',
   '.item-popup',
 ].join(',');
 
@@ -826,24 +851,44 @@ function scanPage() {
   }
 }
 
-// 1. Periodic scanning to catch any missed updates
-setInterval(scanPage, 1000);
+// 1. Periodic scanning to catch any missed updates (fallback only — the
+// MutationObserver below handles the vast majority of DOM changes)
+setInterval(scanPage, 10000);
 
-// 2. Immediate scan on DOM modifications using MutationObserver
+// 2. Immediate scan on DOM modifications using MutationObserver.
+// Mutations are batched and processed once per animation frame to avoid
+// running selector queries + fiber walks for every single mutation record.
+const pendingNodes: HTMLElement[] = [];
+let scanScheduled = false;
+
+function flushPendingNodes() {
+  scanScheduled = false;
+  const nodes = pendingNodes.splice(0, pendingNodes.length);
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (!node.isConnected) continue;
+    if (node.matches && node.matches(SELECTORS)) {
+      processElement(node);
+    }
+    const children = node.querySelectorAll<HTMLElement>(SELECTORS);
+    children.forEach(processElement);
+  }
+}
+
 const observer = new MutationObserver((mutations) => {
   for (let i = 0; i < mutations.length; i++) {
     const mutation = mutations[i];
     if (mutation.addedNodes.length > 0) {
       mutation.addedNodes.forEach((node) => {
         if (node instanceof HTMLElement) {
-          if (node.matches && node.matches(SELECTORS)) {
-            processElement(node);
-          }
-          const children = node.querySelectorAll<HTMLElement>(SELECTORS);
-          children.forEach(processElement);
+          pendingNodes.push(node);
         }
       });
     }
+  }
+  if (pendingNodes.length > 0 && !scanScheduled) {
+    scanScheduled = true;
+    requestAnimationFrame(flushPendingNodes);
   }
 });
 

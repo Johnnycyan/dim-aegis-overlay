@@ -260,6 +260,26 @@ function updateNameToHashFromWishlist() {
 }
 
 /**
+ * Debounced persistence of the perk registry. The registry updates constantly
+ * while items are scanned; writing the full object to storage on every update
+ * floods storage.onChanged listeners. Persist at most once every few seconds.
+ */
+let perkRegistryPersistTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingPerkRegistry: Record<string, { name: string; icon: string }> | null = null;
+
+function schedulePerkRegistryPersist(registry: Record<string, { name: string; icon: string }>) {
+  pendingPerkRegistry = registry;
+  if (perkRegistryPersistTimer) return;
+  perkRegistryPersistTimer = setTimeout(() => {
+    perkRegistryPersistTimer = null;
+    if (pendingPerkRegistry) {
+      chrome.storage.local.set({ perkRegistry: pendingPerkRegistry });
+      pendingPerkRegistry = null;
+    }
+  }, 3000);
+}
+
+/**
  * Sets up a MutationObserver on the global perk registry element to watch for
  * resolved perk names and trigger real-time updates to the active tooltip.
  */
@@ -287,7 +307,7 @@ function setupRegistryObserver() {
         if (registryStr) {
           try {
             const parsed = JSON.parse(registryStr);
-            chrome.storage.local.set({ perkRegistry: parsed });
+            schedulePerkRegistryPersist(parsed);
             updatePerkNameToIcon(parsed);
           } catch (e) {
             // Ignore
@@ -1585,7 +1605,10 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (changes.perkRegistry) {
       updatePerkNameToIcon(changes.perkRegistry.newValue || {});
       updatePerkNameToHash(changes.perkRegistry.newValue || {});
-      changed = true;
+      // NOTE: do NOT set changed=true here. The perk registry updates
+      // constantly while scanning, and reprocessing all elements on every
+      // registry write creates an expensive rescore feedback loop.
+      // Registry changes only affect perk names/icons, not grades.
     }
     if (changes.aegisCompletedWeapons) {
       completedWeapons = changes.aegisCompletedWeapons.newValue || {};
@@ -1603,43 +1626,90 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 
+// Track page scrolling so we can suppress tooltip builds while tiles are
+// flying past under the cursor. Building the full tooltip (DOMParser HTML
+// parse + forced layout for positioning) on every tile that passes under the
+// mouse during a scroll is a major source of scroll jank, especially in Firefox.
+let lastScrollTime = 0;
+let scrollClassTimer: ReturnType<typeof setTimeout> | null = null;
+document.addEventListener(
+  'scroll',
+  () => {
+    lastScrollTime = Date.now();
+    // Flag the document as "scrolling" so CSS can suppress hover transforms
+    // on tiles passing under the cursor (each scale triggers a tile repaint)
+    if (document.body && !document.body.classList.contains('aegis-scrolling')) {
+      document.body.classList.add('aegis-scrolling');
+    }
+    if (scrollClassTimer) clearTimeout(scrollClassTimer);
+    scrollClassTimer = setTimeout(() => {
+      scrollClassTimer = null;
+      document.body?.classList.remove('aegis-scrolling');
+    }, 150);
+  },
+  { capture: true, passive: true }
+);
+
+let tooltipShowTimer: ReturnType<typeof setTimeout> | null = null;
+const TOOLTIP_HOVER_DELAY_MS = 100;
+const TOOLTIP_SCROLL_SUPPRESS_MS = 150;
+
 function handleMouseEnter(e: MouseEvent) {
   const el = e.currentTarget as HTMLElement;
   hoveredElement = el;
+
+  // Ignore hover hits that happen mid-scroll (tile just passed under cursor)
+  if (Date.now() - lastScrollTime < TOOLTIP_SCROLL_SUPPRESS_MS) return;
+
   setupRegistryObserver();
-  const result = (el as any)._aegisResult as ScoringResult;
-  const name = (el as any)._aegisName as string;
-  const perksMap = (el as any)._aegisPerksMap as Record<number, { name: string; icon: string }>;
-  const activeHashes = (el as any)._aegisActiveHashes as number[];
 
-  if (result && result.grade) {
-    const sheetWeapon = (el as any)._aegisSheetWeapon;
-    const bestAlternative = (el as any)._aegisBestAlternative;
-    const isBestInClass = (el as any)._aegisIsBestInClass;
-    const sheetPerks = (el as any)._aegisSheetPerks;
-    const sheetArmor = (el as any)._aegisSheetArmor;
-
-    showTooltip(
-      el,
-      result,
-      name,
-      perksMap,
-      activeHashes,
-      scoringSource === 'lightgg',
-      sheetWeapon,
-      bestAlternative,
-      isBestInClass,
-      sheetPerks,
-      perkNameToIcon,
-      sheetArmor
-    );
+  // Hover intent: only build the tooltip if the pointer actually settles
+  if (tooltipShowTimer) {
+    clearTimeout(tooltipShowTimer);
+    tooltipShowTimer = null;
   }
+  tooltipShowTimer = setTimeout(() => {
+    tooltipShowTimer = null;
+    if (hoveredElement !== el) return;
+
+    const result = (el as any)._aegisResult as ScoringResult;
+    const name = (el as any)._aegisName as string;
+    const perksMap = (el as any)._aegisPerksMap as Record<number, { name: string; icon: string }>;
+    const activeHashes = (el as any)._aegisActiveHashes as number[];
+
+    if (result && result.grade) {
+      const sheetWeapon = (el as any)._aegisSheetWeapon;
+      const bestAlternative = (el as any)._aegisBestAlternative;
+      const isBestInClass = (el as any)._aegisIsBestInClass;
+      const sheetPerks = (el as any)._aegisSheetPerks;
+      const sheetArmor = (el as any)._aegisSheetArmor;
+
+      showTooltip(
+        el,
+        result,
+        name,
+        perksMap,
+        activeHashes,
+        scoringSource === 'lightgg',
+        sheetWeapon,
+        bestAlternative,
+        isBestInClass,
+        sheetPerks,
+        perkNameToIcon,
+        sheetArmor
+      );
+    }
+  }, TOOLTIP_HOVER_DELAY_MS);
 }
 
 /**
  * Handles hiding the tooltip when the mouse leaves a weapon tile.
  */
 function handleMouseLeave() {
+  if (tooltipShowTimer) {
+    clearTimeout(tooltipShowTimer);
+    tooltipShowTimer = null;
+  }
   hoveredElement = null;
   hideTooltip();
 }
@@ -2581,35 +2651,55 @@ function reprocessAllElements() {
 }
 
 // 1. Observe the DOM for additions or changes to 'data-aegis-item-hash' or 'data-aegis-perk-hashes'
-const observer = new MutationObserver((mutations) => {
+// Mutations are batched and processed once per animation frame instead of
+// running processElement + opacity sync for every single mutation record.
+const pendingProcessTargets = new Set<HTMLElement>();
+let processFlushScheduled = false;
+
+function flushPendingProcessTargets() {
+  processFlushScheduled = false;
+  setupRegistryObserver();
   setupSearchFilterObserver();
+  const targets = Array.from(pendingProcessTargets);
+  pendingProcessTargets.clear();
+  for (let i = 0; i < targets.length; i++) {
+    if (targets[i].isConnected) {
+      processElement(targets[i]);
+    }
+  }
+  scheduleOpacityUpdate();
+}
+
+const observer = new MutationObserver((mutations) => {
   for (let i = 0; i < mutations.length; i++) {
     const mutation = mutations[i];
-    
+
     // Check if the custom data attributes were modified
     if (
       mutation.type === 'attributes' &&
       (mutation.attributeName === 'data-aegis-item-hash' || mutation.attributeName === 'data-aegis-perk-hashes')
     ) {
-      processElement(mutation.target as HTMLElement);
+      pendingProcessTargets.add(mutation.target as HTMLElement);
     }
-    
+
     // Check for added nodes that might contain our attributes
     if (mutation.type === 'childList') {
-      setupRegistryObserver();
       mutation.addedNodes.forEach((node) => {
         if (node instanceof HTMLElement) {
           if (node.hasAttribute('data-aegis-item-hash')) {
-            processElement(node);
+            pendingProcessTargets.add(node);
           }
           // Scan children
           const children = node.querySelectorAll<HTMLElement>('[data-aegis-item-hash]');
-          children.forEach((child) => processElement(child));
+          children.forEach((child) => pendingProcessTargets.add(child));
         }
       });
     }
   }
-  updateBadgesOpacity();
+  if (pendingProcessTargets.size > 0 && !processFlushScheduled) {
+    processFlushScheduled = true;
+    requestAnimationFrame(flushPendingProcessTargets);
+  }
 });
 
 function startObserver() {
@@ -2705,7 +2795,11 @@ function updateBadgesOpacity() {
       }
     }
 
-    // Apply or remove style overrides accordingly
+    // Apply or remove style overrides accordingly (skip DOM writes when the
+    // state didn't change — each setProperty call forces a style recalc)
+    const newState = isDimmed ? '1' : '0';
+    if (badge.dataset.aegisDimmed === newState) return;
+    badge.dataset.aegisDimmed = newState;
     if (isDimmed) {
       badge.style.setProperty('opacity', '0.25', 'important');
       badge.style.setProperty('filter', 'grayscale(0.8)', 'important');
@@ -2721,8 +2815,56 @@ reprocessAllElements();
 updateBadgesOpacity();
 setupRegistryObserver();
 
-// Run periodic checks to keep badge opacity in sync with React state updates
-setInterval(updateBadgesOpacity, 300);
+// Keep badge opacity in sync with React state updates — event-driven, not polled.
+// DIM dims items by mutating class/style attributes, so watch for those changes
+// near annotated items and recompute once per frame when they occur.
+let opacityUpdateScheduled = false;
+
+function scheduleOpacityUpdate() {
+  if (opacityUpdateScheduled) return;
+  opacityUpdateScheduled = true;
+  const tryRun = () => {
+    // Defer while the page is actively scrolling: the badge dim state is not
+    // perceivable mid-scroll, and running the getComputedStyle walk over every
+    // badge each frame is expensive (13%+ of main thread in Firefox profiles).
+    if (Date.now() - lastScrollTime < TOOLTIP_SCROLL_SUPPRESS_MS) {
+      setTimeout(tryRun, 150);
+      return;
+    }
+    opacityUpdateScheduled = false;
+    updateBadgesOpacity();
+  };
+  tryRun();
+}
+
+const dimmingObserver = new MutationObserver((mutations) => {
+  for (let i = 0; i < mutations.length; i++) {
+    const target = mutations[i].target as HTMLElement;
+    // Ignore our own badge style writes
+    if (target.classList && target.classList.contains('aegis-badge')) continue;
+    // Only care about changes on or around annotated item containers
+    if (
+      target.closest('[data-aegis-item-hash]') ||
+      (target.querySelector && target.querySelector('.aegis-badge'))
+    ) {
+      scheduleOpacityUpdate();
+      return;
+    }
+  }
+});
+
+function startDimmingObserver() {
+  if (!document.body) {
+    document.addEventListener('DOMContentLoaded', startDimmingObserver, { once: true });
+    return;
+  }
+  dimmingObserver.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class', 'style'],
+    subtree: true,
+  });
+}
+startDimmingObserver();
 
 // Diagnostic logging framework
 const diagnosticLogs: string[] = [];
