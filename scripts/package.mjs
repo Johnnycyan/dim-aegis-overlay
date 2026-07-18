@@ -24,7 +24,7 @@ function zip(sourceDir, outFile) {
   // Use tar (bsdtar) on Windows to ensure forward slashes in ZIP archive paths.
   // Firefox addons store rejects zips containing backslash path entries.
   if (process.platform === 'win32') {
-    execSync(`tar -a -cf "${outFile}" -C "${sourceDir}" .`, { stdio: 'inherit' });
+    execSync(`tar -a -cf "${outFile}" -C "${sourceDir}" *`, { stdio: 'inherit' });
   } else {
     execSync(`zip -rj "${outFile}" "${sourceDir}"`, { stdio: 'inherit' });
   }
@@ -47,7 +47,7 @@ if (fs.existsSync(srcZipOut)) fs.unlinkSync(srcZipOut);
 if (process.platform === 'win32') {
   const excludeList = ['node_modules', 'dist', '.git', '.github', '*.zip', 'scratch', '.agents', '.gemini'];
   const excludeArgs = excludeList.map(item => `--exclude="${item}"`).join(' ');
-  execSync(`tar -a -cf "${srcZipOut}" ${excludeArgs} .`, { stdio: 'inherit' });
+  execSync(`tar -a -cf "${srcZipOut}" ${excludeArgs} *`, { stdio: 'inherit' });
 } else {
   execSync(`zip -r "${srcZipOut}" . -x "node_modules/*" "dist/*" ".git/*" ".github/*" "*.zip" "scratch/*" ".agents/*" ".gemini/*"`, { stdio: 'inherit' });
 }
