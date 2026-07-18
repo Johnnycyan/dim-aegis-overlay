@@ -123,6 +123,28 @@ function findAegisArmorSet(itemName) {
     }
     return null;
 }
+const AMMO_TYPE_MAP = {
+    'Autos': 'Primary',
+    'Bows': 'Primary',
+    'HCs': 'Primary',
+    'Pulses': 'Primary',
+    'Scouts': 'Primary',
+    'Sidearms': 'Primary',
+    'SMGs': 'Primary',
+    'BGLs': 'Special',
+    'Fusions': 'Special',
+    'Glaives': 'Special',
+    'Shotguns': 'Special',
+    'Snipers': 'Special',
+    'Rocket Sidearms': 'Special',
+    'Traces': 'Special',
+    'HGLs': 'Heavy',
+    'LFRs': 'Heavy',
+    'LMGs': 'Heavy',
+    'Rockets': 'Heavy',
+    'Swords': 'Heavy',
+    'Other': 'Other'
+};
 let wishlistDb = {};
 let enhancedToNormalMap = {};
 let scoringSource = 'aegis';
@@ -646,16 +668,34 @@ function populateFilters() {
     if (!aegisSheetDb || !aegisSheetDb.categories)
         return;
     const catSelect = document.querySelector('.aegis-explorer-category-select');
-    if (catSelect && catSelect.children.length <= 1) {
-        const categories = Object.keys(aegisSheetDb.categories).sort();
-        for (const cat of categories) {
-            const opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat;
-            catSelect.appendChild(opt);
+    const ammoSelect = document.querySelector('.aegis-explorer-ammo-select');
+    if (!catSelect)
+        return;
+    const prevCat = catSelect.value;
+    const selectedAmmo = ammoSelect ? ammoSelect.value : '';
+    // Clear existing category options except the first one ("All Categories")
+    catSelect.innerHTML = '<option value="">All Categories</option>';
+    const categories = Object.keys(aegisSheetDb.categories).sort();
+    for (const cat of categories) {
+        if (selectedAmmo) {
+            const weaponAmmo = AMMO_TYPE_MAP[cat] || 'Other';
+            if (weaponAmmo !== selectedAmmo)
+                continue;
         }
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
     }
-    populateFramesFilter(catSelect ? catSelect.value : '');
+    // Restore selection if still valid/available
+    const hasPrevCat = Array.from(catSelect.options).some(opt => opt.value === prevCat);
+    if (hasPrevCat) {
+        catSelect.value = prevCat;
+    }
+    else {
+        catSelect.value = '';
+    }
+    populateFramesFilter(catSelect.value);
 }
 function updateProgressIndicator() {
     let totalWeaponsCount = 0;
@@ -1038,15 +1078,20 @@ function renderResults() {
         const catSelect = document.querySelector('.aegis-explorer-category-select');
         const frameSelect = document.querySelector('.aegis-explorer-frame-select');
         const elementSelect = document.querySelector('.aegis-explorer-element-select');
+        const ammoSelect = document.querySelector('.aegis-explorer-ammo-select');
         const hideCompletedCheckbox = document.querySelector('.aegis-explorer-hide-completed');
         const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const selectedCat = catSelect ? catSelect.value : '';
         const selectedFrame = frameSelect ? frameSelect.value : '';
         const selectedElement = elementSelect ? elementSelect.value : '';
+        const selectedAmmo = ammoSelect ? ammoSelect.value : '';
         const hideCompleted = hideCompletedCheckbox ? hideCompletedCheckbox.checked : false;
         const matches = [];
         for (const [cat, list] of Object.entries(db.categories)) {
             if (selectedCat && cat !== selectedCat)
+                continue;
+            const weaponAmmo = AMMO_TYPE_MAP[cat] || 'Other';
+            if (selectedAmmo && weaponAmmo !== selectedAmmo)
                 continue;
             for (const w of list) {
                 const normName = w.name.toLowerCase().trim();
@@ -1280,6 +1325,8 @@ function initAegisExplorer() {
         <select class="aegis-explorer-frame-select">
           <option value="">All Frames</option>
         </select>
+      </div>
+      <div class="aegis-explorer-selects">
         <select class="aegis-explorer-element-select">
           <option value="">All Elements</option>
           <option value="Kinetic">Kinetic</option>
@@ -1288,6 +1335,12 @@ function initAegisExplorer() {
           <option value="Void">Void</option>
           <option value="Stasis">Stasis</option>
           <option value="Strand">Strand</option>
+        </select>
+        <select class="aegis-explorer-ammo-select">
+          <option value="">All Ammo</option>
+          <option value="Primary">Primary</option>
+          <option value="Special">Special</option>
+          <option value="Heavy">Heavy</option>
         </select>
       </div>
       <div class="aegis-explorer-sub-controls">
@@ -1322,6 +1375,7 @@ function initAegisExplorer() {
     const catSelect = panel.querySelector('.aegis-explorer-category-select');
     const frameSelect = panel.querySelector('.aegis-explorer-frame-select');
     const elementSelect = panel.querySelector('.aegis-explorer-element-select');
+    const ammoSelect = panel.querySelector('.aegis-explorer-ammo-select');
     const hideCompletedCheckbox = panel.querySelector('.aegis-explorer-hide-completed');
     fab.addEventListener('click', () => {
         panel.classList.toggle('open');
@@ -1362,6 +1416,10 @@ function initAegisExplorer() {
     });
     frameSelect?.addEventListener('change', onUpdate);
     elementSelect?.addEventListener('change', onUpdate);
+    ammoSelect?.addEventListener('change', () => {
+        populateFilters();
+        onUpdate();
+    });
     hideCompletedCheckbox?.addEventListener('change', onUpdate);
 }
 // Load wishlist & config on startup
@@ -2334,7 +2392,10 @@ function setupSearchFilterObserver() {
                         else {
                             perkRank = grade;
                         }
-                        if (targetQuery === 'god') {
+                        if (targetQuery === 'upgradeable' || targetQuery === 'upgradable' || targetQuery === 'upgrade') {
+                            isMatch = !!result?.upgradeAvailable;
+                        }
+                        else if (targetQuery === 'god') {
                             isMatch = compareGrades(perkRank, '>=s');
                         }
                         else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {

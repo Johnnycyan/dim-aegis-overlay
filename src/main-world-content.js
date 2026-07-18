@@ -484,6 +484,19 @@ function findItemInFiber(fiber) {
     let curr = fiber;
     let depth = 0;
     while (curr && depth < 40) {
+        // Stop upward traversal if this component represents a plug/socket/mod
+        if (curr.memoizedProps) {
+            const p = curr.memoizedProps;
+            if (p.plug || p.socket || p.socketInfo || p.socketDef || p.plugItem || p.mod || p.isPlug || p.isSocket) {
+                return null;
+            }
+        }
+        if (curr.pendingProps) {
+            const p = curr.pendingProps;
+            if (p.plug || p.socket || p.socketInfo || p.socketDef || p.plugItem || p.mod || p.isPlug || p.isSocket) {
+                return null;
+            }
+        }
         const item = extractItemFromFiberProps(curr.memoizedProps) ||
             extractItemFromFiberProps(curr.pendingProps) ||
             extractItemFromFiberProps(curr.stateNode?.props);
@@ -608,6 +621,17 @@ function processElement(el) {
         const item = findItemInFiber(fiber);
         if (!item || !item.hash)
             return;
+        // Verify that this element actually represents the item by matching the icon image src.
+        // This prevents annotating mod/socket slots that climb up to the parent item in the fiber tree.
+        const imgEl = el.querySelector('img');
+        if (imgEl && item.icon) {
+            const imgPath = imgEl.getAttribute('src') || '';
+            const iconPath = item.icon.toLowerCase();
+            const iconFilename = iconPath.split('/').pop();
+            if (iconFilename && !imgPath.toLowerCase().includes(iconFilename)) {
+                return;
+            }
+        }
         // Check if this item is a weapon or armor.
         const isWeapon = item.weapon === true ||
             item.bucket?.inWeapons === true ||
