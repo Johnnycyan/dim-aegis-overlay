@@ -1,6 +1,6 @@
 {
   "name": "dim-aegis-overlay",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Chrome/Opera MV3 extension to overlay Aegis weapon wishlist rankings on Destiny Item Manager (DIM)",
   "type": "module",
   "scripts": {

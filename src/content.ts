@@ -1594,8 +1594,278 @@ function initAegisExplorer() {
   hideCompletedCheckbox?.addEventListener('change', onUpdate);
 }
 
+function showWelcomeModal() {
+  if (document.querySelector('.aegis-welcome-backdrop')) return;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'aegis-welcome-backdrop';
+
+  backdrop.innerHTML = `
+    <div class="aegis-welcome-modal">
+      <div class="aegis-welcome-header">
+        <span class="aegis-welcome-title">Welcome to DIM Aegis Overlay</span>
+        <button class="aegis-welcome-close" title="Dismiss Tutorial">&times;</button>
+      </div>
+      
+      <div class="aegis-welcome-slides">
+        <!-- Slide 1: Welcome & Disclaimer -->
+        <div class="aegis-welcome-slide active" data-slide="0">
+          <div class="tooltip-section">
+            <span class="tooltip-section-header">Getting Started</span>
+            <p class="tooltip-desc" style="font-size: 12.5px; line-height: 1.5; margin-top: 6px; margin-bottom: 12px;">
+              This extension enhances Destiny Item Manager (DIM) by displaying meta spreadsheet weapon rankings, perk accuracy ratings, and custom armor set configurations directly on your items.
+            </p>
+            
+            <div class="tooltip-divider" style="margin: 12px 0;"></div>
+            
+            <div class="tooltip-note" style="border: 1px solid rgba(231, 76, 60, 0.4); background: rgba(231, 76, 60, 0.08); padding: 12px; border-radius: 8px; font-size: 11.5px; color: #ff9f9f; line-height: 1.5; margin-bottom: 12px;">
+              <strong>⚠️ DISCLAIMER:</strong> The Aegis database source is primarily a <strong>PvE Endgame spreadsheet</strong>. Some weapons or perk combinations that excel in PvP or casual play may score lower.
+            </div>
+            
+            <p class="tooltip-desc" style="font-size: 11.5px; line-height: 1.5; color: #b1b1ba; margin-top: 8px;">
+              Click <strong>Next</strong> to start the quick tour of features, or use the navigation dots below.
+            </p>
+          </div>
+        </div>
+
+        <!-- Slide 2: Scoring & Grades Guide -->
+        <div class="aegis-welcome-slide" data-slide="1">
+          <div class="tooltip-section">
+            <span class="tooltip-section-header">Scoring & Grades Guide</span>
+            <span class="tooltip-section-header" style="margin-top: 6px; font-size: 9.5px; color: #ffd700;">1. Standard Grading (Match Accuracy)</span>
+            
+            <div class="tooltip-grid" style="margin-top: 6px; row-gap: 5px; column-gap: 10px;">
+              <span class="grade-pill grade-s-pill">S+</span><span>Traits 1 & 2 + Mag + Barrel + Origin</span>
+              <span class="grade-pill grade-s-pill">S</span><span>Traits 1 & 2 + Magazine matched</span>
+              <span class="grade-pill grade-a-pill">A+</span><span>Traits 1 & 2 + Barrel matched</span>
+              <span class="grade-pill grade-a-pill">A</span><span>Traits 1 & 2 both matched</span>
+              <span class="grade-pill grade-b-pill">B+</span><span>1 Trait active + 1 selectable + Mag/Barrel</span>
+              <span class="grade-pill grade-b-pill">B</span><span>1 Trait active + 1 selectable Trait</span>
+              <span class="grade-pill grade-c-pill">C</span><span>1 Trait matched + Magazine or Barrel</span>
+              <span class="grade-pill grade-d-pill">D</span><span>Only 1 Trait matched</span>
+              <span class="grade-pill grade-f-pill">F</span><span>Underperforming (no Traits matched)</span>
+            </div>
+            <span class="tooltip-note" style="display: block; margin-top: 4px; margin-bottom: 8px;">*Main Traits 1 & 2 must match to score A or higher.</span>
+            
+            <div class="tooltip-divider" style="margin: 8px 0;"></div>
+            
+            <p class="tooltip-desc" style="margin-bottom: 6px; font-size: 10.5px;"><strong>Perk Details Previews:</strong> Hovering weapons in DIM displays scoring overlays:</p>
+            <div style="display: flex; justify-content: center; margin-top: 4px;">
+              <img src="${chrome.runtime.getURL('aegis_recommended_perks.png')}" style="width: 500px; height: 220px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: #12121a;" alt="Recommended Perks Overlay" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: 2-Tier System -->
+        <div class="aegis-welcome-slide" data-slide="2">
+          <div class="tooltip-section">
+            <span class="tooltip-section-header">2. 2-Tier System (e.g. BS+, SF)</span>
+            <p class="tooltip-desc">Combines weapon meta tier with roll accuracy:</p>
+            
+            <div class="two-tier-demo-wrapper" style="margin-top: 8px; margin-bottom: 8px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 6px; padding: 12px; display: flex; align-items: center; gap: 16px;">
+              <img src="${chrome.runtime.getURL('two-tier-demo.png')}" class="two-tier-demo-img" style="width: 72px; height: auto; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1);" alt="2-tier grade badge demo" />
+              <div class="two-tier-demo-text" style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                <div class="tooltip-formula" style="margin: 0; padding: 4px 8px; font-size: 10.5px; background: #08080c; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; color: #ffb300; text-align: center; font-weight: 700;">[Archetype Tier] [Roll Grade]</div>
+                <span class="tooltip-note" style="font-size: 10px;">Example: <b>BS+</b> means archetype is <b>B-Tier</b>, but your roll is a perfect <b>S+</b>.</span>
+              </div>
+            </div>
+            
+            <p class="tooltip-desc" style="font-size: 11.5px; line-height: 1.45;">
+              - <strong>First Letter (Weapon Meta Ranking):</strong> Always sourced from Aegis' endgame PvE spreadsheet archetype rankings.<br/>
+              - <strong>Second Letter (Perk Synergy Grade):</strong> Sourced from Aegis' recommended perks by default, or your own synced custom DIM wishlist.
+            </p>
+            
+            <div style="display: flex; justify-content: center; margin-top: 6px; margin-bottom: 6px;">
+              <img src="${chrome.runtime.getURL('wishlist_configuration.png')}" style="width: 320px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: #12121a;" alt="Wishlist settings preview" />
+            </div>
+            
+            <div class="tooltip-divider" style="margin: 6px 0;"></div>
+            
+            <div class="tooltip-note" style="border: 1px solid rgba(255, 215, 0, 0.25); background: rgba(255, 215, 0, 0.04); padding: 8px; border-radius: 6px; font-size: 10.5px; line-height: 1.4; color: #ffd700;">
+              <strong>💡 How to Enable:</strong> Open the extension settings popup by clicking the <strong>puzzle piece / Aegis icon</strong> in your browser's toolbar (top right), then toggle the <strong>2-Tier System</strong> setting switch.
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: Database Explorer & Chase List -->
+        <div class="aegis-welcome-slide" data-slide="3">
+          <div class="tooltip-section">
+            <span class="tooltip-section-header">Database Explorer & Chase List</span>
+            <p class="tooltip-desc">Easily browse recommendations and build your dream loadouts:</p>
+            <div style="display: flex; gap: 14px; justify-content: center; margin-top: 6px; margin-bottom: 8px;">
+              <img src="${chrome.runtime.getURL('database_explorer_tab.png')}" style="width: 200px; height: auto; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: #12121a;" alt="Database Explorer" />
+              <img src="${chrome.runtime.getURL('chase_list_tab.png')}" style="width: 200px; height: auto; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: #12121a;" alt="Chase List" />
+            </div>
+            <p class="tooltip-desc"><strong>Database Explorer:</strong> Click the floating magnifying glass on the bottom right of DIM to search weapons, elements, and frames.</p>
+            <p class="tooltip-desc" style="margin-top: 4px;"><strong>My Chase List:</strong> Add weapons to your Chase List, choose your target rolls, and filter/highlight them in your vault with a single click.</p>
+          </div>
+        </div>
+
+        <!-- Slide 5: Vault Search Filtering -->
+        <div class="aegis-welcome-slide" data-slide="4">
+          <div class="tooltip-section">
+            <span class="tooltip-section-header">3. Vault Search Filtering</span>
+            <p class="tooltip-desc">Type these filters directly into the DIM search bar:</p>
+            
+            <div class="search-filter-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 6px; font-size: 11px;">
+              <div class="filter-group" style="display: flex; flex-direction: column; gap: 6px;">
+                <div class="filter-group-title" style="font-weight: 700; color: #ffb300; text-transform: uppercase; font-size: 9.5px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2px;">Weapons</div>
+                <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                  <code class="filter-code" style="align-self: flex-start;">aegis:w:b</code>
+                  <span class="tooltip-desc" style="font-size: 10px;">Filters by weapon tier (e.g., B-Tier archetype)</span>
+                </div>
+                <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                  <code class="filter-code" style="align-self: flex-start;">aegis:p:s+</code>
+                  <span class="tooltip-desc" style="font-size: 10px;">Filters by perk roll grade (e.g., S+ roll quality)</span>
+                </div>
+                <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                  <code class="filter-code" style="align-self: flex-start;">aegis:bs+</code>
+                  <span class="tooltip-desc" style="font-size: 10px;">Filters by exact 2-tier combo (B archetype, S+ roll)</span>
+                </div>
+                <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                  <code class="filter-code" style="align-self: flex-start;">aegis:god</code>
+                  <span class="tooltip-desc" style="font-size: 10px;">Highlights all S and S+ perk rolls</span>
+                </div>
+                <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                  <code class="filter-code" style="align-self: flex-start;">aegis:upgrade</code>
+                  <span class="tooltip-desc" style="font-size: 10px;">Highlights weapons with unselected better perk choices</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="filter-group" style="display: flex; flex-direction: column; gap: 6px;">
+                  <div class="filter-group-title" style="font-weight: 700; color: #ffb300; text-transform: uppercase; font-size: 9.5px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2px;">Armor (Set Bonuses)</div>
+                  <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                    <code class="filter-code" style="align-self: flex-start;">aegis:a:2p:s</code>
+                    <span class="tooltip-desc" style="font-size: 10px;">Filters armor by 2pc set bonus grade (e.g., S-Tier)</span>
+                  </div>
+                  <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                    <code class="filter-code" style="align-self: flex-start;">aegis:a:4p:a</code>
+                    <span class="tooltip-desc" style="font-size: 10px;">Filters armor by 4pc set bonus grade (e.g., A-Tier)</span>
+                  </div>
+                  <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                    <code class="filter-code" style="align-self: flex-start;">aegis:a:s/a</code>
+                    <span class="tooltip-desc" style="font-size: 10px;">Filters armor with exact combined 2pc S / 4pc A</span>
+                  </div>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column; gap: 6px;">
+                  <div class="filter-group-title" style="font-weight: 700; color: #ffb300; text-transform: uppercase; font-size: 9.5px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2px;">Operators (Universal)</div>
+                  <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                    <code class="filter-code" style="align-self: flex-start;">aegis:p:&gt;=b</code>
+                    <span class="tooltip-desc" style="font-size: 10px;">Filter perks B or better (works with w:, 2p:, 4p:)</span>
+                  </div>
+                  <div class="filter-item" style="display: flex; flex-direction: column; gap: 2px;">
+                    <code class="filter-code" style="align-self: flex-start;">aegis:w:&gt;a</code>
+                    <span class="tooltip-desc" style="font-size: 10px;">Filter weapons strictly higher than A-Tier</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tooltip-divider" style="margin: 8px 0;"></div>
+            <p class="tooltip-note"><strong>Pro-Tip:</strong> Want to use your own wishlist? You can sync and toggle custom DIM wishlists in the settings popup anytime.</p>
+          </div>
+        </div>
+
+        <!-- Slide 6: Support the Project -->
+        <div class="aegis-welcome-slide" data-slide="5">
+          <div class="tooltip-section">
+            <span class="tooltip-section-header">Support the Project</span>
+            <p class="tooltip-desc" style="font-size: 12.5px; line-height: 1.5; margin-top: 6px; margin-bottom: 12px;">This extension is free and open-source, maintained to help fellow Guardians build their perfect vaults.</p>
+            <p class="tooltip-desc" style="margin-bottom: 20px;">If you find the tool useful, please consider supporting development costs or Chrome Web Store hosting.</p>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+              <a href="https://ko-fi.com/dilligafm8" target="_blank" rel="noopener noreferrer" class="aegis-welcome-kofi-btn">
+                Support on Ko-fi
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="aegis-welcome-footer">
+        <label class="aegis-welcome-dismiss-checkbox">
+          <input type="checkbox" id="aegis-welcome-dont-show" />
+          Do not show this again
+        </label>
+        
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div class="aegis-welcome-dots">
+            <span class="aegis-welcome-dot active" data-index="0"></span>
+            <span class="aegis-welcome-dot" data-index="1"></span>
+            <span class="aegis-welcome-dot" data-index="2"></span>
+            <span class="aegis-welcome-dot" data-index="3"></span>
+            <span class="aegis-welcome-dot" data-index="4"></span>
+            <span class="aegis-welcome-dot" data-index="5"></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="aegis-welcome-back-btn" style="display: none;">Back</button>
+            <button class="aegis-welcome-next-btn">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(backdrop);
+
+  let currentSlide = 0;
+  const totalSlides = 6;
+  const slides = backdrop.querySelectorAll('.aegis-welcome-slide');
+  const dots = backdrop.querySelectorAll('.aegis-welcome-dot');
+  const nextBtn = backdrop.querySelector('.aegis-welcome-next-btn') as HTMLButtonElement;
+  const backBtn = backdrop.querySelector('.aegis-welcome-back-btn') as HTMLButtonElement;
+  const closeBtn = backdrop.querySelector('.aegis-welcome-close');
+  const dontShowCheckbox = backdrop.querySelector('#aegis-welcome-dont-show') as HTMLInputElement;
+
+  function updateSlide(index: number) {
+    currentSlide = index;
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide].classList.add('active');
+
+    backBtn.style.display = currentSlide === 0 ? 'none' : 'block';
+
+    if (currentSlide === totalSlides - 1) {
+      nextBtn.textContent = 'Get Started';
+    } else {
+      nextBtn.textContent = 'Next';
+    }
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (currentSlide < totalSlides - 1) {
+      updateSlide(currentSlide + 1);
+    } else {
+      dismissModal();
+    }
+  });
+
+  backBtn.addEventListener('click', () => {
+    if (currentSlide > 0) {
+      updateSlide(currentSlide - 1);
+    }
+  });
+
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const index = parseInt(dot.getAttribute('data-index') || '0', 10);
+      updateSlide(index);
+    });
+  });
+
+  function dismissModal() {
+    if (dontShowCheckbox.checked) {
+      chrome.storage.local.set({ aegisWelcomeDismissed: true });
+    }
+    backdrop.remove();
+  }
+
+  closeBtn?.addEventListener('click', dismissModal);
+}
+
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList', 'aegisWelcomeDismissed'], (res) => {
   wishlistDb = res.wishlistData || {};
   enhancedToNormalMap = res.enhancedToNormal || {};
   completedWeapons = res.aegisCompletedWeapons || {};
@@ -1616,6 +1886,10 @@ chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', '
   updatePerkNameToHash(res.perkRegistry || {});
   reprocessAllElements();
   initAegisExplorer();
+
+  if (!res.aegisWelcomeDismissed) {
+    showWelcomeModal();
+  }
 });
 
 // Watch for changes in storage (e.g. manual sync from settings popup)
