@@ -2576,24 +2576,39 @@ function injectPopupSummary(
  * Injects or updates the Aegis rank badge overlay inside a weapon tile.
  */
 function injectBadge(el: HTMLElement, result: ScoringResult) {
-  let badgeTarget = el.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"]') as HTMLElement | null;
+  // Never inject badges inside popup toolbars, tag controls, or stat rows
+  if (el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup') &&
+      !el.matches('[id^="item-"], [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"], [class*="item-tile"], .item-tile, .item')) {
+    removeBadge(el);
+    return;
+  }
+
+  // Deduplicate: Find root item container to ensure EXACTLY 1 badge per item tile in DIM Stable and Beta
+  const itemContainer = (el.closest('[data-aegis-item-hash]') as HTMLElement) || el;
+  let badgeTarget = itemContainer.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"]') as HTMLElement | null;
   if (!badgeTarget) {
-    badgeTarget = el;
+    badgeTarget = itemContainer;
   }
   // Ensure the badge target is relatively positioned so the absolute badge is anchored to it
   badgeTarget.style.setProperty('position', 'relative', 'important');
 
   // Handle S-tier gold glow class on the badge target
-  if (badgeTarget) {
+  if (result.grade && result.grade.startsWith('S')) {
+    badgeTarget.classList.add('aegis-gold-glow');
+  } else {
     badgeTarget.classList.remove('aegis-gold-glow');
-    if (result.grade && result.grade.startsWith('S')) {
-      badgeTarget.classList.add('aegis-gold-glow');
-    }
   }
 
-  let badge = badgeTarget.querySelector('.aegis-badge') as HTMLDivElement | null;
-  
-  if (!badge) {
+  // Purge any duplicate badges within itemContainer and reuse the primary badge
+  const existingBadges = Array.from(itemContainer.querySelectorAll('.aegis-badge'));
+  let badge: HTMLDivElement;
+
+  if (existingBadges.length > 0) {
+    badge = existingBadges[0] as HTMLDivElement;
+    for (let i = 1; i < existingBadges.length; i++) {
+      existingBadges[i].remove();
+    }
+  } else {
     badge = document.createElement('div');
     badge.className = 'aegis-badge';
     badgeTarget.appendChild(badge);
@@ -2642,16 +2657,13 @@ function injectBadge(el: HTMLElement, result: ScoringResult) {
  * Removes the Aegis badge overlay from a weapon tile if it exists.
  */
 function removeBadge(el: HTMLElement) {
-  let badgeTarget = el.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"]') as HTMLElement | null;
+  const itemContainer = (el.closest('[data-aegis-item-hash]') as HTMLElement) || el;
+  itemContainer.classList.remove('aegis-gold-glow');
+  const badgeTarget = itemContainer.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"]');
   if (badgeTarget) {
     badgeTarget.classList.remove('aegis-gold-glow');
-  } else {
-    el.classList.remove('aegis-gold-glow');
   }
-  const badge = el.querySelector('.aegis-badge');
-  if (badge) {
-    badge.remove();
-  }
+  itemContainer.querySelectorAll('.aegis-badge').forEach((b) => b.remove());
 }
 
 /**
@@ -2947,10 +2959,13 @@ function processElement(el: HTMLElement) {
       }
 
       const isPopup = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+      const isItemTile = el.matches('[id^="item-"], [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"], [class*="item-tile"], .item-tile, .item');
 
-      // Inject rank badge (only if not the popup container itself)
-      if (!isPopup) {
+      // Inject rank badge (only if it's a valid item tile and NOT the popup container itself)
+      if (!isPopup && isItemTile) {
         injectBadge(el, result);
+      } else if (!isPopup) {
+        removeBadge(el);
       }
 
       // Inject popup summary card if inside a details popup (or if we are the popup container)
@@ -2959,11 +2974,15 @@ function processElement(el: HTMLElement) {
         injectPopupSummary(popupContainer as HTMLElement, result, scoringSource, sheetWeapon || undefined, sheetPerks);
       }
 
-      // Attach event listeners for the tooltip if not already done (only if not the popup container itself)
-      if (!isPopup && !el.hasAttribute('data-aegis-listeners')) {
+      // Attach event listeners for hover tooltips (only for valid item tiles)
+      if (!isPopup && isItemTile && !el.hasAttribute('data-aegis-listeners')) {
         el.addEventListener('mouseenter', handleMouseEnter);
         el.addEventListener('mouseleave', handleMouseLeave);
         el.setAttribute('data-aegis-listeners', 'true');
+      } else if (!isItemTile && el.hasAttribute('data-aegis-listeners')) {
+        el.removeEventListener('mouseenter', handleMouseEnter);
+        el.removeEventListener('mouseleave', handleMouseLeave);
+        el.removeAttribute('data-aegis-listeners');
       }
     } else {
       // If graded previously but now has no grade, remove UI

@@ -643,6 +643,24 @@ const detectPlugCategory = (def: any): string => {
  */
 function processElement(el: HTMLElement) {
   try {
+    // Exclude sub-elements inside popups, controls, or toolbars (e.g. tag selectors, stat rows, socket plugs, action buttons)
+    const isPopupContainer = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+    if (!isPopupContainer) {
+      const isSubElement = el.matches(`
+        [class*="tag"], [class*="Tag"],
+        [class*="control"], [class*="Control"],
+        [class*="stat"], [class*="Stat"],
+        [class*="socket"], [class*="Socket"],
+        [class*="button"], [class*="Button"],
+        [class*="action"], [class*="Action"],
+        [class*="toolbar"], [class*="Toolbar"],
+        button, svg, path
+      `);
+      if (isSubElement) {
+        return;
+      }
+    }
+
     // Skip if any ancestor element is already annotated for an item.
     // This prevents double-annotating nested elements (e.g. a container div
     // AND its inner item tile both matching our selectors), which causes
@@ -660,13 +678,16 @@ function processElement(el: HTMLElement) {
 
     // Verify that this element actually represents the item by matching the icon image src.
     // This prevents annotating mod/socket slots that climb up to the parent item in the fiber tree.
-    const imgEl = el.querySelector('img');
-    if (imgEl && item.icon) {
-      const imgPath = imgEl.getAttribute('src') || '';
-      const iconPath = item.icon.toLowerCase();
-      const iconFilename = iconPath.split('/').pop();
-      if (iconFilename && !imgPath.toLowerCase().includes(iconFilename)) {
-        return;
+    // Skip this check for main popup containers, which contain various sub-images (emblems, stats, class icons).
+    if (!isPopupContainer) {
+      const imgEl = el.querySelector('img');
+      if (imgEl && item.icon) {
+        const imgPath = imgEl.getAttribute('src') || '';
+        const iconPath = item.icon.toLowerCase();
+        const iconFilename = iconPath.split('/').pop();
+        if (iconFilename && !imgPath.toLowerCase().includes(iconFilename)) {
+          return;
+        }
       }
     }
 
@@ -856,9 +877,9 @@ function processElement(el: HTMLElement) {
 
 const SELECTORS = [
   '[id^="item-"]',
-  '[class*="item-"]',
   '[class*="StoreItem"]',
   '[class*="InventoryItem"]',
+  '[class*="ItemTile"]',
   '[class*="item-tile"]',
   '.item',
   '.item-tile',
