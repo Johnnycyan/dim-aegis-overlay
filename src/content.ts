@@ -171,6 +171,7 @@ let scoringSource = 'aegis';
 let aegisLayoutSide = 'side';
 let aegisDbMode = 'both';
 let aegisTwoTier = false;
+let aegisHoverEnabled = true;
 let aegisArmorSource = 'lowco';
 let lightggDb: Record<string, string> = {};
 let aegisSheetDb: AegisSheetDatabase | null = null;
@@ -2003,7 +2004,7 @@ function showWelcomeModal() {
 }
 
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList', 'aegisWelcomeDismissed'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisHoverEnabled', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList', 'aegisWelcomeDismissed'], (res) => {
   wishlistDb = res.wishlistData || {};
   enhancedToNormalMap = res.enhancedToNormal || {};
   completedWeapons = res.aegisCompletedWeapons || {};
@@ -2012,6 +2013,7 @@ chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', '
   aegisLayoutSide = res.aegisLayoutSide || 'side';
   aegisDbMode = res.aegisDbMode || 'both';
   aegisTwoTier = res.aegisTwoTier || false;
+  aegisHoverEnabled = res.aegisHoverEnabled !== false;
   aegisArmorSource = res.aegisArmorSource || 'lowco';
   lightggDb = res.lightggData || {};
   aegisSheetDb = res.aegisSheetDb || null;
@@ -2058,6 +2060,17 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (changes.aegisTwoTier) {
       aegisTwoTier = changes.aegisTwoTier.newValue || false;
       changed = true;
+    }
+    if (changes.aegisHoverEnabled) {
+      aegisHoverEnabled = changes.aegisHoverEnabled.newValue !== false;
+      if (!aegisHoverEnabled) {
+        if (tooltipShowTimer) {
+          clearTimeout(tooltipShowTimer);
+          tooltipShowTimer = null;
+        }
+        hoveredElement = null;
+        hideTooltip();
+      }
     }
     if (changes.aegisArmorSource) {
       aegisArmorSource = changes.aegisArmorSource.newValue || 'lowco';
@@ -2127,6 +2140,8 @@ const TOOLTIP_HOVER_DELAY_MS = 100;
 const TOOLTIP_SCROLL_SUPPRESS_MS = 150;
 
 function handleMouseEnter(e: MouseEvent) {
+  if (!aegisHoverEnabled) return;
+
   const el = e.currentTarget as HTMLElement;
   hoveredElement = el;
 
