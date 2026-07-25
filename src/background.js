@@ -114,10 +114,18 @@ function parseCSV(text) {
     return rows;
 }
 function normName(s) {
-    return (s ?? '').split('\n')[0].trim().toLowerCase();
+    return (s ?? '').replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+function extractVersionTag(name) {
+    const match = name.match(/(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)/i);
+    return match ? match[1].toLowerCase() : '';
 }
 function stripEdition(name) {
-    return name.replace(/\s*\([^)]+\)\s*$/, '').trim();
+    return name
+        .replace(/\s*\([^)]+\)\s*$/gi, '')
+        .replace(/\s+(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)\s+version$/gi, '')
+        .replace(/\s+(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)$/gi, '')
+        .trim();
 }
 /**
  * Fetches Aegis spreadsheet tabs, parses them and caches the output database in local storage.
@@ -125,6 +133,7 @@ function stripEdition(name) {
 async function fetchAndCacheAegisSheet() {
     console.log('DIM Aegis Overlay: Fetching Aegis Master Spreadsheet...');
     const weapons = {};
+    const variants = {};
     const categories = {};
     try {
         const promises = ALL_TABS.map(async (tab) => {
@@ -165,9 +174,10 @@ async function fetchAndCacheAegisSheet() {
                     const nameVal = getVal(row, 'Name');
                     if (!nameVal)
                         continue;
-                    const weaponName = nameVal.split('\n')[0].trim();
+                    const weaponName = nameVal.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
                     const normalized = normName(weaponName);
                     const baseNormalized = normName(stripEdition(weaponName));
+                    const versionTag = extractVersionTag(weaponName);
                     const weaponData = {
                         name: weaponName,
                         energy: getVal(row, ['Energy', 'INFO Energy']),
@@ -181,9 +191,16 @@ async function fetchAndCacheAegisSheet() {
                         notes: getVal(row, ['ANALYSIS Notes', 'Notes']),
                         rank: getVal(row, 'Rank'),
                         tier: getVal(row, 'Tier'),
+                        versionTag: versionTag || undefined,
                     };
                     weapons[normalized] = weaponData;
-                    if (baseNormalized !== normalized) {
+                    if (!variants[baseNormalized]) {
+                        variants[baseNormalized] = [];
+                    }
+                    if (!variants[baseNormalized].some((v) => v.name === weaponName)) {
+                        variants[baseNormalized].push(weaponData);
+                    }
+                    if (!weapons[baseNormalized]) {
                         weapons[baseNormalized] = weaponData;
                     }
                     categoryWeapons.push(weaponData);
@@ -321,7 +338,7 @@ async function fetchAndCacheAegisSheet() {
             }
         }
         await chrome.storage.local.set({
-            aegisSheetDb: { weapons, categories, armor, armorAegis },
+            aegisSheetDb: { weapons, variants, categories, armor, armorAegis },
             aegisSheetLastSync: Date.now(),
         });
         console.log('DIM Aegis Overlay: Aegis spreadsheet sync completed successfully.');

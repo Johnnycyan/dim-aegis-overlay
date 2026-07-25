@@ -111,11 +111,20 @@ function parseCSV(text: string): string[][] {
 }
 
 function normName(s: string): string {
-  return (s ?? '').split('\n')[0].trim().toLowerCase();
+  return (s ?? '').replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function extractVersionTag(name: string): string {
+  const match = name.match(/(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)/i);
+  return match ? match[1].toLowerCase() : '';
 }
 
 function stripEdition(name: string): string {
-  return name.replace(/\s*\([^)]+\)\s*$/, '').trim();
+  return name
+    .replace(/\s*\([^)]+\)\s*$/gi, '')
+    .replace(/\s+(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)\s+version$/gi, '')
+    .replace(/\s+(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)$/gi, '')
+    .trim();
 }
 
 /**
@@ -124,6 +133,7 @@ function stripEdition(name: string): string {
 async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: string }> {
   console.log('DIM Aegis Overlay: Fetching Aegis Master Spreadsheet...');
   const weapons: Record<string, any> = {};
+  const variants: Record<string, any[]> = {};
   const categories: Record<string, any[]> = {};
 
   try {
@@ -168,9 +178,10 @@ async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: st
           const nameVal = getVal(row, 'Name');
           if (!nameVal) continue;
 
-          const weaponName = nameVal.split('\n')[0].trim();
+          const weaponName = nameVal.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
           const normalized = normName(weaponName);
           const baseNormalized = normName(stripEdition(weaponName));
+          const versionTag = extractVersionTag(weaponName);
 
           const weaponData = {
             name: weaponName,
@@ -185,10 +196,19 @@ async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: st
             notes: getVal(row, ['ANALYSIS Notes', 'Notes']),
             rank: getVal(row, 'Rank'),
             tier: getVal(row, 'Tier'),
+            versionTag: versionTag || undefined,
           };
 
           weapons[normalized] = weaponData;
-          if (baseNormalized !== normalized) {
+          
+          if (!variants[baseNormalized]) {
+            variants[baseNormalized] = [];
+          }
+          if (!variants[baseNormalized].some((v: any) => v.name === weaponName)) {
+            variants[baseNormalized].push(weaponData);
+          }
+
+          if (!weapons[baseNormalized]) {
             weapons[baseNormalized] = weaponData;
           }
 
@@ -331,7 +351,7 @@ async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: st
     }
 
     await chrome.storage.local.set({
-      aegisSheetDb: { weapons, categories, armor, armorAegis },
+      aegisSheetDb: { weapons, variants, categories, armor, armorAegis },
       aegisSheetLastSync: Date.now(),
     });
 

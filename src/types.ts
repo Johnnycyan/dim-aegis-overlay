@@ -73,6 +73,7 @@ export interface AegisSheetWeapon {
   notes: string;
   rank: string;
   tier: string;
+  versionTag?: string;
 }
 
 /**
@@ -98,6 +99,7 @@ export interface AegisArmorSet {
  */
 export interface AegisSheetDatabase {
   weapons: Record<string, AegisSheetWeapon>;
+  variants?: Record<string, AegisSheetWeapon[]>;
   categories: Record<string, AegisSheetWeapon[]>;
   armor?: Record<string, AegisArmorSet>;
   armorAegis?: Record<string, AegisArmorSet>;

@@ -355,12 +355,134 @@ function cleanPerkName(name) {
 function cleanPerkNameForMatch(name) {
     return cleanPerkName(name).replace(/^enhanced\s+/, '').trim();
 }
-function findAegisWeapon(name) {
+function cleanWeaponNameBase(name) {
+    return name
+        .toLowerCase()
+        .replace(/\s*\([^)]+\)\s*$/gi, '')
+        .replace(/\s+(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)\s+version$/gi, '')
+        .replace(/\s+(brave|pantheon|rotn|legacy|adept|timelost|harrowed|re-issue|reissued)$/gi, '')
+        .trim();
+}
+function findAegisWeapon(name, perksMap, activeHashes, elText) {
     if (!aegisSheetDb || !aegisSheetDb.weapons)
         return null;
     const normalized = name.split('\n')[0].trim().toLowerCase();
-    const baseNormalized = normalized.replace(/\s*\([^)]+\)\s*$/, '').trim();
-    return aegisSheetDb.weapons[normalized] || aegisSheetDb.weapons[baseNormalized] || null;
+    const baseNormalized = cleanWeaponNameBase(normalized);
+    // 1. Get variants array for this base weapon name
+    const variants = aegisSheetDb.variants?.[baseNormalized] || [];
+    // 2. Multi-variant disambiguation (when 2+ variants exist for the base name)
+    if (variants.length > 1) {
+        // Gather ALL perk names & text signals attached to this item (from perksMap, activeHashes, element text)
+        const allItemPerkNames = [];
+        if (perksMap) {
+            for (const p of Object.values(perksMap)) {
+                if (p?.name) {
+                    const pName = p.name.toLowerCase().trim();
+                    if (!allItemPerkNames.includes(pName)) {
+                        allItemPerkNames.push(pName);
+                    }
+                }
+            }
+        }
+        if (activeHashes && perksMap) {
+            for (const h of activeHashes) {
+                if (perksMap[h]?.name) {
+                    const hName = perksMap[h].name.toLowerCase().trim();
+                    if (!allItemPerkNames.includes(hName)) {
+                        allItemPerkNames.push(hName);
+                    }
+                }
+            }
+        }
+        if (elText) {
+            const textWords = elText.toLowerCase().split(/[^a-z0-9]+/);
+            for (const w of textWords) {
+                if (w && w.length > 2 && !allItemPerkNames.includes(w)) {
+                    allItemPerkNames.push(w);
+                }
+            }
+        }
+        // Check specific Origin Traits & Source Keywords
+        const hasIndomitability = allItemPerkNames.some(p => p.includes('indomitability') || p.includes('onslaught') || p.includes('brave'));
+        const hasEllipticalOrbit = allItemPerkNames.some(p => p.includes('elliptical orbit') || p.includes('pantheon'));
+        const hasGravityWell = allItemPerkNames.some(p => p.includes('gravity well') || p.includes('rotn') || p.includes('rite of the nine'));
+        const hasSouldrinker = allItemPerkNames.some(p => p.includes('souldrinker') || p.includes('soul drinker') || p.includes('vow of the disciple'));
+        const hasBrayInheritance = allItemPerkNames.some(p => p.includes('bray inheritance') || p.includes('deep stone crypt'));
+        // A. Into the Light / BRAVE version (Indomitability / Onslaught / BRAVE)
+        if (hasIndomitability) {
+            const match = variants.find(v => (v.versionTag === 'brave' || v.name.toLowerCase().includes('brave')));
+            if (match)
+                return match;
+        }
+        // B. Pantheon version (Elliptical Orbit / Pantheon)
+        if (hasEllipticalOrbit) {
+            const match = variants.find(v => (v.versionTag === 'pantheon' || v.name.toLowerCase().includes('pantheon')));
+            if (match)
+                return match;
+        }
+        // C. Rite of the Nine / RotN version (Gravity Well / RotN / Rite of the Nine)
+        if (hasGravityWell) {
+            const match = variants.find(v => (v.versionTag === 'rotn' || v.name.toLowerCase().includes('rotn')));
+            if (match)
+                return match;
+        }
+        // D. Raid / Legacy versions (Souldrinker for Vow Forbearance, Bray Inheritance for DSC Succession)
+        if (hasSouldrinker || hasBrayInheritance) {
+            const match = variants.find(v => !v.versionTag && !v.name.toLowerCase().includes('brave') && !v.name.toLowerCase().includes('pantheon') && !v.name.toLowerCase().includes('rotn'));
+            if (match)
+                return match;
+        }
+        // E. High Albedo (Rocket Sidearm vs Primary Sidearm)
+        if (baseNormalized.includes('high albedo')) {
+            const isRocketSidearm = allItemPerkNames.some(p => p.includes('rocket') || p.includes('nanotech') || p.includes('origin'));
+            if (isRocketSidearm) {
+                const match = variants.find(v => v.frame.toLowerCase().includes('rocket') || (v.origin && v.origin !== '-') || v.source?.toLowerCase().includes('triumph'));
+                if (match)
+                    return match;
+            }
+        }
+        // F. Universal Origin Trait Matcher:
+        // If the variant's origin in Aegis's sheet matches any perk on this item
+        for (const variant of variants) {
+            if (variant.origin && variant.origin !== '-') {
+                const cleanOrigin = cleanPerkName(variant.origin);
+                if (allItemPerkNames.some(p => isPerkMatch(p, cleanOrigin))) {
+                    return variant;
+                }
+            }
+        }
+        // G. Universal Perk Synergy / Overlap Score Fallback:
+        // If origin traits are missing, score each variant against the item's available perks
+        if (allItemPerkNames.length > 0) {
+            let bestVariant = null;
+            let maxScore = -1;
+            for (const variant of variants) {
+                let score = 0;
+                const vP1s = variant.perk1.split(/[\/\n,]+/).map(cleanPerkName).filter(Boolean);
+                const vP2s = variant.perk2.split(/[\/\n,]+/).map(cleanPerkName).filter(Boolean);
+                for (const itemPerk of allItemPerkNames) {
+                    if (vP1s.some(vp => isPerkMatch(itemPerk, vp)))
+                        score += 2;
+                    if (vP2s.some(vp => isPerkMatch(itemPerk, vp)))
+                        score += 2;
+                }
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestVariant = variant;
+                }
+            }
+            if (bestVariant && maxScore > 0) {
+                return bestVariant;
+            }
+        }
+        // H. Fallback: if no origin traits or perk overlap matched, prefer legacy variant if one exists
+        const legacyMatch = variants.find(v => !v.versionTag && !v.name.toLowerCase().includes('brave') && !v.name.toLowerCase().includes('pantheon') && !v.name.toLowerCase().includes('rotn'));
+        if (legacyMatch)
+            return legacyMatch;
+        return variants[0];
+    }
+    // 3. Single variant or no variant list fallback
+    return aegisSheetDb.weapons[normalized] || aegisSheetDb.weapons[baseNormalized] || (variants[0] ?? null);
 }
 function findWeaponCategory(weaponName) {
     if (!aegisSheetDb || !aegisSheetDb.categories)
@@ -2402,7 +2524,8 @@ function processElement(el) {
         }
         let result;
         let sheetPerks = undefined;
-        const sheetWeapon = findAegisWeapon(weaponName);
+        const elText = el.textContent || '';
+        const sheetWeapon = findAegisWeapon(weaponName, perksMap, activeHashes, elText);
         let bestAlternative = undefined;
         let isBestInClass = false;
         if (scoringSource === 'lightgg') {
