@@ -404,6 +404,38 @@ function setupRegistryObserver() {
   });
 }
 
+/**
+ * Parses a comma, slash, or newline delimited recommendation string into trimmed components.
+ * High-performance allocation-free scanner avoids intermediate array copies and regex overhead.
+ */
+function parseRecommendations(str: string): string[] {
+  if (!str) return [];
+  const result: string[] = [];
+  let start = 0;
+  const len = str.length;
+  for (let i = 0; i <= len; i++) {
+    const char = i < len ? str[i] : '\n';
+    if (char === '/' || char === '\n' || char === ',') {
+      if (start < i) {
+        // Find trimmed boundaries within [start, i)
+        let tStart = start;
+        let tEnd = i - 1;
+        while (tStart <= tEnd && str.charCodeAt(tStart) <= 32) {
+          tStart++;
+        }
+        while (tEnd >= tStart && str.charCodeAt(tEnd) <= 32) {
+          tEnd--;
+        }
+        if (tStart <= tEnd) {
+          result.push(str.substring(tStart, tEnd + 1));
+        }
+      }
+      start = i + 1;
+    }
+  }
+  return result;
+}
+
 function cleanPerkName(name: string): string {
   return (name ?? '')
     .toLowerCase()
@@ -1097,16 +1129,11 @@ function renderResults() {
           const w = db.weapons[normName];
           const sourceStr = w?.source ? w.source : 'Unknown Source';
 
-          const parseRecs = (str: string) => {
-            if (!str) return [];
-            return str.split(/[\/\n,]+/).map(s => s.trim()).filter(Boolean);
-          };
-
-          const barrels = w ? parseRecs(w.barrel) : [];
-          const mags = w ? parseRecs(w.mag) : [];
-          const perk1s = w ? parseRecs(w.perk1) : [];
-          const perk2s = w ? parseRecs(w.perk2) : [];
-          const origins = w ? parseRecs(w.origin) : [];
+          const barrels = w ? parseRecommendations(w.barrel) : [];
+          const mags = w ? parseRecommendations(w.mag) : [];
+          const perk1s = w ? parseRecommendations(w.perk1) : [];
+          const perk2s = w ? parseRecommendations(w.perk2) : [];
+          const origins = w ? parseRecommendations(w.origin) : [];
 
           const possiblePerks = weaponPossiblePerksCache[normName];
           const hasManifestPerks = possiblePerks && possiblePerks.isFromManifest;
@@ -1558,12 +1585,8 @@ function renderResults() {
             chaseBtn.classList.remove('aegis-btn-chase-active');
             chaseBtn.textContent = '+ Chase';
           } else {
-            const parseRecs = (str: string) => {
-              if (!str) return [];
-              return str.split(/[\/\n,]+/).map(s => s.trim()).filter(Boolean);
-            };
-            const perk1s = parseRecs(w.perk1);
-            const perk2s = parseRecs(w.perk2);
+            const perk1s = parseRecommendations(w.perk1);
+            const perk2s = parseRecommendations(w.perk2);
 
             chaseList[norm] = {
               name: w.name,
@@ -3308,36 +3331,53 @@ function getItemContainer(badge: HTMLElement): HTMLElement | null {
 
 function updateBadgesOpacity() {
   const badges = document.querySelectorAll<HTMLElement>('.aegis-badge');
+  const cache = new Map<HTMLElement, boolean>();
+
+  const checkElementOrAncestorDimmed = (el: HTMLElement | null): boolean => {
+    if (!el || el === document.body) return false;
+    let cached = cache.get(el);
+    if (cached !== undefined) return cached;
+
+    const style = window.getComputedStyle(el);
+    const opacity = parseFloat(style.opacity || '1');
+    const filter = style.filter || '';
+    let dimmed = opacity < 0.9 || filter.includes('opacity') || filter.includes('grayscale');
+
+    if (!dimmed && el.parentElement) {
+      dimmed = checkElementOrAncestorDimmed(el.parentElement);
+    }
+
+    cache.set(el, dimmed);
+    return dimmed;
+  };
+
+  const checkSingleElementDimmed = (el: HTMLElement): boolean => {
+    let cached = cache.get(el);
+    if (cached !== undefined) return cached;
+
+    const style = window.getComputedStyle(el);
+    const opacity = parseFloat(style.opacity || '1');
+    const filter = style.filter || '';
+    const dimmed = opacity < 0.9 || filter.includes('opacity') || filter.includes('grayscale');
+
+    cache.set(el, dimmed);
+    return dimmed;
+  };
 
   badges.forEach((badge) => {
     const parent = badge.parentElement;
     if (!parent) return;
 
-    let isDimmed = false;
-
-    // 1. Walk up from parent to document.body (detect parent card dimming)
-    let currentAncestor: HTMLElement | null = parent;
-    while (currentAncestor && currentAncestor !== document.body) {
-      const style = window.getComputedStyle(currentAncestor);
-      const opacity = parseFloat(style.opacity || '1');
-      const filter = style.filter || '';
-
-      if (opacity < 0.9 || filter.includes('opacity') || filter.includes('grayscale')) {
-        isDimmed = true;
-        break;
-      }
-      currentAncestor = currentAncestor.parentElement;
-    }
+    // 1. Check parent and walk up to document.body (detect parent card dimming)
+    // Caches and short-circuits to avoid layout thrashing across multiple badges
+    let isDimmed = checkElementOrAncestorDimmed(parent);
 
     // 2. Find the item container and check its direct children
     if (!isDimmed) {
       const container = getItemContainer(badge);
       if (container) {
         // A. Check container itself
-        const containerStyle = window.getComputedStyle(container);
-        const containerOpacity = parseFloat(containerStyle.opacity || '1');
-        const containerFilter = containerStyle.filter || '';
-        if (containerOpacity < 0.9 || containerFilter.includes('opacity') || containerFilter.includes('grayscale')) {
+        if (checkSingleElementDimmed(container)) {
           isDimmed = true;
         }
 
@@ -3347,11 +3387,7 @@ function updateBadgesOpacity() {
           for (let i = 0; i < children.length; i++) {
             const child = children[i] as HTMLElement;
             if (child.classList.contains('aegis-badge')) continue;
-            const style = window.getComputedStyle(child);
-            const opacity = parseFloat(style.opacity || '1');
-            const filter = style.filter || '';
-
-            if (opacity < 0.9 || filter.includes('opacity') || filter.includes('grayscale')) {
+            if (checkSingleElementDimmed(child)) {
               isDimmed = true;
               break;
             }
