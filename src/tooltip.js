@@ -98,21 +98,69 @@ function positionTooltip(target, tooltip) {
     tooltip.style.visibility = '';
     const tooltipWidth = tooltipRect.width || 260;
     const tooltipHeight = tooltipRect.height || 180;
-    // Default: Position above the weapon tile
-    let top = targetRect.top - tooltipHeight - 8;
-    let left = targetRect.left + (targetRect.width - tooltipWidth) / 2;
-    // Fallback: If it overflows the top of the viewport, display below
-    if (top < 8) {
-        top = targetRect.bottom + 8;
+    const gap = 8;
+    const margin = 8;
+    let top = 0;
+    let left = 0;
+    let placed = false;
+    // Try placement 1: Above (preferred)
+    const topAbove = targetRect.top - tooltipHeight - gap;
+    const leftCentered = targetRect.left + (targetRect.width - tooltipWidth) / 2;
+    if (topAbove >= margin &&
+        leftCentered >= margin &&
+        leftCentered + tooltipWidth <= window.innerWidth - margin) {
+        top = topAbove;
+        left = leftCentered;
+        placed = true;
     }
-    // Fit left alignment within viewport
-    if (left < 8) {
-        left = 8;
+    // Try placement 2: Below
+    if (!placed) {
+        const topBelow = targetRect.bottom + gap;
+        if (topBelow + tooltipHeight <= window.innerHeight - margin &&
+            leftCentered >= margin &&
+            leftCentered + tooltipWidth <= window.innerWidth - margin) {
+            top = topBelow;
+            left = leftCentered;
+            placed = true;
+        }
     }
-    // Fit right alignment within viewport
-    const maxLeft = window.innerWidth - tooltipWidth - 8;
-    if (left > maxLeft) {
-        left = maxLeft;
+    // Try placement 3: Right
+    if (!placed) {
+        const leftRight = targetRect.right + gap;
+        const topCentered = targetRect.top + (targetRect.height - tooltipHeight) / 2;
+        if (leftRight + tooltipWidth <= window.innerWidth - margin &&
+            topCentered >= margin &&
+            topCentered + tooltipHeight <= window.innerHeight - margin) {
+            top = topCentered;
+            left = leftRight;
+            placed = true;
+        }
+    }
+    // Try placement 4: Left
+    if (!placed) {
+        const leftLeft = targetRect.left - tooltipWidth - gap;
+        const topCentered = targetRect.top + (targetRect.height - tooltipHeight) / 2;
+        if (leftLeft >= margin &&
+            topCentered >= margin &&
+            topCentered + tooltipHeight <= window.innerHeight - margin) {
+            top = topCentered;
+            left = leftLeft;
+            placed = true;
+        }
+    }
+    // Fallback: Default to Above or Below (whichever has more space), and clamp both coordinates to viewport
+    if (!placed) {
+        // If target is in the upper half of viewport, place below; otherwise place above
+        if (targetRect.top + targetRect.height / 2 < window.innerHeight / 2) {
+            top = targetRect.bottom + gap;
+        }
+        else {
+            top = targetRect.top - tooltipHeight - gap;
+        }
+        left = leftCentered;
+        // Clamp to keep fully inside viewport
+        top = Math.max(margin, Math.min(top, window.innerHeight - tooltipHeight - margin));
+        left = Math.max(margin, Math.min(left, window.innerWidth - tooltipWidth - margin));
     }
     tooltip.style.top = `${top + window.scrollY}px`;
     tooltip.style.left = `${left + window.scrollX}px`;
