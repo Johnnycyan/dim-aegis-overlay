@@ -151,6 +151,7 @@ let scoringSource = 'aegis';
 let aegisLayoutSide = 'side';
 let aegisDbMode = 'both';
 let aegisTwoTier = false;
+let aegisHoverEnabled = true;
 let aegisArmorSource = 'lowco';
 let lightggDb = {};
 let aegisSheetDb = null;
@@ -521,20 +522,38 @@ function isWordSubsequence(subWords, mainWords) {
     }
     return subIdx === subWords.length;
 }
+/** Cache map to store pre-parsed representations of perk and recommendation names. */
+const perkMatchCache = new Map();
+/**
+ * Returns pre-parsed, memoized string representation of a perk or recommendation name.
+ * Caches regex cleanup, word arrays, and stripped strings to avoid costly re-parsing in hot loops.
+ */
+function getPerkMatchData(name) {
+    const key = name ?? '';
+    let cached = perkMatchCache.get(key);
+    if (!cached) {
+        const clean = key.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        const words = clean ? clean.split(' ') : [];
+        const stripped = clean.replace(/\s+/g, '');
+        cached = { clean, words, stripped };
+        perkMatchCache.set(key, cached);
+    }
+    return cached;
+}
+/**
+ * Checks whether a given perk name matches a recommended perk string.
+ * Uses memoized perk data via getPerkMatchData for high-performance matching.
+ */
 function isPerkMatch(perkName, recName) {
-    const pNameClean = perkName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-    const rNameClean = recName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!pNameClean || !rNameClean)
+    const pData = getPerkMatchData(perkName);
+    const rData = getPerkMatchData(recName);
+    if (!pData.clean || !rData.clean)
         return false;
-    const pWords = pNameClean.split(' ');
-    const rWords = rNameClean.split(' ');
-    const pStripped = pNameClean.replace(/\s+/g, '');
-    const rStripped = rNameClean.replace(/\s+/g, '');
-    if (pStripped === rStripped)
+    if (pData.stripped === rData.stripped)
         return true;
-    if (isWordSubsequence(rWords, pWords))
+    if (isWordSubsequence(rData.words, pData.words))
         return true;
-    if (isWordSubsequence(pWords, rWords))
+    if (isWordSubsequence(pData.words, rData.words))
         return true;
     return false;
 }
@@ -1804,7 +1823,7 @@ function showWelcomeModal() {
     closeBtn?.addEventListener('click', dismissModal);
 }
 // Load wishlist & config on startup
-chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList', 'aegisWelcomeDismissed'], (res) => {
+chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', 'lightggData', 'aegisSheetDb', 'perkRegistry', 'aegisLayoutSide', 'aegisDbMode', 'aegisTwoTier', 'aegisHoverEnabled', 'aegisArmorSource', 'aegisCompletedWeapons', 'aegisChaseList', 'aegisWelcomeDismissed'], (res) => {
     wishlistDb = res.wishlistData || {};
     enhancedToNormalMap = res.enhancedToNormal || {};
     completedWeapons = res.aegisCompletedWeapons || {};
@@ -1813,6 +1832,7 @@ chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', '
     aegisLayoutSide = res.aegisLayoutSide || 'side';
     aegisDbMode = res.aegisDbMode || 'both';
     aegisTwoTier = res.aegisTwoTier || false;
+    aegisHoverEnabled = res.aegisHoverEnabled !== false;
     aegisArmorSource = res.aegisArmorSource || 'lowco';
     lightggDb = res.lightggData || {};
     aegisSheetDb = res.aegisSheetDb || null;
@@ -1857,6 +1877,17 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         if (changes.aegisTwoTier) {
             aegisTwoTier = changes.aegisTwoTier.newValue || false;
             changed = true;
+        }
+        if (changes.aegisHoverEnabled) {
+            aegisHoverEnabled = changes.aegisHoverEnabled.newValue !== false;
+            if (!aegisHoverEnabled) {
+                if (tooltipShowTimer) {
+                    clearTimeout(tooltipShowTimer);
+                    tooltipShowTimer = null;
+                }
+                hoveredElement = null;
+                hideTooltip();
+            }
         }
         if (changes.aegisArmorSource) {
             aegisArmorSource = changes.aegisArmorSource.newValue || 'lowco';
@@ -1919,6 +1950,8 @@ let tooltipShowTimer = null;
 const TOOLTIP_HOVER_DELAY_MS = 100;
 const TOOLTIP_SCROLL_SUPPRESS_MS = 150;
 function handleMouseEnter(e) {
+    if (!aegisHoverEnabled)
+        return;
     const el = e.currentTarget;
     hoveredElement = el;
     // Ignore hover hits that happen mid-scroll (tile just passed under cursor)
@@ -2159,7 +2192,38 @@ function injectPopupSummary(popupContainer, result, scoringSource, sheetWeapon, 
                     }
                 }
                 if (!chipsHtml) {
-                    const cleanVal = item.rawVal.split(/[\/\n]+/).map((s) => s.trim()).filter(Boolean).join(' / ');
+                    // Parse and sanitize item.rawVal: split by slash/newline, trim whitespace, and join with ' / '.
+                    // Optimized implementation avoids intermediate array allocations and regex overhead.
+                    let cleanVal = '';
+                    let start = 0;
+                    const rawVal = item.rawVal;
+                    const len = rawVal.length;
+                    for (let i = 0; i <= len; i++) {
+                        const char = i < len ? rawVal[i] : '\n';
+                        if (char === '/' || char === '\n') {
+                            if (start < i) {
+                                // Find trimmed boundaries within [start, i) to avoid allocating untrimmed substrings
+                                let tStart = start;
+                                let tEnd = i - 1;
+                                while (tStart <= tEnd && rawVal.charCodeAt(tStart) <= 32) {
+                                    tStart++;
+                                }
+                                while (tEnd >= tStart && rawVal.charCodeAt(tEnd) <= 32) {
+                                    tEnd--;
+                                }
+                                if (tStart <= tEnd) {
+                                    const part = rawVal.substring(tStart, tEnd + 1);
+                                    if (cleanVal) {
+                                        cleanVal += ' / ' + part;
+                                    }
+                                    else {
+                                        cleanVal = part;
+                                    }
+                                }
+                            }
+                            start = i + 1;
+                        }
+                    }
                     if (!cleanVal)
                         continue;
                     chipsHtml = `<span class="aegis-details-value-text">${cleanVal}</span>`;
@@ -2298,21 +2362,37 @@ function injectPopupSummary(popupContainer, result, scoringSource, sheetWeapon, 
  * Injects or updates the Aegis rank badge overlay inside a weapon tile.
  */
 function injectBadge(el, result) {
-    let badgeTarget = el.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"]');
+    // Never inject badges inside popup toolbars, tag controls, or stat rows
+    if (el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup') &&
+        !el.matches('[id^="item-"], [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"], [class*="item-tile"], .item-tile, .item')) {
+        removeBadge(el);
+        return;
+    }
+    // Deduplicate: Find root item container to ensure EXACTLY 1 badge per item tile in DIM Stable and Beta
+    const itemContainer = el.closest('[data-aegis-item-hash]') || el;
+    let badgeTarget = itemContainer.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"]');
     if (!badgeTarget) {
-        badgeTarget = el;
+        badgeTarget = itemContainer;
     }
     // Ensure the badge target is relatively positioned so the absolute badge is anchored to it
     badgeTarget.style.setProperty('position', 'relative', 'important');
     // Handle S-tier gold glow class on the badge target
-    if (badgeTarget) {
+    if (result.grade && result.grade.startsWith('S')) {
+        badgeTarget.classList.add('aegis-gold-glow');
+    }
+    else {
         badgeTarget.classList.remove('aegis-gold-glow');
-        if (result.grade && result.grade.startsWith('S')) {
-            badgeTarget.classList.add('aegis-gold-glow');
+    }
+    // Purge any duplicate badges within itemContainer and reuse the primary badge
+    const existingBadges = Array.from(itemContainer.querySelectorAll('.aegis-badge'));
+    let badge;
+    if (existingBadges.length > 0) {
+        badge = existingBadges[0];
+        for (let i = 1; i < existingBadges.length; i++) {
+            existingBadges[i].remove();
         }
     }
-    let badge = badgeTarget.querySelector('.aegis-badge');
-    if (!badge) {
+    else {
         badge = document.createElement('div');
         badge.className = 'aegis-badge';
         badgeTarget.appendChild(badge);
@@ -2356,17 +2436,13 @@ function injectBadge(el, result) {
  * Removes the Aegis badge overlay from a weapon tile if it exists.
  */
 function removeBadge(el) {
-    let badgeTarget = el.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"]');
+    const itemContainer = el.closest('[data-aegis-item-hash]') || el;
+    itemContainer.classList.remove('aegis-gold-glow');
+    const badgeTarget = itemContainer.querySelector('.item-tile, [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"]');
     if (badgeTarget) {
         badgeTarget.classList.remove('aegis-gold-glow');
     }
-    else {
-        el.classList.remove('aegis-gold-glow');
-    }
-    const badge = el.querySelector('.aegis-badge');
-    if (badge) {
-        badge.remove();
-    }
+    itemContainer.querySelectorAll('.aegis-badge').forEach((b) => b.remove());
 }
 /**
  * Evaluates a single weapon tile element, calculates its grade, and applies overlay UI.
@@ -2648,20 +2724,29 @@ function processElement(el) {
                 result.grade = `${archetypeTier}${result.grade}`;
             }
             const isPopup = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
-            // Inject rank badge (only if not the popup container itself)
-            if (!isPopup) {
+            const isItemTile = el.matches('[id^="item-"], [class*="StoreItem"], [class*="InventoryItem"], [class*="ItemTile"], [class*="item-tile"], .item-tile, .item');
+            // Inject rank badge (only if it's a valid item tile and NOT the popup container itself)
+            if (!isPopup && isItemTile) {
                 injectBadge(el, result);
+            }
+            else if (!isPopup) {
+                removeBadge(el);
             }
             // Inject popup summary card if inside a details popup (or if we are the popup container)
             const popupContainer = isPopup ? el : el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
             if (popupContainer) {
                 injectPopupSummary(popupContainer, result, scoringSource, sheetWeapon || undefined, sheetPerks);
             }
-            // Attach event listeners for the tooltip if not already done (only if not the popup container itself)
-            if (!isPopup && !el.hasAttribute('data-aegis-listeners')) {
+            // Attach event listeners for hover tooltips (only for valid item tiles)
+            if (!isPopup && isItemTile && !el.hasAttribute('data-aegis-listeners')) {
                 el.addEventListener('mouseenter', handleMouseEnter);
                 el.addEventListener('mouseleave', handleMouseLeave);
                 el.setAttribute('data-aegis-listeners', 'true');
+            }
+            else if (!isItemTile && el.hasAttribute('data-aegis-listeners')) {
+                el.removeEventListener('mouseenter', handleMouseEnter);
+                el.removeEventListener('mouseleave', handleMouseLeave);
+                el.removeAttribute('data-aegis-listeners');
             }
         }
         else {

@@ -605,21 +605,46 @@ function isWordSubsequence(subWords: string[], mainWords: string[]): boolean {
   return subIdx === subWords.length;
 }
 
+interface PerkMatchData {
+  clean: string;
+  words: string[];
+  stripped: string;
+}
+
+/** Cache map to store pre-parsed representations of perk and recommendation names. */
+const perkMatchCache = new Map<string, PerkMatchData>();
+
+/**
+ * Returns pre-parsed, memoized string representation of a perk or recommendation name.
+ * Caches regex cleanup, word arrays, and stripped strings to avoid costly re-parsing in hot loops.
+ */
+function getPerkMatchData(name: string): PerkMatchData {
+  const key = name ?? '';
+  let cached = perkMatchCache.get(key);
+  if (!cached) {
+    const clean = key.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    const words = clean ? clean.split(' ') : [];
+    const stripped = clean.replace(/\s+/g, '');
+    cached = { clean, words, stripped };
+    perkMatchCache.set(key, cached);
+  }
+  return cached;
+}
+
+/**
+ * Checks whether a given perk name matches a recommended perk string.
+ * Uses memoized perk data via getPerkMatchData for high-performance matching.
+ */
 function isPerkMatch(perkName: string, recName: string): boolean {
-  const pNameClean = perkName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-  const rNameClean = recName.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const pData = getPerkMatchData(perkName);
+  const rData = getPerkMatchData(recName);
 
-  if (!pNameClean || !rNameClean) return false;
+  if (!pData.clean || !rData.clean) return false;
 
-  const pWords = pNameClean.split(' ');
-  const rWords = rNameClean.split(' ');
+  if (pData.stripped === rData.stripped) return true;
 
-  const pStripped = pNameClean.replace(/\s+/g, '');
-  const rStripped = rNameClean.replace(/\s+/g, '');
-  if (pStripped === rStripped) return true;
-
-  if (isWordSubsequence(rWords, pWords)) return true;
-  if (isWordSubsequence(pWords, rWords)) return true;
+  if (isWordSubsequence(rData.words, pData.words)) return true;
+  if (isWordSubsequence(pData.words, rData.words)) return true;
 
   return false;
 }
@@ -2442,7 +2467,38 @@ function injectPopupSummary(
         }
 
         if (!chipsHtml) {
-          const cleanVal = item.rawVal.split(/[\/\n]+/).map((s) => s.trim()).filter(Boolean).join(' / ');
+          // Parse and sanitize item.rawVal: split by slash/newline, trim whitespace, and join with ' / '.
+          // Optimized implementation avoids intermediate array allocations and regex overhead.
+          let cleanVal = '';
+          let start = 0;
+          const rawVal = item.rawVal;
+          const len = rawVal.length;
+          for (let i = 0; i <= len; i++) {
+            const char = i < len ? rawVal[i] : '\n';
+            if (char === '/' || char === '\n') {
+              if (start < i) {
+                // Find trimmed boundaries within [start, i) to avoid allocating untrimmed substrings
+                let tStart = start;
+                let tEnd = i - 1;
+                while (tStart <= tEnd && rawVal.charCodeAt(tStart) <= 32) {
+                  tStart++;
+                }
+                while (tEnd >= tStart && rawVal.charCodeAt(tEnd) <= 32) {
+                  tEnd--;
+                }
+                if (tStart <= tEnd) {
+                  const part = rawVal.substring(tStart, tEnd + 1);
+                  if (cleanVal) {
+                    cleanVal += ' / ' + part;
+                  } else {
+                    cleanVal = part;
+                  }
+                }
+              }
+              start = i + 1;
+            }
+          }
+
           if (!cleanVal) continue;
           chipsHtml = `<span class="aegis-details-value-text">${cleanVal}</span>`;
         }
