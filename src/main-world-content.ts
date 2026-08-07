@@ -27,7 +27,7 @@ function sendDiagnosticLog(msg: string) {
 }
 
 // Global cache for weapon instances to store full perk sets (e.g. from popups)
-const instanceCache: Record<string, { perkHashes: number[]; perksDataMap: Record<number, PerkInfo> }> = {};
+const instanceCache: Record<string, { perkHashes: number[]; perksDataMap: Record<number, PerkInfo>; equippedMasterwork?: string }> = {};
 
 // Manifest database state variables for fast offline lookups
 let manifestDbName: string | null = null;
@@ -730,6 +730,9 @@ function processElement(el: HTMLElement) {
     let activePerkHashes: number[] = []; // Only currently plugged perks
     let perksDataMap: Record<number, PerkInfo> = {};
 
+    // Equipped Masterwork stat name (e.g. "Range", "Handling")
+    let equippedMasterwork: string = '';
+
     // Categorized possible perks extracted directly from the React Fiber socket data.
     // perk1s = column 3 (first trait column), perk2s = column 4 (second trait column)
     const possibleBarrels: string[] = [];
@@ -747,6 +750,9 @@ function processElement(el: HTMLElement) {
         // Determine the socket category from the reference plug (plugged or first option)
         const referenceDef = socket.plugged?.plugDef ?? socket.plugOptions?.[0]?.plugDef;
         let slotCategory = detectPlugCategory(referenceDef);
+
+        // --- Detect equipped Masterwork via socket (Strategy 2 pre-check, handled after loop) ---
+        // We keep a coarse early-detect here for the specific slot only
 
         // Assign trait sockets to perk1 (column 3) or perk2 (column 4) by order of appearance
         if (slotCategory === 'trait') {
@@ -810,6 +816,82 @@ function processElement(el: HTMLElement) {
       }
     }
 
+    // === Strategy 1: item.masterworkInfo — DIM surfaces this directly on the item object ===
+    // DIM stores masterwork info in item.masterworkInfo.statName (e.g. "Range", "Handling")
+    if (item.masterworkInfo) {
+      // statName is the clean stat name (e.g. "Reload Speed", "Range", "Handling")
+      // — use it directly without stripping since it won't contain "masterwork"
+      const mwStatName =
+        item.masterworkInfo.statName ||
+        item.masterworkInfo.stat?.displayProperties?.name ||
+        item.masterworkInfo.name ||
+        item.masterworkInfo.typeName ||
+        '';
+      if (mwStatName) {
+        // Strip "masterwork(ed)" as a whole word only (word boundary prevents mid-word cuts)
+        equippedMasterwork = mwStatName
+          .replace(/\bmasterwork(?:ed|s)?\b\s*:?\s*/gi, '')
+          .replace(/:\s*/g, '')
+          .trim();
+      }
+    }
+
+    // === Strategy 2: Socket scan — look for weapon_masterwork* category ===
+    if (!equippedMasterwork && item.sockets && item.sockets.allSockets) {
+      for (const socket of item.sockets.allSockets) {
+        if (!socket || !socket.plugged?.plugDef) continue;
+        const def = socket.plugged.plugDef;
+        const catId = (def.plug?.plugCategoryIdentifier || '').toLowerCase();
+        const typeName = (def.itemTypeDisplayName || '').toLowerCase();
+        // Match weapon masterwork or generic masterwork sockets
+        if (catId.startsWith('weapon_masterwork') ||
+            catId.includes('masterwork') ||
+            typeName.includes('masterwork')) {
+          const mwName = (def.displayProperties?.name || '').trim();
+          if (mwName) {
+            equippedMasterwork = mwName
+              .replace(/\bmasterwork(?:ed|s)?\b\s*:?\s*/gi, '')
+              .replace(/:\s*/g, '')
+              .trim();
+          }
+          if (equippedMasterwork) break;
+        }
+      }
+    }
+
+    // === Normalize full D2 stat names to match sheet abbreviations ===
+    // DIM uses "Reload Speed" but sheets typically say "Reload"; "Blast Radius" → stays, etc.
+
+    // First: strip any "Tier N" prefix (present when statName is null for partial MW)
+    // e.g. "tier 1stability" → "stability", "Tier 10Reload Speed" → "Reload Speed"
+    equippedMasterwork = equippedMasterwork
+      .replace(/\btier\s*\d+\s*/gi, '')
+      .trim();
+
+    const mwNormMap: Record<string, string> = {
+      'reload speed': 'Reload',
+      'reload': 'Reload',
+      'charge time': 'Charge Time',
+      'draw time': 'Draw Time',
+      'blast radius': 'Blast Radius',
+      'projectile speed': 'Velocity',
+      'swing speed': 'Swing Speed',
+      'range': 'Range',
+      'handling': 'Handling',
+      'stability': 'Stability',
+      'velocity': 'Velocity',
+      'impact': 'Impact',
+    };
+    const mwLower = equippedMasterwork.toLowerCase();
+    if (mwNormMap[mwLower]) {
+      equippedMasterwork = mwNormMap[mwLower];
+    }
+
+    console.debug(
+      `[Aegis MW] ${item.name}: equipped="${equippedMasterwork}"`,
+      'masterworkInfo:', item.masterworkInfo
+    );
+
     // Instance ID cache logic (handles async loading and popup-to-grid sync)
     const instanceId = item.id;
     if (instanceId) {
@@ -818,6 +900,7 @@ function processElement(el: HTMLElement) {
         instanceCache[instanceId] = {
           perkHashes: [...perkHashes],
           perksDataMap: { ...perksDataMap },
+          equippedMasterwork,
         };
       } else if (instanceCache[instanceId]) {
         // If current element lacks perks but we have it in cache, populate it!
@@ -828,6 +911,10 @@ function processElement(el: HTMLElement) {
           }
         }
         Object.assign(perksDataMap, cached.perksDataMap);
+        // Restore MW from cache if we didn't detect one directly
+        if (!equippedMasterwork && cached.equippedMasterwork) {
+          equippedMasterwork = cached.equippedMasterwork;
+        }
       }
     }
 
@@ -852,6 +939,14 @@ function processElement(el: HTMLElement) {
         origins: possibleOrigins.sort(),
       };
       el.setAttribute('data-aegis-weapon-possible-perks', JSON.stringify(possiblePerksData));
+    }
+
+    // Always write the MW attribute before the early-return check so it's
+    // never skipped on re-scans where only the hash/perks are unchanged.
+    if (equippedMasterwork) {
+      el.setAttribute('data-aegis-masterwork', equippedMasterwork);
+    } else {
+      el.removeAttribute('data-aegis-masterwork');
     }
 
     // Optimization: Avoid re-triggering content.ts if no scoring-relevant data changed

@@ -74,6 +74,7 @@ export interface AegisSheetWeapon {
   rank: string;
   tier: string;
   versionTag?: string;
+  mw?: string;
 }
 
 /**

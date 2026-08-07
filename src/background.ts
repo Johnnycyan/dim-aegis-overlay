@@ -197,6 +197,7 @@ async function fetchAndCacheAegisSheet(): Promise<{ success: boolean; error?: st
             rank: getVal(row, 'Rank'),
             tier: getVal(row, 'Tier'),
             versionTag: versionTag || undefined,
+            mw: getVal(row, ['MW', 'PERKS MW']),
           };
 
           weapons[normalized] = weaponData;
@@ -472,8 +473,40 @@ async function syncLightGGInBackground(): Promise<{ success: boolean; count?: nu
   });
 }
 
+// Helper to handle auto-resync when DIM is launched
+async function handleDimLaunched() {
+  const data = await chrome.storage.local.get(['lastUpdated']);
+  const dayInMs = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  if (!data.lastUpdated || now - data.lastUpdated > dayInMs) {
+    console.log('DIM launched and database cache is expired. Triggering background auto-resync...');
+    const res = await syncAllData();
+    if (res.success) {
+      notifyDimTabsOfUpdate(res.count || 0);
+    }
+  }
+}
+
+function notifyDimTabsOfUpdate(updatedCount: number) {
+  chrome.tabs.query({ url: '*://*.destinyitemmanager.com/*' }, (tabs) => {
+    for (const tab of tabs) {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'showToast',
+          message: `Spreadsheets synced automatically (${updatedCount} weapons cached)`
+        }).catch(() => {});
+      }
+    }
+  });
+}
+
 // Listen for messages from settings popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.action === 'dimLaunched') {
+    handleDimLaunched().catch(console.error);
+    return false;
+  }
+
   if (message.action === 'syncNow') {
     syncAllData(message.url)
       .then((res) => sendResponse(res))

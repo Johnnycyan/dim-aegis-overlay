@@ -607,6 +607,23 @@ const detectPlugCategory = (def) => {
  */
 function processElement(el) {
     try {
+        // Exclude sub-elements inside popups, controls, or toolbars (e.g. tag selectors, stat rows, socket plugs, action buttons)
+        const isPopupContainer = el.matches('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
+        if (!isPopupContainer) {
+            const isSubElement = el.matches(`
+        [class*="tag"], [class*="Tag"],
+        [class*="control"], [class*="Control"],
+        [class*="stat"], [class*="Stat"],
+        [class*="socket"], [class*="Socket"],
+        [class*="button"], [class*="Button"],
+        [class*="action"], [class*="Action"],
+        [class*="toolbar"], [class*="Toolbar"],
+        button, svg, path
+      `);
+            if (isSubElement) {
+                return;
+            }
+        }
         // Skip if any ancestor element is already annotated for an item.
         // This prevents double-annotating nested elements (e.g. a container div
         // AND its inner item tile both matching our selectors), which causes
@@ -623,13 +640,16 @@ function processElement(el) {
             return;
         // Verify that this element actually represents the item by matching the icon image src.
         // This prevents annotating mod/socket slots that climb up to the parent item in the fiber tree.
-        const imgEl = el.querySelector('img');
-        if (imgEl && item.icon) {
-            const imgPath = imgEl.getAttribute('src') || '';
-            const iconPath = item.icon.toLowerCase();
-            const iconFilename = iconPath.split('/').pop();
-            if (iconFilename && !imgPath.toLowerCase().includes(iconFilename)) {
-                return;
+        // Skip this check for main popup containers, which contain various sub-images (emblems, stats, class icons).
+        if (!isPopupContainer) {
+            const imgEl = el.querySelector('img');
+            if (imgEl && item.icon) {
+                const imgPath = imgEl.getAttribute('src') || '';
+                const iconPath = item.icon.toLowerCase();
+                const iconFilename = iconPath.split('/').pop();
+                if (iconFilename && !imgPath.toLowerCase().includes(iconFilename)) {
+                    return;
+                }
             }
         }
         // Check if this item is a weapon or armor.
@@ -665,6 +685,8 @@ function processElement(el) {
         let perkHashes = [];
         let activePerkHashes = []; // Only currently plugged perks
         let perksDataMap = {};
+        // Equipped Masterwork stat name (e.g. "Range", "Handling")
+        let equippedMasterwork = '';
         // Categorized possible perks extracted directly from the React Fiber socket data.
         // perk1s = column 3 (first trait column), perk2s = column 4 (second trait column)
         const possibleBarrels = [];
@@ -681,6 +703,8 @@ function processElement(el) {
                 // Determine the socket category from the reference plug (plugged or first option)
                 const referenceDef = socket.plugged?.plugDef ?? socket.plugOptions?.[0]?.plugDef;
                 let slotCategory = detectPlugCategory(referenceDef);
+                // --- Detect equipped Masterwork via socket (Strategy 2 pre-check, handled after loop) ---
+                // We keep a coarse early-detect here for the specific slot only
                 // Assign trait sockets to perk1 (column 3) or perk2 (column 4) by order of appearance
                 if (slotCategory === 'trait') {
                     traitSocketsSeen++;
@@ -748,6 +772,74 @@ function processElement(el) {
                 }
             }
         }
+        // === Strategy 1: item.masterworkInfo — DIM surfaces this directly on the item object ===
+        // DIM stores masterwork info in item.masterworkInfo.statName (e.g. "Range", "Handling")
+        if (item.masterworkInfo) {
+            // statName is the clean stat name (e.g. "Reload Speed", "Range", "Handling")
+            // — use it directly without stripping since it won't contain "masterwork"
+            const mwStatName = item.masterworkInfo.statName ||
+                item.masterworkInfo.stat?.displayProperties?.name ||
+                item.masterworkInfo.name ||
+                item.masterworkInfo.typeName ||
+                '';
+            if (mwStatName) {
+                // Strip "masterwork(ed)" as a whole word only (word boundary prevents mid-word cuts)
+                equippedMasterwork = mwStatName
+                    .replace(/\bmasterwork(?:ed|s)?\b\s*:?\s*/gi, '')
+                    .replace(/:\s*/g, '')
+                    .trim();
+            }
+        }
+        // === Strategy 2: Socket scan — look for weapon_masterwork* category ===
+        if (!equippedMasterwork && item.sockets && item.sockets.allSockets) {
+            for (const socket of item.sockets.allSockets) {
+                if (!socket || !socket.plugged?.plugDef)
+                    continue;
+                const def = socket.plugged.plugDef;
+                const catId = (def.plug?.plugCategoryIdentifier || '').toLowerCase();
+                const typeName = (def.itemTypeDisplayName || '').toLowerCase();
+                // Match weapon masterwork or generic masterwork sockets
+                if (catId.startsWith('weapon_masterwork') ||
+                    catId.includes('masterwork') ||
+                    typeName.includes('masterwork')) {
+                    const mwName = (def.displayProperties?.name || '').trim();
+                    if (mwName) {
+                        equippedMasterwork = mwName
+                            .replace(/\bmasterwork(?:ed|s)?\b\s*:?\s*/gi, '')
+                            .replace(/:\s*/g, '')
+                            .trim();
+                    }
+                    if (equippedMasterwork)
+                        break;
+                }
+            }
+        }
+        // === Normalize full D2 stat names to match sheet abbreviations ===
+        // DIM uses "Reload Speed" but sheets typically say "Reload"; "Blast Radius" → stays, etc.
+        // First: strip any "Tier N" prefix (present when statName is null for partial MW)
+        // e.g. "tier 1stability" → "stability", "Tier 10Reload Speed" → "Reload Speed"
+        equippedMasterwork = equippedMasterwork
+            .replace(/\btier\s*\d+\s*/gi, '')
+            .trim();
+        const mwNormMap = {
+            'reload speed': 'Reload',
+            'reload': 'Reload',
+            'charge time': 'Charge Time',
+            'draw time': 'Draw Time',
+            'blast radius': 'Blast Radius',
+            'projectile speed': 'Velocity',
+            'swing speed': 'Swing Speed',
+            'range': 'Range',
+            'handling': 'Handling',
+            'stability': 'Stability',
+            'velocity': 'Velocity',
+            'impact': 'Impact',
+        };
+        const mwLower = equippedMasterwork.toLowerCase();
+        if (mwNormMap[mwLower]) {
+            equippedMasterwork = mwNormMap[mwLower];
+        }
+        console.debug(`[Aegis MW] ${item.name}: equipped="${equippedMasterwork}"`, 'masterworkInfo:', item.masterworkInfo);
         // Instance ID cache logic (handles async loading and popup-to-grid sync)
         const instanceId = item.id;
         if (instanceId) {
@@ -756,6 +848,7 @@ function processElement(el) {
                 instanceCache[instanceId] = {
                     perkHashes: [...perkHashes],
                     perksDataMap: { ...perksDataMap },
+                    equippedMasterwork,
                 };
             }
             else if (instanceCache[instanceId]) {
@@ -767,6 +860,10 @@ function processElement(el) {
                     }
                 }
                 Object.assign(perksDataMap, cached.perksDataMap);
+                // Restore MW from cache if we didn't detect one directly
+                if (!equippedMasterwork && cached.equippedMasterwork) {
+                    equippedMasterwork = cached.equippedMasterwork;
+                }
             }
         }
         // Register all parsed perks in the global dictionary
@@ -788,6 +885,14 @@ function processElement(el) {
             };
             el.setAttribute('data-aegis-weapon-possible-perks', JSON.stringify(possiblePerksData));
         }
+        // Always write the MW attribute before the early-return check so it's
+        // never skipped on re-scans where only the hash/perks are unchanged.
+        if (equippedMasterwork) {
+            el.setAttribute('data-aegis-masterwork', equippedMasterwork);
+        }
+        else {
+            el.removeAttribute('data-aegis-masterwork');
+        }
         // Optimization: Avoid re-triggering content.ts if no scoring-relevant data changed
         if (existingHash === newHash && existingPerks === newPerks) {
             return;
@@ -808,9 +913,9 @@ function processElement(el) {
 }
 const SELECTORS = [
     '[id^="item-"]',
-    '[class*="item-"]',
     '[class*="StoreItem"]',
     '[class*="InventoryItem"]',
+    '[class*="ItemTile"]',
     '[class*="item-tile"]',
     '.item',
     '.item-tile',

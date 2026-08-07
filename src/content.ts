@@ -1,6 +1,6 @@
 import { scoreWeapon } from './scorer';
 import { WishlistDatabase, ScoringResult, AegisSheetDatabase, AegisSheetWeapon, TooltipPerk, AegisArmorSet } from './types';
-import { showTooltip, hideTooltip } from './tooltip';
+import { showTooltip, hideTooltip, extractRecommendedMasterwork } from './tooltip';
 /** Safely sets element HTML using DOMParser (avoids innerHTML linter warning). */
 function safeSetInnerHTML(element: HTMLElement, htmlString: string) {
   const parser = new DOMParser();
@@ -349,6 +349,8 @@ function setupRegistryObserver() {
             const isBestInClass = (hoveredElement as any)._aegisIsBestInClass;
             const sheetPerks = (hoveredElement as any)._aegisSheetPerks;
 
+            const equippedMW = (hoveredElement as any)._aegisEquippedMasterwork;
+
             showTooltip(
               hoveredElement,
               result,
@@ -360,7 +362,9 @@ function setupRegistryObserver() {
               bestAlternative,
               isBestInClass,
               sheetPerks,
-              perkNameToIcon
+              perkNameToIcon,
+              null,
+              equippedMW
             );
           }
         }
@@ -2219,6 +2223,8 @@ function handleMouseEnter(e: MouseEvent) {
       const sheetPerks = (el as any)._aegisSheetPerks;
       const sheetArmor = (el as any)._aegisSheetArmor;
 
+      const equippedMW = (el as any)._aegisEquippedMasterwork;
+
       showTooltip(
         el,
         result,
@@ -2231,7 +2237,8 @@ function handleMouseEnter(e: MouseEvent) {
         isBestInClass,
         sheetPerks,
         perkNameToIcon,
-        sheetArmor
+        sheetArmor,
+        equippedMW
       );
     }
   }, TOOLTIP_HOVER_DELAY_MS);
@@ -2258,7 +2265,8 @@ function injectPopupSummary(
   scoringSource: string,
   sheetWeapon?: AegisSheetWeapon,
   sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] },
-  sheetArmor?: AegisArmorSet | null
+  sheetArmor?: AegisArmorSet | null,
+  equippedMasterwork?: string
 ) {
   const titleEl = popupContainer.querySelector('h1, [class*="title"]');
   if (!titleEl) return;
@@ -2536,6 +2544,94 @@ function injectPopupSummary(
         `;
       }
 
+      // Extract recommended Masterworks
+      const recMWs: string[] = [];
+      let rawMW = sheetWeapon.mw ? sheetWeapon.mw.trim() : null;
+      if (rawMW && rawMW !== '-') {
+        const parts = rawMW.split(/[\/\n\\]/);
+        for (const part of parts) {
+          const trimmed = part.trim();
+          if (trimmed) recMWs.push(trimmed);
+        }
+      }
+      if (recMWs.length === 0) {
+        const notesText = (sheetWeapon.notes || '') + ' ' + (result.notes || '') + ' ' + (result.wishlistNotes || '');
+        const foundMW = extractRecommendedMasterwork(notesText);
+        if (foundMW) {
+          const parts = foundMW.split(/[\/\n\\]/);
+          for (const part of parts) {
+            const trimmed = part.trim();
+            if (trimmed) recMWs.push(trimmed);
+          }
+        }
+      }
+
+      if (recMWs.length > 0) {
+        let mwChipsHtml = '';
+        const eqMW = (equippedMasterwork || '').toLowerCase();
+
+        for (const mw of recMWs) {
+          const mwLower = mw.toLowerCase();
+          // Fuzzy match: "Reload" matches "Reload Speed", "Range" matches "Range", etc.
+          const isMatch = eqMW && (
+            mwLower === eqMW ||
+            eqMW.startsWith(mwLower) ||
+            mwLower.startsWith(eqMW)
+          );
+
+          let chipStyle = [
+            'border-radius: 4px !important',
+            'font-size: 10px !important',
+            'font-weight: 800 !important',
+            'padding: 3px 7px !important',
+            'display: inline-flex !important',
+            'align-items: center !important',
+            'gap: 4px !important',
+            'transition: all 0.2s ease !important',
+          ];
+
+          let icon = '☆';
+          let title = `Aegis recommends: ${mw}`;
+
+          if (isMatch) {
+            // MATCHED: Luminous gold gradient + checkmark + outer glow + bright white text
+            chipStyle.push(
+              'background: linear-gradient(135deg, rgba(255, 215, 0, 0.35), rgba(255, 140, 0, 0.25)) !important',
+              'border: 1.5px solid #ffd700 !important',
+              'color: #ffffff !important',
+              'text-shadow: 0 0 6px rgba(255, 215, 0, 0.8) !important',
+              'box-shadow: 0 0 10px rgba(255, 191, 0, 0.65), inset 0 0 4px rgba(255, 255, 255, 0.2) !important'
+            );
+            icon = '✓';
+            title = `✓ You have this Masterwork equipped!`;
+          } else {
+            // UNMATCHED: Muted dashed amber chip
+            chipStyle.push(
+              'background: rgba(255, 191, 0, 0.05) !important',
+              'border: 1px dashed rgba(255, 191, 0, 0.4) !important',
+              'color: rgba(235, 203, 139, 0.65) !important',
+              'box-shadow: none !important'
+            );
+          }
+
+          mwChipsHtml += `
+            <span class="aegis-perk-chip" style="${chipStyle.join('; ')}" title="${title}">
+              <span style="font-size: 11px !important; line-height: 1 !important; ${isMatch ? 'color: #ffe57f !important;' : ''}">${icon}</span>
+              ${mw}
+            </span>
+          `;
+        }
+
+        perksRowsHtml += `
+          <div class="aegis-details-row aegis-perk-row">
+            <span class="aegis-details-label">MW</span>
+            <div class="aegis-details-value aegis-details-chips-container" style="display: flex !important; flex-wrap: wrap !important; gap: 4px !important;">
+              ${mwChipsHtml}
+            </div>
+          </div>
+        `;
+      }
+
       // Check if superiors exist and format them
       let superiorsHtml = '';
       if (superiors.byEnergy || superiors.byFrame || superiors.byBoth) {
@@ -2783,6 +2879,8 @@ function processElement(el: HTMLElement) {
   const weaponName = el.getAttribute('data-aegis-item-name') || 'Unknown Weapon';
   const perkHashesStr = el.getAttribute('data-aegis-perk-hashes');
   const perksDataStr = el.getAttribute('data-aegis-perks-data');
+  // Equipped masterwork stat (e.g. "Range", "Handling") — written by main-world-content.ts
+  const equippedMasterwork = (el.getAttribute('data-aegis-masterwork') || '').trim().toLowerCase();
 
   if (itemHashStr && weaponName && weaponName !== 'Unknown Weapon') {
     const hash = parseInt(itemHashStr, 10);
@@ -3044,6 +3142,7 @@ function processElement(el: HTMLElement) {
     (el as any)._aegisBestAlternative = bestAlternative;
     (el as any)._aegisIsBestInClass = isBestInClass;
     (el as any)._aegisSheetPerks = hasSheetData ? sheetPerks : null;
+    (el as any)._aegisEquippedMasterwork = equippedMasterwork || null;
 
     if (result.grade) {
       // Modify grade string to be 2-tier if configured and sheet data is present
@@ -3065,7 +3164,7 @@ function processElement(el: HTMLElement) {
       // Inject popup summary card if inside a details popup (or if we are the popup container)
       const popupContainer = isPopup ? el : el.closest('[class*="ItemPopup"], [class*="item-popup"], [class*="Sheet"], [class*="sheet"], .item-popup');
       if (popupContainer) {
-        injectPopupSummary(popupContainer as HTMLElement, result, scoringSource, sheetWeapon || undefined, sheetPerks);
+        injectPopupSummary(popupContainer as HTMLElement, result, scoringSource, sheetWeapon || undefined, sheetPerks, undefined, equippedMasterwork);
       }
 
       // Attach event listeners for hover tooltips (only for valid item tiles)
@@ -3130,99 +3229,375 @@ function compareGrades(itemGrade: string, queryStr: string): boolean {
   return normalizedGrade === queryStr || normalizedGrade.startsWith(queryStr);
 }
 
+function setupSearchWidget() {
+  const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]') as HTMLInputElement;
+  if (!searchInput) return;
+
+  const searchWrapper = searchInput.parentElement;
+  if (!searchWrapper) return;
+
+  if (searchWrapper.querySelector('.aegis-search-widget')) return;
+
+  // Closure state variables for modular filter building
+  let activeTarget = 'perk'; // 'perk', 'weapon', 'armor2p', 'armor4p'
+  let activeCondition = '>='; // '=', '>=', '<='
+
+  const widgetContainer = document.createElement('div');
+  widgetContainer.className = 'aegis-search-widget';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'aegis-search-widget-btn';
+  button.title = 'Aegis Filters';
+  button.innerHTML = `
+    <svg viewBox="0 0 24 24" class="aegis-widget-icon" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  `;
+
+  const menu = document.createElement('div');
+  menu.className = 'aegis-search-widget-menu hidden';
+  menu.innerHTML = `
+    <div class="aegis-menu-header">Aegis Filters</div>
+    
+    <div class="aegis-widget-row">
+      <div class="aegis-row-label">Target</div>
+      <div class="aegis-btn-group" data-group="target">
+        <button type="button" class="aegis-group-btn active" data-value="perk">Perk</button>
+        <button type="button" class="aegis-group-btn" data-value="weapon">Weapon</button>
+        <button type="button" class="aegis-group-btn" data-value="armor2p">Armor 2pc</button>
+        <button type="button" class="aegis-group-btn" data-value="armor4p">Armor 4pc</button>
+      </div>
+    </div>
+
+    <div class="aegis-widget-row">
+      <div class="aegis-row-label">Condition</div>
+      <div class="aegis-btn-group" data-group="condition">
+        <button type="button" class="aegis-group-btn active" data-value=">=">Or Better (&ge;)</button>
+        <button type="button" class="aegis-group-btn" data-value="=">Only (=)</button>
+        <button type="button" class="aegis-group-btn" data-value="<=">Or Worse (&le;)</button>
+      </div>
+    </div>
+
+    <div class="aegis-widget-row">
+      <div class="aegis-row-label">Grade</div>
+      <div class="aegis-grade-grid">
+        <button type="button" class="aegis-grade-btn" data-grade="s">S</button>
+        <button type="button" class="aegis-grade-btn" data-grade="a">A</button>
+        <button type="button" class="aegis-grade-btn" data-grade="b">B</button>
+        <button type="button" class="aegis-grade-btn" data-grade="c">C</button>
+      </div>
+    </div>
+
+    <div class="aegis-menu-divider"></div>
+
+    <div class="aegis-widget-row">
+      <div class="aegis-row-label">Shortcuts</div>
+      <div class="aegis-shortcuts-grid">
+        <button type="button" class="aegis-shortcut-btn" data-shortcut="aegis:god">God Rolls</button>
+        <button type="button" class="aegis-shortcut-btn" data-shortcut="aegis:upgrade">Upgradeable</button>
+        <button type="button" class="aegis-shortcut-btn" data-shortcut="aegis:chase">Chase List</button>
+      </div>
+    </div>
+
+    <div class="aegis-menu-divider"></div>
+    <button type="button" class="aegis-menu-clear-btn">Clear Active Filter</button>
+  `;
+
+  widgetContainer.appendChild(button);
+  widgetContainer.appendChild(menu);
+
+  // Inject widget right after searchInput
+  searchInput.after(widgetContainer);
+
+  // Position relative is required for absolute dropdown anchoring
+  searchWrapper.style.setProperty('position', 'relative', 'important');
+
+  // Toggle dropdown on button click
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('hidden');
+  });
+
+  // Handle Target selection clicks
+  const targetGroup = menu.querySelector('[data-group="target"]') as HTMLElement;
+  targetGroup.addEventListener('click', (e) => {
+    const btn = e.target as HTMLButtonElement;
+    if (!btn.classList.contains('aegis-group-btn')) return;
+    targetGroup.querySelectorAll('.aegis-group-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTarget = btn.getAttribute('data-value') || 'perk';
+  });
+
+  // Handle Condition selection clicks
+  const conditionGroup = menu.querySelector('[data-group="condition"]') as HTMLElement;
+  conditionGroup.addEventListener('click', (e) => {
+    const btn = e.target as HTMLButtonElement;
+    if (!btn.classList.contains('aegis-group-btn')) return;
+    conditionGroup.querySelectorAll('.aegis-group-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCondition = btn.getAttribute('data-value') || '>=';
+  });
+
+  // Handle Grade button clicks (constructs & triggers filter)
+  const gradeGrid = menu.querySelector('.aegis-grade-grid') as HTMLElement;
+  gradeGrid.addEventListener('click', (e) => {
+    const btn = e.target as HTMLButtonElement;
+    if (!btn.classList.contains('aegis-grade-btn')) return;
+
+    const grade = btn.getAttribute('data-grade') || 's';
+    const prefixes: Record<string, string> = {
+      perk: 'aegis:p:',
+      weapon: 'aegis:w:',
+      armor2p: 'aegis:a:2p:',
+      armor4p: 'aegis:a:4p:'
+    };
+
+    const prefix = prefixes[activeTarget] || 'aegis:p:';
+    const op = activeCondition === '=' ? '' : activeCondition;
+    const query = `${prefix}${op}${grade}`;
+
+    searchInput.value = query;
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    searchInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    menu.classList.add('hidden');
+  });
+
+  // Handle Shortcut button clicks
+  const shortcutsGrid = menu.querySelector('.aegis-shortcuts-grid') as HTMLElement;
+  shortcutsGrid.addEventListener('click', (e) => {
+    const btn = e.target as HTMLButtonElement;
+    if (!btn.classList.contains('aegis-shortcut-btn')) return;
+
+    const query = btn.getAttribute('data-shortcut');
+    if (query) {
+      searchInput.value = query;
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      searchInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    menu.classList.add('hidden');
+  });
+
+  // Handle Clear Filter click
+  const clearBtn = menu.querySelector('.aegis-menu-clear-btn') as HTMLButtonElement;
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    searchInput.dispatchEvent(new Event('change', { bubbles: true }));
+    menu.classList.add('hidden');
+  });
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (!widgetContainer.contains(e.target as Node)) {
+      menu.classList.add('hidden');
+    }
+  });
+}
+
+let activeAegisFilter: string | null = null;
+let activeAegisFilterLabel: string | null = null;
+
+function renderAegisFilterPill() {
+  const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]') as HTMLInputElement;
+  if (!searchInput) return;
+
+  const searchWrapper = searchInput.parentElement;
+  if (!searchWrapper) return;
+
+  let pill = searchWrapper.querySelector('.aegis-filter-pill') as HTMLElement | null;
+  
+  if (!activeAegisFilter) {
+    if (pill) {
+      pill.remove();
+      searchInput.style.removeProperty('padding-left');
+    }
+    return;
+  }
+
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.className = 'aegis-filter-pill';
+    searchWrapper.appendChild(pill);
+  }
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'aegis-pill-text';
+  textSpan.textContent = activeAegisFilterLabel || 'Aegis Filter';
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'aegis-pill-close';
+  closeBtn.innerHTML = '&times;';
+  
+  pill.replaceChildren(textSpan, closeBtn);
+
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    activeAegisFilter = null;
+    activeAegisFilterLabel = null;
+    renderAegisFilterPill();
+    
+    // Trigger search input update
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  // Adjust padding-left on search input
+  requestAnimationFrame(() => {
+    if (pill) {
+      const pillWidth = pill.getBoundingClientRect().width || 100;
+      searchInput.style.setProperty('padding-left', `${36 + pillWidth + 8}px`, 'important');
+    }
+  });
+}
+
+function evaluateAegisFiltering() {
+  const items = document.querySelectorAll<HTMLElement>('[data-aegis-item-hash]');
+  
+  if (!activeAegisFilter) {
+    items.forEach(item => {
+      item.style.removeProperty('opacity');
+      item.style.removeProperty('filter');
+      item.style.removeProperty('pointer-events');
+    });
+    return;
+  }
+
+  const targetQuery = activeAegisFilter.replace(/^aegis:/i, '').toLowerCase();
+
+  items.forEach(item => {
+    const result = (item as any)._aegisResult as ScoringResult | undefined;
+    const grade = result?.grade?.toLowerCase() || '';
+    let isMatch = false;
+    const isArmor = grade.includes('/');
+
+    if (isArmor) {
+      let cleanQuery = targetQuery;
+      if (targetQuery.startsWith('a:') || targetQuery.startsWith('armor:')) {
+        cleanQuery = targetQuery.startsWith('a:') ? targetQuery.substring(2) : targetQuery.substring(6);
+      }
+
+      const parts = grade.split('/');
+      const rating2 = parts[0];
+      const rating4 = parts[1];
+
+      if (cleanQuery.startsWith('2p:') || cleanQuery.startsWith('2piece:')) {
+        const targetRank = cleanQuery.startsWith('2p:') ? cleanQuery.substring(3) : cleanQuery.substring(7);
+        isMatch = compareGrades(rating2, targetRank);
+      } else if (cleanQuery.startsWith('4p:') || cleanQuery.startsWith('4piece:')) {
+        const targetRank = cleanQuery.startsWith('4p:') ? cleanQuery.substring(3) : cleanQuery.substring(7);
+        isMatch = compareGrades(rating4, targetRank);
+      } else if (cleanQuery.includes('/')) {
+        isMatch = (grade === cleanQuery);
+      } else {
+        isMatch = compareGrades(rating2, cleanQuery) || compareGrades(rating4, cleanQuery);
+      }
+    } else {
+      if (targetQuery.startsWith('a:') || targetQuery.startsWith('armor:')) {
+        isMatch = false;
+      } else {
+        let weaponRank = '';
+        let perkRank = '';
+        const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
+        if (isTwoTier) {
+          weaponRank = grade.charAt(0);
+          perkRank = grade.substring(1);
+        } else {
+          perkRank = grade;
+        }
+
+        if (targetQuery === 'upgradeable' || targetQuery === 'upgradable' || targetQuery === 'upgrade') {
+          isMatch = !!result?.upgradeAvailable;
+        } else if (targetQuery === 'god') {
+          isMatch = compareGrades(perkRank, '>=s');
+        } else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
+          const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
+          isMatch = compareGrades(weaponRank, targetRank);
+        } else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
+          const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
+          isMatch = compareGrades(perkRank, targetRank);
+        } else {
+          isMatch = compareGrades(grade, targetQuery) || compareGrades(weaponRank, targetQuery) || compareGrades(perkRank, targetQuery);
+        }
+      }
+    }
+
+    if (isMatch) {
+      // Let DIM's native search rules determine opacity (bright if matches DIM search, dimmed if not)
+      item.style.removeProperty('opacity');
+      item.style.removeProperty('filter');
+      item.style.removeProperty('pointer-events');
+    } else {
+      // Force dimming because it failed the Aegis filter criteria
+      item.style.setProperty('opacity', '0.15', 'important');
+      item.style.setProperty('filter', 'grayscale(80%)', 'important');
+      item.style.setProperty('pointer-events', 'none', 'important');
+    }
+  });
+}
+
 function setupSearchFilterObserver() {
   const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]') as HTMLInputElement;
   if (!searchInput) return;
+
+  setupSearchWidget();
 
   if (searchInput.hasAttribute('data-aegis-search-observer')) return;
   searchInput.setAttribute('data-aegis-search-observer', 'true');
 
   searchInput.addEventListener('input', () => {
-    const val = searchInput.value.trim().toLowerCase();
+    let val = searchInput.value;
     
-    // Check if search query has "aegis:grade" (allowing comparison operators > < = /)
-    const aegisMatch = val.match(/\baegis:([a-z0-9+:-><=/]+)/);
+    // Check if the search query has "aegis:grade"
+    const aegisMatch = val.match(/\baegis:([a-z0-9+:-><=/]+)/i);
     
     if (aegisMatch) {
+      const fullMatchText = aegisMatch[0];
       const targetQuery = aegisMatch[1].toLowerCase();
-      const items = document.querySelectorAll<HTMLElement>('[data-aegis-item-hash]');
-      items.forEach(item => {
-        const result = (item as any)._aegisResult as ScoringResult | undefined;
-        const grade = result?.grade?.toLowerCase() || '';
-        // Extract weapon rank and perk rank if it's a 2-tier grade (e.g. "bs+")
-        let isMatch = false;
-        const isArmor = grade.includes('/');
-
-        if (isArmor) {
-          let cleanQuery = targetQuery;
-          if (targetQuery.startsWith('a:') || targetQuery.startsWith('armor:')) {
-            cleanQuery = targetQuery.startsWith('a:') ? targetQuery.substring(2) : targetQuery.substring(6);
+      
+      // Map query to human-readable label
+      let label = targetQuery;
+      if (targetQuery === 'god') label = 'God Rolls';
+      else if (targetQuery === 'upgrade' || targetQuery === 'upgradeable') label = 'Upgradeable';
+      else if (targetQuery === 'chase') label = 'Chase List';
+      else {
+        const parts = targetQuery.split(':');
+        if (parts.length >= 2) {
+          const type = parts[0];
+          const rank = parts[parts.length - 1];
+          const hasOp = targetQuery.includes('>=') || targetQuery.includes('<=');
+          const op = hasOp ? (targetQuery.includes('>=') ? ' >= ' : ' <= ') : ' = ';
+          const cleanRank = rank.replace(/>=/g, '').replace(/<=/g, '').toUpperCase();
+          
+          let typeLabel = 'Perk';
+          if (type === 'w' || type === 'weapon') typeLabel = 'Weapon';
+          else if (type === 'a' || type === 'armor') {
+            if (targetQuery.includes('2p') || targetQuery.includes('2piece')) typeLabel = 'Armor 2pc';
+            else if (targetQuery.includes('4p') || targetQuery.includes('4piece')) typeLabel = 'Armor 4pc';
+            else typeLabel = 'Armor';
           }
-
-          const parts = grade.split('/');
-          const rating2 = parts[0];
-          const rating4 = parts[1];
-
-          if (cleanQuery.startsWith('2p:') || cleanQuery.startsWith('2piece:')) {
-            const targetRank = cleanQuery.startsWith('2p:') ? cleanQuery.substring(3) : cleanQuery.substring(7);
-            isMatch = compareGrades(rating2, targetRank);
-          } else if (cleanQuery.startsWith('4p:') || cleanQuery.startsWith('4piece:')) {
-            const targetRank = cleanQuery.startsWith('4p:') ? cleanQuery.substring(3) : cleanQuery.substring(7);
-            isMatch = compareGrades(rating4, targetRank);
-          } else if (cleanQuery.includes('/')) {
-            isMatch = (grade === cleanQuery);
-          } else {
-            // General query matching either 2p or 4p rating
-            isMatch = compareGrades(rating2, cleanQuery) || compareGrades(rating4, cleanQuery);
-          }
-        } else {
-          // If the query starts with 'a:' or 'armor:', it's an armor-only filter, so weapons should not match.
-          if (targetQuery.startsWith('a:') || targetQuery.startsWith('armor:')) {
-            isMatch = false;
-          } else {
-            let weaponRank = '';
-            let perkRank = '';
-            const isTwoTier = grade.length > 2 || (grade.length === 2 && !grade.endsWith('+') && !grade.endsWith('-'));
-            if (isTwoTier) {
-              weaponRank = grade.charAt(0);
-              perkRank = grade.substring(1);
-            } else {
-              perkRank = grade;
-            }
-
-            if (targetQuery === 'upgradeable' || targetQuery === 'upgradable' || targetQuery === 'upgrade') {
-              isMatch = !!result?.upgradeAvailable;
-            } else if (targetQuery === 'god') {
-              isMatch = compareGrades(perkRank, '>=s');
-            } else if (targetQuery.startsWith('w:') || targetQuery.startsWith('weapon:')) {
-              const targetRank = targetQuery.startsWith('w:') ? targetQuery.substring(2) : targetQuery.substring(7);
-              isMatch = compareGrades(weaponRank, targetRank);
-            } else if (targetQuery.startsWith('p:') || targetQuery.startsWith('perk:')) {
-              const targetRank = targetQuery.startsWith('p:') ? targetQuery.substring(2) : targetQuery.substring(5);
-              isMatch = compareGrades(perkRank, targetRank);
-            } else {
-              // General match: combined grade, or weapon rank, or perk rank
-              isMatch = compareGrades(grade, targetQuery) || compareGrades(weaponRank, targetQuery) || compareGrades(perkRank, targetQuery);
-            }
-          }
+          label = `${typeLabel}${op}${cleanRank}`;
         }
+      }
 
-        if (isMatch) {
-          item.style.setProperty('opacity', '1', 'important');
-          item.style.setProperty('filter', 'none', 'important');
-        } else {
-          item.style.setProperty('opacity', '0.15', 'important');
-          item.style.setProperty('filter', 'grayscale(80%)', 'important');
-        }
-      });
-    } else {
-      // Restore all items
-      const items = document.querySelectorAll<HTMLElement>('[data-aegis-item-hash]');
-      items.forEach(item => {
-        item.style.removeProperty('opacity');
-        item.style.removeProperty('filter');
-      });
+      // Activate filter state
+      activeAegisFilter = fullMatchText;
+      activeAegisFilterLabel = label;
+
+      // Strip "aegis:..." from input value so it doesn't break DIM
+      searchInput.value = val.replace(/\baegis:[a-z0-9+:-><=/]+/gi, '').replace(/\s+/g, ' ').trim();
+      
+      // Update/show the pill
+      renderAegisFilterPill();
+      
+      // Dispatch input event to let DIM update with the cleaned query
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
     }
+
+    // Run custom Aegis highlighting on all item elements
+    evaluateAegisFiltering();
   });
 }
 
@@ -3255,6 +3630,7 @@ function flushPendingProcessTargets() {
       processElement(targets[i]);
     }
   }
+  evaluateAegisFiltering();
   scheduleOpacityUpdate();
 }
 
@@ -3491,4 +3867,45 @@ document.addEventListener('aegis-diagnostic-log', (e: any) => {
 
 // Setup initial log entry
 addDiagnosticLog('Aegis isolated-world script initialized.');
+
+/**
+ * Creates and displays a premium glassmorphic toast notification on the page.
+ */
+function showAegisToast(msg: string) {
+  const existing = document.querySelector('.aegis-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'aegis-toast';
+
+  const iconHtml = `<span class="aegis-toast-icon">🔄</span>`;
+  const textHtml = `<span class="aegis-toast-text">${msg}</span>`;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`${iconHtml}${textHtml}`, 'text/html');
+  toast.replaceChildren(...Array.from(doc.body.childNodes));
+
+  document.body.appendChild(toast);
+
+  // Trigger CSS animations
+  requestAnimationFrame(() => {
+    toast.classList.add('visible');
+  });
+
+  // Hide and remove elements after delay
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 450);
+  }, 4500);
+}
+
+// Handle incoming messages from the background script
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.action === 'showToast') {
+    showAegisToast(message.message);
+  }
+});
+
+// Notify the background service worker that DIM is running
+chrome.runtime.sendMessage({ action: 'dimLaunched' }).catch(() => {});
 

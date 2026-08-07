@@ -189,6 +189,29 @@ function positionTooltip(target: HTMLElement, tooltip: HTMLElement) {
 }
 
 /**
+ * Extracts the recommended Masterwork from note strings.
+ * Supports slashes/alternatives, e.g. "Range/Handling MW" -> "Range/Handling"
+ */
+export function extractRecommendedMasterwork(notes: string): string | null {
+  if (!notes) return null;
+  const match = notes.match(/\b(range|reload|handling|stability|velocity|blast\s+radius|draw\s+time|impact)(?:\s*[\/\\]\s*(?:range|reload|handling|stability|velocity|blast\s+radius|draw\s+time|impact))?\s+(mw|masterwork)\b/i);
+  if (match) {
+    const rawVal = match[0].split(/\s+(?:mw|masterwork)/i)[0].trim();
+    return rawVal.split(/[\/\\]/).map(w => w.trim().charAt(0).toUpperCase() + w.trim().slice(1).toLowerCase()).join('/');
+  }
+  return null;
+}
+
+/**
+ * Extracts the recommended weapon mod from note strings.
+ */
+function extractRecommendedMod(notes: string): string | null {
+  if (!notes) return null;
+  const match = notes.match(/\b(backup\s+mag|boss\s+spec|major\s+spec|minor\s+spec|adept\s+big\s+ones|counterbalance\s+stock|quick\s+access\s+sling|targeting\s+adjuster|adept\s+mod)\b/i);
+  return match ? match[1].split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : null;
+}
+
+/**
  * Displays the tooltip with weapon ranking and perk matching info.
  *
  * @param target The hovered weapon element.
@@ -208,7 +231,8 @@ export function showTooltip(
   isBestInClass?: boolean,
   sheetPerks?: { matched: TooltipPerk[]; missing: TooltipPerk[] },
   globalPerkNameToIcon?: Record<string, string>,
-  sheetArmor?: AegisArmorSet | null
+  sheetArmor?: AegisArmorSet | null,
+  equippedMasterwork?: string
 ) {
   const tooltip = getOrCreateTooltip();
   const isLightGGMode = !!isLightGG;
@@ -236,9 +260,6 @@ export function showTooltip(
           <span class="aegis-tooltip-sheet-badge aegis-tier-source" style="background: linear-gradient(135deg, #1abc9c, #16a085) !important;">${sheetArmor.sourceType}</span>
           <span class="aegis-tooltip-sheet-rank">Source: ${sheetArmor.source}</span>
         </div>
-      </div>
-      
-      <div class="aegis-tooltip-body">
         <div class="aegis-tooltip-section">
           <div class="aegis-tooltip-section-title">2-Piece Bonus: <strong style="color: #fff;">${sheetArmor.piece2Name}</strong></div>
           <div style="display: flex; gap: 8px; align-items: flex-start; margin-top: 4px;">
@@ -290,6 +311,30 @@ export function showTooltip(
     }
   }
 
+  // Extract recommended Masterworks & Mod
+  const recMWs: string[] = [];
+  let rawMW = sheetWeapon?.mw ? sheetWeapon.mw.trim() : null;
+  if (rawMW && rawMW !== '-') {
+    const parts = rawMW.split(/[\/\n\\]/);
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed) recMWs.push(trimmed);
+    }
+  }
+  if (recMWs.length === 0) {
+    const notesText = (sheetWeapon?.notes || '') + ' ' + (result.notes || '') + ' ' + (result.wishlistNotes || '');
+    const foundMW = extractRecommendedMasterwork(notesText);
+    if (foundMW) {
+      const parts = foundMW.split(/[\/\n\\]/);
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed) recMWs.push(trimmed);
+      }
+    }
+  }
+  const notesText = (sheetWeapon?.notes || '') + ' ' + (result.notes || '') + ' ' + (result.wishlistNotes || '');
+  const recMod = extractRecommendedMod(notesText);
+
   // Assemble sheet metadata
   let sheetMetaHtml = '';
   let sheetBodyHtml = '';
@@ -328,6 +373,42 @@ export function showTooltip(
       `;
     }
 
+    if (sheetWeapon.origin) {
+      recsHtml += `
+        <div class="aegis-tooltip-compact-recs" style="margin-top: 4px;">
+          <span class="aegis-tooltip-recs-label">Origin:</span>
+          <span class="aegis-tooltip-recs-value" title="${sheetWeapon.origin}">${sheetWeapon.origin}</span>
+        </div>
+      `;
+    }
+
+    if (recMWs.length > 0) {
+      const eqMW = (equippedMasterwork || '').toLowerCase();
+      const badges = recMWs.map(mw => {
+        const mwLower = mw.toLowerCase();
+        const isMatch = eqMW && (
+          mwLower === eqMW ||
+          eqMW.startsWith(mwLower) ||
+          mwLower.startsWith(eqMW)
+        );
+        const icon = isMatch ? '✓' : '☆';
+        const matchStyle = isMatch
+          ? 'display: inline-block !important; background: linear-gradient(135deg, rgba(255, 215, 0, 0.38), rgba(255, 140, 0, 0.28)) !important; border: 1.5px solid #ffd700 !important; color: #ffffff !important; text-shadow: 0 0 6px rgba(255, 215, 0, 0.8) !important; box-shadow: 0 0 10px rgba(255, 191, 0, 0.65) !important;'
+          : 'display: inline-block !important; background: rgba(255, 191, 0, 0.05) !important; border: 1px dashed rgba(255, 191, 0, 0.4) !important; color: rgba(235, 203, 139, 0.65) !important; box-shadow: none !important;';
+        const title = isMatch
+          ? `✓ Equipped & Recommended Masterwork`
+          : `Recommended Masterwork (Not equipped)`;
+        return `<span class="aegis-mw-badge" style="${matchStyle}" title="${title}">${icon} ${mw}</span>`;
+      }).join('');
+
+      recsHtml += `
+        <div class="aegis-tooltip-compact-recs" style="margin-top: 6px; align-items: center;">
+          <span class="aegis-tooltip-recs-label" style="color: #ebcb8b !important;">Rec MW:</span>
+          <span class="aegis-tooltip-recs-value" style="display: flex !important; flex-wrap: wrap !important; gap: 4px !important;">${badges}</span>
+        </div>
+      `;
+    }
+
     if (sheetWeapon.notes || recsHtml) {
       sheetBodyHtml = `
         <div class="aegis-tooltip-section aegis-meta-section">
@@ -339,6 +420,13 @@ export function showTooltip(
     }
   }
 
+  let recsRowHtml = '';
+  if (recMod) {
+    recsRowHtml = '<div class="aegis-tooltip-recommendations">';
+    recsRowHtml += `<span class="aegis-mod-badge" title="Recommended Weapon Mod">Mod: ${recMod}</span>`;
+    recsRowHtml += '</div>';
+  }
+
   // Assemble premium HTML content
   let html = `
     <div class="aegis-tooltip-header">
@@ -348,6 +436,7 @@ export function showTooltip(
       </div>
       ${tagsHtml}
       ${sheetMetaHtml}
+      ${recsRowHtml}
   `;
 
   if (!isLightGGMode) {

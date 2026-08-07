@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'aegisLayoutSide',
             'aegisDbMode',
             'aegisTwoTier',
+            'aegisHoverEnabled',
             'aegisArmorSource',
             'updateAvailableVersion',
             'updateBannerDismissed'
@@ -150,6 +151,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             }
+            // Set Aegis Hover Enabled segmented control
+            const hoverEnabledVal = res.aegisHoverEnabled !== false ? 'true' : 'false';
+            const hoverEnabledSegmented = document.getElementById('aegis-hover-enabled-segmented');
+            if (hoverEnabledSegmented) {
+                hoverEnabledSegmented.querySelectorAll('button').forEach(btn => {
+                    if (btn.getAttribute('data-value') === hoverEnabledVal) {
+                        btn.classList.add('active');
+                    }
+                    else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
             // Set Aegis Armor Source segmented control
             const armorSourceVal = res.aegisArmorSource || 'lowco';
             const armorSourceSegmented = document.getElementById('aegis-armor-source-segmented');
@@ -246,6 +260,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (val) {
                     chrome.storage.local.set({ aegisTwoTier: val === 'true' }, () => {
                         console.log(`[DIM Aegis Overlay] Aegis Two-Tier grade changed to: ${val === 'true'}`);
+                        updateUI();
+                    });
+                }
+            }
+        });
+    }
+    // Handle Aegis Hover Enabled segmented control click
+    const hoverEnabledSegmented = document.getElementById('aegis-hover-enabled-segmented');
+    if (hoverEnabledSegmented) {
+        hoverEnabledSegmented.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target && target.tagName === 'BUTTON') {
+                const val = target.getAttribute('data-value');
+                if (val) {
+                    chrome.storage.local.set({ aegisHoverEnabled: val === 'true' }, () => {
+                        console.log(`[DIM Aegis Overlay] Aegis Hover Enabled changed to: ${val === 'true'}`);
                         updateUI();
                     });
                 }

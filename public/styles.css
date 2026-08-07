@@ -2787,6 +2787,348 @@ body.aegis-scrolling div[id^="item-"][data-aegis-item-hash]:hover {
   color: #ffffff !important;
 }
 
+/* Aegis Custom Toast Styles */
+.aegis-toast {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  background: rgba(18, 26, 38, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+  border-radius: 8px !important;
+  padding: 12px 18px !important;
+  color: #e5e9f0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  z-index: 999999 !important;
+  transform: translateY(100px) scale(0.95) !important;
+  opacity: 0 !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
+  pointer-events: none !important;
+}
+
+.aegis-toast.visible {
+  transform: translateY(0) scale(1) !important;
+  opacity: 1 !important;
+}
+
+.aegis-toast-icon {
+  font-size: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffd700 !important;
+  animation: aegis-spin 2s linear infinite !important;
+}
+
+.aegis-toast-text {
+  letter-spacing: 0.3px !important;
+}
+
+@keyframes aegis-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Aegis Search Widget Styles */
+.aegis-search-widget {
+  position: absolute !important;
+  right: 108px !important; /* shifted further left to avoid overlapping DIM's search clear (X) and settings buttons */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  z-index: 100 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+/* Shield widget button style */
+.aegis-search-widget-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #ffd700 !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0.75 !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+  border-radius: 50% !important;
+  width: 24px !important;
+  height: 24px !important;
+  outline: none !important;
+}
+
+.aegis-search-widget-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+  background: rgba(255, 215, 0, 0.08) !important;
+}
+
+.aegis-widget-icon {
+  width: 14px !important;
+  height: 14px !important;
+  stroke: #ffd700 !important;
+}
+
+/* Floating widget dropdown menu */
+.aegis-search-widget-menu {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  background: rgba(20, 24, 30, 0.98) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  min-width: 280px !important;
+  padding: 6px 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.1s ease, transform 0.1s ease !important;
+}
+
+.aegis-search-widget-menu.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  transform: translateY(-4px) !important;
+}
+
+.aegis-menu-header {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: #ffd700 !important;
+  padding: 6px 12px 4px 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  margin-bottom: 4px !important;
+}
+
+.aegis-widget-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  padding: 6px 12px !important;
+}
+
+.aegis-row-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #7f8c8d !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.aegis-btn-group {
+  display: flex !important;
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 2px !important;
+  gap: 2px !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.aegis-group-btn {
+  flex: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  color: #8a8a8a !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 4px 6px !important;
+  cursor: pointer !important;
+  border-radius: 3px !important;
+  text-align: center !important;
+  transition: all 0.1s ease !important;
+  outline: none !important;
+}
+
+.aegis-group-btn:hover {
+  color: #e3e3e8 !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.aegis-group-btn.active {
+  background: rgba(255, 215, 0, 0.08) !important;
+  color: #ffd700 !important;
+  border: 1px solid rgba(255, 215, 0, 0.15) !important;
+}
+
+/* Grade selector buttons */
+.aegis-grade-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 4px !important;
+}
+
+.aegis-grade-btn {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+  color: #ffd700 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 6px !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.1s ease !important;
+  outline: none !important;
+}
+
+.aegis-grade-btn:hover {
+  background: rgba(255, 215, 0, 0.08) !important;
+  border-color: rgba(255, 215, 0, 0.25) !important;
+}
+
+/* Shortcut buttons grid */
+.aegis-shortcuts-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 4px !important;
+}
+
+.aegis-shortcut-btn {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+  color: #cdd6f4 !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 5px 4px !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.1s ease !important;
+  outline: none !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.aegis-shortcut-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.aegis-menu-divider {
+  height: 1px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  margin: 4px 0 !important;
+}
+
+/* Clear filter action button */
+.aegis-menu-clear-btn {
+  margin: 4px 12px 6px 12px !important;
+  background: rgba(231, 76, 60, 0.05) !important;
+  border: 1px solid rgba(231, 76, 60, 0.2) !important;
+  border-radius: 4px !important;
+  color: #e74c3c !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  padding: 6px !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.1s ease !important;
+  outline: none !important;
+}
+
+.aegis-menu-clear-btn:hover {
+  background: rgba(231, 76, 60, 0.12) !important;
+  border-color: #e74c3c !important;
+}
+
+/* Aegis Filter Tag Pill */
+.aegis-filter-pill {
+  position: absolute !important;
+  left: 34px !important; /* positioned perfectly after DIM's search magnifying glass icon */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: rgba(255, 215, 0, 0.08) !important;
+  border: 1px solid rgba(255, 215, 0, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  z-index: 10 !important;
+  color: #ffd700 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px !important;
+  user-select: none !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+  height: 22px !important;
+}
+
+.aegis-pill-text {
+  white-space: nowrap !important;
+}
+
+.aegis-pill-close {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 215, 0, 0.5) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.1s ease !important;
+  outline: none !important;
+}
+
+.aegis-pill-close:hover {
+  color: #ff5c5c !important;
+}
+
+/* Masterwork and Mod Tooltip Recommendation Badges */
+.aegis-tooltip-recommendations {
+  display: flex !important;
+  gap: 6px !important;
+  margin-top: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.aegis-mw-badge {
+  background: rgba(255, 191, 0, 0.12) !important;
+  border: 1px solid #ffb300 !important;
+  color: #ffd54f !important;
+  text-shadow: 0 0 4px rgba(255, 179, 0, 0.4) !important;
+  box-shadow: 0 0 6px rgba(255, 179, 0, 0.15) !important;
+  border-radius: 4px !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  padding: 2.5px 7px !important;
+  letter-spacing: 0.3px !important;
+}
+
+.aegis-mod-badge {
+  background: rgba(136, 192, 208, 0.08) !important;
+  border: 1px solid rgba(136, 192, 208, 0.25) !important;
+  color: #88c0d0 !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  letter-spacing: 0.2px !important;
+}
+
 
 
 
