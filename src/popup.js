@@ -36,8 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
             'aegisHoverEnabled',
             'aegisArmorSource',
             'updateAvailableVersion',
-            'updateBannerDismissed'
+            'updateBannerDismissed',
+            'lastSeenChangelogVersion'
         ], (res) => {
+            // Auto-show Changelog Modal once for new version updates
+            const currentVer = chrome.runtime.getManifest().version;
+            if (res.lastSeenChangelogVersion !== currentVer) {
+                const changelogModal = document.getElementById('changelog-modal');
+                if (changelogModal) {
+                    changelogModal.classList.remove('hidden');
+                }
+            }
             // Handle Extension Update warning banner
             const updateBanner = document.getElementById('extension-update-banner');
             const newVersionText = document.getElementById('new-version-text');
@@ -211,7 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const val = target.getAttribute('data-value');
                 if (val) {
                     chrome.storage.local.set({ scoringSource: val }, () => {
-                        console.log(`[DIM Aegis Overlay] Scoring source changed to: ${val}`);
                         updateUI();
                     });
                 }
@@ -227,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const val = target.getAttribute('data-value');
                 if (val) {
                     chrome.storage.local.set({ aegisDbMode: val }, () => {
-                        console.log(`[DIM Aegis Overlay] Aegis DB Mode changed to: ${val}`);
                         updateUI();
                     });
                 }
@@ -515,6 +522,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         lightggSyncStatusText.style.color = '#4caf50';
                     }
                 });
+            }
+        });
+    }
+    // --- Changelog Modal Handlers ---
+    const changelogModal = document.getElementById('changelog-modal');
+    const openChangelogBtn = document.getElementById('open-changelog-btn');
+    const changelogCloseBtn = document.getElementById('changelog-close-btn');
+    const changelogAckBtn = document.getElementById('changelog-ack-btn');
+    const showChangelog = () => {
+        if (changelogModal)
+            changelogModal.classList.remove('hidden');
+    };
+    const hideChangelog = () => {
+        if (changelogModal)
+            changelogModal.classList.add('hidden');
+        const currentVersion = chrome.runtime.getManifest().version;
+        chrome.storage.local.set({ lastSeenChangelogVersion: currentVersion });
+    };
+    if (openChangelogBtn)
+        openChangelogBtn.addEventListener('click', showChangelog);
+    if (changelogCloseBtn)
+        changelogCloseBtn.addEventListener('click', hideChangelog);
+    if (changelogAckBtn)
+        changelogAckBtn.addEventListener('click', hideChangelog);
+    if (changelogModal) {
+        changelogModal.addEventListener('click', (e) => {
+            if (e.target === changelogModal) {
+                hideChangelog();
             }
         });
     }

@@ -231,5 +231,3 @@ if (document.readyState === 'loading') {
 } else {
   startDomScrape();
 }
-
-console.log('[DIM Aegis Overlay] Light.gg Roll Appraiser content script initialized (API intercept + DOM scrape).');

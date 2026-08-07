@@ -30,6 +30,15 @@
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
           </svg>
         </a>
+        <button type="button" id="open-changelog-btn" class="github-link-btn" title="View v1.6.0 Changelog" style="background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.15); color: #d8dee9;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </button>
         <div class="aegis-help-container">
           <button type="button" class="aegis-help-icon-btn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -147,7 +156,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
           <span id="update-check-status" style="font-size: 9px; font-weight: 600; text-transform: uppercase;"></span>
-          <span class="version" id="version-text" title="Click to check for updates">v1.5.4</span>
+          <span class="version" id="version-text" title="Click to check for updates">v1.6.0</span>
         </div>
       </div>
     </header>
@@ -155,7 +164,7 @@
     <main class="popup-main">
       <div id="extension-update-banner" class="update-banner hidden">
         <div class="update-banner-content">
-          <span>🚀 Update Available! Version <strong id="new-version-text">v1.5.4</strong> is ready on GitHub.</span>
+          <span>Update available: Version <strong id="new-version-text">v1.6.0</strong> is ready on GitHub.</span>
           <button id="update-banner-dismiss" type="button" class="dismiss-btn">&times;</button>
         </div>
       </div>
@@ -217,76 +226,64 @@
       </section>
 
       <section class="settings-card">
-        <h2>Wishlist Configuration</h2>
-        <p class="description">Enter the raw text URL of your Destiny Item Manager wishlist file.</p>
-        
+        <h2>Data Sources & Custom Wishlist</h2>
+        <p class="description">Configure secondary wishlist source URL.</p>
         <div class="input-group">
-          <input type="url" id="wishlist-url" placeholder="https://example.com/wishlist.txt" />
+          <label for="wishlist-url">Custom Wishlist URL</label>
+          <input type="text" id="wishlist-url" placeholder="https://..." />
         </div>
-
-        <button id="sync-button" class="btn btn-primary">
-          <span class="btn-text">Sync Wishlist</span>
+        <button id="sync-button" class="btn btn-primary" style="margin-top: 4px;">
+          <span class="btn-text">Sync Wishlist txt</span>
           <span class="spinner hidden"></span>
         </button>
-        <div id="wishlist-sync-status-row" class="sync-status-row">
-          <span id="wishlist-sync-status-text">Waiting...</span>
+        <div id="sync-status" class="sync-status hidden">
+          <span id="sync-status-text"></span>
         </div>
       </section>
 
       <section class="settings-card">
-        <h2>Light.gg Sync</h2>
-        <p class="description">Automatically opens Roll Appraiser in the background to fetch your weapon grades &mdash; no tab-switching needed.</p>
-        <div id="lightgg-sync-warning" class="warning-msg-box hidden">
-          <p>⚠️ Light.gg cache is older than 48 hours. Syncing is recommended.</p>
+        <h2>Light.gg Roll Appraiser Cache</h2>
+        <p class="description">Manage cached weapon popularity grades scraped from Light.gg.</p>
+        <div id="lightgg-sync-warning" class="warning-banner hidden" style="margin-bottom: 10px;">
+          <span>Cached grades are older than 48 hours. Consider resyncing.</span>
         </div>
-        <div class="btn-group">
-          <button id="lightgg-sync-button" class="btn btn-secondary">
-            <span class="btn-text">Sync Grades</span>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button id="lightgg-sync-button" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;">
+            <span class="btn-text">Scrape Grades</span>
             <span class="spinner hidden"></span>
           </button>
-          <button id="lightgg-clear-button" class="btn btn-muted">
-            <span class="btn-text">Clear Cache</span>
-          </button>
+          <button id="lightgg-clear-button" class="btn btn-danger" style="flex: 1;">Clear Cache</button>
         </div>
-        <div id="lightgg-sync-status-row" class="sync-status-row">
-          <span id="lightgg-sync-status-text">Waiting...</span>
+        <div id="lightgg-sync-status-row" class="sync-status-row" style="margin-top: 6px; text-align: center; display: none;">
+          <span id="lightgg-sync-status-text" style="font-size: 10.5px; font-weight: 500;"></span>
         </div>
       </section>
 
-      <section class="status-card">
-        <h2>Sync Status</h2>
-        <div class="status-list">
-          <div class="status-item">
-            <span class="status-label">Status:</span>
-            <span id="sync-status" class="status-value status-success">Idle</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Last Updated:</span>
-            <span id="last-updated" class="status-value">Never</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Weapons Indexed:</span>
-            <span id="weapons-count" class="status-value">0</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Light.gg Graded:</span>
-            <span id="lightgg-count" class="status-value">0</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Light.gg Synced:</span>
-            <span id="lightgg-last-updated" class="status-value">Never</span>
-          </div>
-          <div id="error-container" class="error-msg-box hidden">
-            <p id="error-message"></p>
-          </div>
+      <div id="error-container" class="error-container hidden">
+        <p id="error-message"></p>
+      </div>
+
+      <section class="info-card">
+        <div class="info-row">
+          <span class="label">Sheet Weapons Loaded</span>
+          <span id="weapons-count" class="value">0</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Light.gg Cached Weapons</span>
+          <span id="lightgg-count" class="value">0</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Wishlist Last Updated</span>
+          <span id="last-updated" class="value">Never</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Light.gg Last Synced</span>
+          <span id="lightgg-last-updated" class="value">Never</span>
         </div>
       </section>
-
-      
     </main>
 
     <footer class="popup-footer">
-      <p>Wishlist files are parsed in the background and stored locally in your browser.</p>
       <div class="footer-links" style="margin-top: 8px; display: flex; justify-content: center; align-items: center; gap: 12px; font-size: 10px;">
         <a href="https://docs.google.com/spreadsheets/d/1JM-0SlxVDAi-C6rGVlLxa-J1WGewEeL8Qvq4htWZHhY/" target="_blank" style="color: #88c0d0; text-decoration: none; font-weight: 600;">Aegis Spreadsheet</a>
         <span style="color: rgba(255,255,255,0.2);">|</span>
@@ -302,6 +299,78 @@
       </div>
     </footer>
   </div>
+
+  <!-- Changelog Modal Popup -->
+  <div id="changelog-modal" class="changelog-modal-overlay hidden">
+    <div class="changelog-modal-card">
+      <div class="changelog-modal-header">
+        <div class="changelog-badge-row">
+          <span class="changelog-version-tag">v1.6.0</span>
+          <span class="changelog-date-tag">Changelog</span>
+        </div>
+        <h2 class="changelog-title">v1.6.0 Release Notes</h2>
+        <button type="button" id="changelog-close-btn" class="changelog-close-x">&times;</button>
+      </div>
+
+      <div class="changelog-modal-body">
+        
+        <div class="changelog-feature-card">
+          <div class="changelog-feature-header">
+            <span class="changelog-feature-name">Masterwork Recommendations</span>
+          </div>
+          <p class="changelog-feature-desc">
+            Shows recommended masterworks on your weapons. Highlights equipped matches in gold and unmatched recommendations as outlines.
+          </p>
+          <div class="changelog-demo-row">
+            <span class="demo-chip demo-matched">✓ Reload</span>
+            <span class="demo-chip demo-unmatched">☆ Handling</span>
+          </div>
+        </div>
+
+        <div class="changelog-feature-card">
+          <div class="changelog-feature-header">
+            <span class="changelog-feature-name">Filter Stacking</span>
+          </div>
+          <p class="changelog-feature-desc">
+            Combine Aegis filters with normal DIM search filters (e.g. <code>is:handcannon aegis:god</code>). Active Aegis filters appear as clearable search pills.
+          </p>
+        </div>
+
+        <div class="changelog-feature-card">
+          <div class="changelog-feature-header">
+            <span class="changelog-feature-name">Search Bar Quick-Filters</span>
+          </div>
+          <p class="changelog-feature-desc">
+            One-click filter widget built into the search bar to filter weapon tiers without typing.
+          </p>
+        </div>
+
+        <div class="changelog-feature-card">
+          <div class="changelog-feature-header">
+            <span class="changelog-feature-name">Performance Improvements</span>
+          </div>
+          <p class="changelog-feature-desc">
+            Faster inventory rendering and smoother scrolling across large vault grids.
+          </p>
+        </div>
+
+        <div class="changelog-feature-card">
+          <div class="changelog-feature-header">
+            <span class="changelog-feature-name">Smart Edge Detection</span>
+          </div>
+          <p class="changelog-feature-desc">
+            Prevents hover tooltips and detail popups from clipping off the edges of your screen.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="changelog-modal-footer">
+        <button type="button" id="changelog-ack-btn" class="btn btn-secondary changelog-btn" style="width: 100%;">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>

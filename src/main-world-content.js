@@ -15,7 +15,6 @@
 // Global registry of all seen perks, shared via a hidden DOM element
 const globalRegistry = {};
 function sendDiagnosticLog(msg) {
-    console.log(`[Aegis Diagnostic] ${msg}`);
     const event = new CustomEvent('aegis-diagnostic-log', { detail: msg });
     document.dispatchEvent(event);
 }
@@ -1162,7 +1161,6 @@ async function buildWeaponIndex() {
             };
             req.onerror = () => resolve();
         });
-        console.log(`Aegis Overlay: Indexed ${Object.keys(weaponNameToHash).length} weapons from manifest database.`);
     }
     catch (e) {
         console.error('Aegis Overlay: Failed to build weapon index', e);
@@ -1201,4 +1199,3 @@ function startObserver() {
     initManifestDatabase();
 }
 startObserver();
-console.log('DIM Aegis Overlay: React Fiber scanner initialized in MAIN world.');

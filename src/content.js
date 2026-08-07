@@ -1862,7 +1862,6 @@ chrome.storage.local.get(['wishlistData', 'enhancedToNormal', 'scoringSource', '
     if (clearLegacyDefaultChaseFilters()) {
         chrome.storage.local.set({ aegisChaseList: chaseList });
     }
-    console.log(`DIM Aegis Overlay: Loaded configuration. Source: ${scoringSource}`);
     updateNameToHashFromWishlist();
     updatePerkNameToIcon(res.perkRegistry || {});
     updatePerkNameToHash(res.perkRegistry || {});
@@ -1944,7 +1943,6 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
             renderResults();
         }
         if (changed) {
-            console.log('DIM Aegis Overlay: Storage updated, re-scoring elements.');
             reprocessAllElements();
         }
     }
@@ -3184,6 +3182,53 @@ function evaluateAegisFiltering() {
         }
     });
 }
+function getAegisFilterLabel(targetQuery) {
+    const q = targetQuery.toLowerCase().trim();
+    if (q === 'god')
+        return 'God Rolls';
+    if (q === 'upgrade' || q === 'upgradeable')
+        return 'Upgradeable';
+    if (q === 'chase')
+        return 'Chase List';
+    if (q === 'bis' || q === 'bestinclass')
+        return 'Best in Class';
+    if (q === 'meta')
+        return 'Meta Tier';
+    const parts = q.split(':');
+    if (parts.length >= 2) {
+        const type = parts[0];
+        const rank = parts[parts.length - 1];
+        const hasOp = q.includes('>=') || q.includes('<=');
+        const op = hasOp ? (q.includes('>=') ? ' >= ' : ' <= ') : ' = ';
+        const cleanRank = rank.replace(/>=/g, '').replace(/<=/g, '').toUpperCase();
+        let typeLabel = 'Perk';
+        if (type === 'w' || type === 'weapon')
+            typeLabel = 'Weapon';
+        else if (type === 'a' || type === 'armor') {
+            if (q.includes('2p') || q.includes('2piece'))
+                typeLabel = 'Armor 2pc';
+            else if (q.includes('4p') || q.includes('4piece'))
+                typeLabel = 'Armor 4pc';
+            else
+                typeLabel = 'Armor';
+        }
+        return `${typeLabel}${op}${cleanRank}`;
+    }
+    return q.toUpperCase();
+}
+function processCompletedAegisToken(searchInput, val, aegisMatch) {
+    const fullMatchText = aegisMatch[0];
+    const targetQuery = aegisMatch[1].toLowerCase();
+    activeAegisFilter = fullMatchText;
+    activeAegisFilterLabel = getAegisFilterLabel(targetQuery);
+    // Strip aegis: filter token from search input
+    const newVal = val.replace(aegisMatch[0], '').replace(/\s+/g, ' ').trim();
+    searchInput.value = newVal;
+    renderAegisFilterPill();
+    // Dispatch input event so DIM processes remaining text (e.g. is:handcannon)
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    evaluateAegisFiltering();
+}
 function setupSearchFilterObserver() {
     const searchInput = document.querySelector('input[name="filter"], input[placeholder*="filter" i], input[type="search"]');
     if (!searchInput)
@@ -3194,54 +3239,50 @@ function setupSearchFilterObserver() {
     searchInput.setAttribute('data-aegis-search-observer', 'true');
     searchInput.addEventListener('input', () => {
         let val = searchInput.value;
-        // Check if the search query has "aegis:grade"
-        const aegisMatch = val.match(/\baegis:([a-z0-9+:-><=/]+)/i);
-        if (aegisMatch) {
-            const fullMatchText = aegisMatch[0];
-            const targetQuery = aegisMatch[1].toLowerCase();
-            // Map query to human-readable label
-            let label = targetQuery;
-            if (targetQuery === 'god')
-                label = 'God Rolls';
-            else if (targetQuery === 'upgrade' || targetQuery === 'upgradeable')
-                label = 'Upgradeable';
-            else if (targetQuery === 'chase')
-                label = 'Chase List';
-            else {
-                const parts = targetQuery.split(':');
-                if (parts.length >= 2) {
-                    const type = parts[0];
-                    const rank = parts[parts.length - 1];
-                    const hasOp = targetQuery.includes('>=') || targetQuery.includes('<=');
-                    const op = hasOp ? (targetQuery.includes('>=') ? ' >= ' : ' <= ') : ' = ';
-                    const cleanRank = rank.replace(/>=/g, '').replace(/<=/g, '').toUpperCase();
-                    let typeLabel = 'Perk';
-                    if (type === 'w' || type === 'weapon')
-                        typeLabel = 'Weapon';
-                    else if (type === 'a' || type === 'armor') {
-                        if (targetQuery.includes('2p') || targetQuery.includes('2piece'))
-                            typeLabel = 'Armor 2pc';
-                        else if (targetQuery.includes('4p') || targetQuery.includes('4piece'))
-                            typeLabel = 'Armor 4pc';
-                        else
-                            typeLabel = 'Armor';
-                    }
-                    label = `${typeLabel}${op}${cleanRank}`;
-                }
-            }
-            // Activate filter state
-            activeAegisFilter = fullMatchText;
-            activeAegisFilterLabel = label;
-            // Strip "aegis:..." from input value so it doesn't break DIM
-            searchInput.value = val.replace(/\baegis:[a-z0-9+:-><=/]+/gi, '').replace(/\s+/g, ' ').trim();
-            // Update/show the pill
-            renderAegisFilterPill();
-            // Dispatch input event to let DIM update with the cleaned query
-            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        // 1. Check if user typed a trailing space after an aegis: token (e.g. "aegis:god ")
+        const spaceMatch = val.match(/\baegis:([a-z0-9+:-><=/]+)\s+/i);
+        if (spaceMatch) {
+            processCompletedAegisToken(searchInput, val, spaceMatch);
             return;
+        }
+        // 2. Check if user is actively typing an aegis: token (e.g. "aegis:g", "aegis:god")
+        const liveMatch = val.match(/\baegis:([a-z0-9+:-><=/]+)/i);
+        if (liveMatch) {
+            const fullMatchText = liveMatch[0];
+            const targetQuery = liveMatch[1].toLowerCase();
+            activeAegisFilter = fullMatchText;
+            activeAegisFilterLabel = getAegisFilterLabel(targetQuery);
+            // Do NOT strip input text while user is typing! Live filter vault items
+            evaluateAegisFiltering();
+            return;
+        }
+        // 3. If there is no aegis: token in the input box and no active pill, clear filter state
+        const searchWrapper = searchInput.parentElement;
+        const hasPill = searchWrapper?.querySelector('.aegis-filter-pill');
+        if (!hasPill) {
+            activeAegisFilter = null;
+            activeAegisFilterLabel = null;
         }
         // Run custom Aegis highlighting on all item elements
         evaluateAegisFiltering();
+    });
+    // Handle Enter / Tab keys to convert typed aegis: token into a pill
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            const val = searchInput.value;
+            const match = val.match(/\baegis:([a-z0-9+:-><=/]+)/i);
+            if (match) {
+                processCompletedAegisToken(searchInput, val, match);
+            }
+        }
+    });
+    // Handle input blur to convert typed aegis: token into a pill if complete
+    searchInput.addEventListener('blur', () => {
+        const val = searchInput.value;
+        const match = val.match(/\baegis:([a-z0-9+:-><=/]+)/i);
+        if (match) {
+            processCompletedAegisToken(searchInput, val, match);
+        }
     });
 }
 /**
@@ -3464,7 +3505,6 @@ startDimmingObserver();
 // Diagnostic logging framework
 const diagnosticLogs = [];
 function addDiagnosticLog(msg) {
-    console.log(`[Aegis Diagnostic] ${msg}`);
     const time = new Date().toTimeString().split(' ')[0];
     const formatted = `[${time}] ${msg}`;
     diagnosticLogs.push(formatted);

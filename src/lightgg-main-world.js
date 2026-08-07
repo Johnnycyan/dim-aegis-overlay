@@ -178,4 +178,3 @@ XMLHttpRequest.prototype.send = function (...args) {
     }
     return _XHRSend.call(this, ...args);
 };
-console.log('[DIM Aegis Overlay] Light.gg API interceptor initialized in MAIN world.');
